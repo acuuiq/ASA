@@ -1,0 +1,108 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:mang_mu/providers/theme_provider.dart';
+import 'package:mang_mu/screens/chat_screen.dart';
+import 'package:mang_mu/screens/regesyer_screen.dart';
+import 'package:mang_mu/screens/user_thing.dart';
+import 'package:mang_mu/screens/signin_screen.dart';
+import 'package:mang_mu/screens/eregesyer_screen.dart';
+import 'package:mang_mu/screens/esignin_screen.dart';
+import 'package:mang_mu/screens/wecome_screen.dart';
+import 'package:mang_mu/screens/ewecome_screen.dart';
+import 'package:mang_mu/screens/mainscren.dart';
+import 'package:mang_mu/screens/splash_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:mang_mu/screens/water_employee_screen.dart';
+import 'package:mang_mu/screens/electricity_employee_screen.dart';
+import 'package:mang_mu/screens/municipality_employee_screen.dart';
+
+import 'package:flutter/material.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'بلدية المدينة',
+            debugShowCheckedModeBanner: false,
+            locale: const Locale('ar'),
+            supportedLocales: const [Locale('ar'), Locale('en')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: ThemeData(
+              primarySwatch: Colors.green,
+              fontFamily: 'Tajawal',
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 0,
+                titleTextStyle: TextStyle(
+                  fontFamily: 'Tajawal',
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              brightness: Brightness.light,
+            ),
+            darkTheme: ThemeData(
+              primarySwatch: Colors.green,
+              fontFamily: 'Tajawal',
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 0,
+                titleTextStyle: TextStyle(
+                  fontFamily: 'Tajawal',
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: Colors.grey[900],
+              cardColor: Colors.grey[800],
+              dialogBackgroundColor: Colors.grey[800],
+            ),
+            themeMode: themeProvider.isDarkMode
+                ? ThemeMode.dark
+                : ThemeMode.light,
+            initialRoute: SplashScreen.screenRoute,
+            routes: {
+              SplashScreen.screenRoute: (context) => const SplashScreen(),
+              Mainscren.screenroot: (context) => const Mainscren(),
+              WecomeScreen.screenroot: (context) => const WecomeScreen(),
+              EwecomeScreen.screenroot: (context) => const EwecomeScreen(),
+              SigninScreen.screenroot: (context) => const SigninScreen(),
+              UserThing.screenRoot: (context) => const UserThing(),
+              RegesyerScreen.screenRoot: (context) => const RegesyerScreen(),
+              EsigninScreen.screenroot: (context) => const EsigninScreen(),
+              EregesyerScreen.screenroot: (context) => const EregesyerScreen(),
+              ChatScreen.screenroot: (context) => const ChatScreen(),
+              WaterEmployeeScreen.screenRoute: (context) =>
+                  const WaterEmployeeScreen(),
+              ElectricityEmployeeScreen.screenRoute: (context) =>
+                  const ElectricityEmployeeScreen(),
+              MunicipalityEmployeeScreen.screenRoute: (context) =>
+                  const MunicipalityEmployeeScreen(),
+            },
+          );
+        },
+      ),
+    );
+  }
+}
