@@ -14,7 +14,7 @@ class Mainscren extends StatefulWidget {
 }
 
 class _MainscrenState extends State<Mainscren>
-    with SingleTickerProviderStateMixin {
+   with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;

@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mang_mu/screens/user_thing.dart';
 import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -31,7 +29,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
   final TextEditingController _idNumberController = TextEditingController();
   int _currentStep = 0;
   final _formKey = GlobalKey<FormState>();
-  
+
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
@@ -141,11 +139,15 @@ class _RegesyerScreenState extends State<RegesyerScreen>
   }
 
   Future<bool> _createAccount() async {
+    User? user;
+
     try {
-      print('بدء إنشاء الحساب...');
+      print('بدء إنشاء الحساب في Supabase...');
 
       final email = _accountController.text.trim();
       final password = _codeController.text.trim();
+      final fullName = _fullNameController.text.trim();
+      final idNumber = _idNumberController.text.trim();
 
       // التحقق من صحة البيانات
       if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
@@ -158,99 +160,204 @@ class _RegesyerScreenState extends State<RegesyerScreen>
         return false;
       }
 
-      // 1. إنشاء المستخدم في Authentication
-      print('إنشاء مستخدم في Authentication...');
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+      // 1. إنشاء المستخدم في مصادقة Supabase
+      print('إنشاء مستخدم في مصادقة Supabase...');
+      final AuthResponse authResponse = await Supabase.instance.client.auth
+          .signUp(email: email, password: password);
 
-      print('تم إنشاء المستخدم: ${userCredential.user!.uid}');
+      user = authResponse.user;
+      if (user == null) {
+        _showError('فشل في إنشاء المستخدم');
+        return false;
+      }
 
-      // 2. رفع الصور إلى Storage (بمعالجة الأخطاء لكل صورة)
+      print('تم إنشاء المستخدم: ${user.id}');
+
+      // الانتظار قليلاً لضمان توفر الجلسة
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // 2. رفع الصور إلى تخزين Supabase
       String frontImageUrl = '';
       String backImageUrl = '';
 
-      try {
-        if (_frontIdentityImage != null) {
-          frontImageUrl = await _uploadImage(
+      if (_frontIdentityImage != null) {
+        try {
+          frontImageUrl = await _uploadImageToSupabase(
             _frontIdentityImage!,
-            'identity/${userCredential.user!.uid}/front',
+            'front',
+            user.id,
           );
+          print('تم رفع الصورة الأمامية بنجاح');
+        } catch (e) {
+          print('خطأ في رفع الصورة الأمامية: $e');
+          _showError('فشل في رفع صورة الهوية الأمامية. يرجى المحاولة مرة أخرى');
+          return false;
         }
-      } catch (e) {
-        print('خطأ في رفع الصورة الأمامية: $e');
-        // نستمر حتى لو فشل رفع الصورة
       }
 
-      try {
-        if (_backIdentityImage != null) {
-          backImageUrl = await _uploadImage(
+      if (_backIdentityImage != null) {
+        try {
+          backImageUrl = await _uploadImageToSupabase(
             _backIdentityImage!,
-            'identity/${userCredential.user!.uid}/back',
+            'back',
+            user.id,
           );
+          print('تم رفع الصورة الخلفية بنجاح');
+        } catch (e) {
+          print('خطأ في رفع الصورة الخلفية: $e');
+          _showError('فشل في رفع صورة الهوية الخلفية. يرجى المحاولة مرة أخرى');
+          return false;
         }
-      } catch (e) {
-        print('خطأ في رفع الصورة الخلفية: $e');
-        // نستمر حتى لو فشل رفع الصورة
       }
 
-      // 3. حفظ البيانات في Firestore
+      // 3. حفظ البيانات في جدول profiles
       try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-              'fullName': _fullNameController.text.trim(),
-              'idNumber': _idNumberController.text.trim(),
-              'email': email,
-              'frontIdImage': frontImageUrl,
-              'backIdImage': backImageUrl,
-              'createdAt': FieldValue.serverTimestamp(),
-              'userType': 'citizen',
-              'status': 'under_review',
-              'uid': userCredential.user!.uid,
-            });
+        final insertData = {
+          'id': user.id,
+          'full_name': fullName,
+          'id_number': idNumber,
+          'email': email,
+          'front_id_image': frontImageUrl,
+          'back_id_image': backImageUrl,
+          'user_type': 'citizen',
+          'status': 'under_review',
+          'created_at': DateTime.now().toIso8601String(),
+        };
+try {
+  await Supabase.instance.client
+      .from('profiles')
+      .insert(insertData);
+  print('تم حفظ بيانات المستخدم في جدول profiles بنجاح');
+} catch (e) {
+  print('خطأ في حفظ البيانات: $e');
+  _showError('فشل في حفظ البيانات: $e');
+  return false;
+}
       } catch (e) {
-        print('خطأ في حفظ البيانات: $e');
-        // حتى لو فشل حفظ البيانات في Firestore، نعتبر العملية ناجحة لأن المستخدم أنشئ
+        print('خطأ في حفظ البيانات في جدول profiles: $e');
+        _showError('فشل في حفظ البيانات. يرجى المحاولة مرة أخرى');
+        return false;
       }
 
       print('تم إنشاء الحساب بنجاح!');
-
-      // الانتقال إلى الشاشة التالية
+      
       _navigateToNextScreen();
       return true;
-    } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Error: ${e.code} - ${e.message}');
-      _handleFirebaseError(e);
+
+    } on AuthException catch (e) {
+      print('Supabase Auth Error: ${e.message}');
+      _handleSupabaseError(e);
       return false;
     } catch (e) {
       print('General Error: $e');
+      _showError('حدث خطأ غير متوقع: ${e.toString()}');
 
-      // إذا تم إنشاء المستخدم ولكن حدث خطأ لاحق، نعتبر العملية ناجحة
-      if (FirebaseAuth.instance.currentUser != null) {
-        print('تم إنشاء المستخدم، الانتقال إلى الشاشة التالية');
-        _navigateToNextScreen();
-        return true;
+      // التحقق من البيانات فقط إذا تم إنشاء المستخدم
+      if (user != null) {
+        await _checkUserData(user.id);
       }
 
-      _showError('حدث خطأ غير متوقع: ${e.toString()}');
       return false;
+    }
+  }
+
+  Future<void> _checkUserData(String userId) async {
+   try {
+  final data = await Supabase.instance.client
+      .from('profiles')
+      .select()
+      .eq('id', userId);
+  
+  if (data != null && data.isNotEmpty) {
+    print('بيانات المستخدم في الجدول: $data');
+  } else {
+    print('المستخدم غير موجود في جدول profiles');
+  }
+} catch (e) {
+  print('خطأ في التحقق من البيانات: $e');
+}
+    
+
+    // التحقق من الصور في التخزين
+    try {
+      final storageObjects = await Supabase.instance.client.storage
+          .from('employee_documents')
+          .list();
+
+      print('الملفات في التخزين: ${storageObjects.length} ملف');
+
+      // عرض الملفات الخاصة بهذا المستخدم
+      final userFiles = storageObjects
+          .where((file) => file.name.contains(userId))
+          .toList();
+
+      print('ملفات المستخدم: ${userFiles.map((f) => f.name).toList()}');
+    } catch (e) {
+      print('خطأ في التحقق من التخزين: $e');
+    }
+  }
+
+  Future<String> _uploadImageToSupabase(
+    File image,
+    String fileType,
+    String userId,
+  ) async {
+    try {
+      print('بدء رفع الصورة إلى Supabase...');
+
+      // استخدام مفتاح service_role للرفع دون الحاجة لجلسة مستخدم
+      final supabaseAdmin = SupabaseClient(
+        'https://xuwxgjiewdlzzpgzvpxb.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1d3hnamlld2RsenpwZ3p2cHhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Mzc5MTIsImV4cCI6MjA3MjQxMzkxMn0.i1CD1NxOM7XDoViqSmyb4ECT7uKZFJPFbzjorscInRY',
+      );
+
+      // إنشاء مسار في مجلد المستخدم
+      final String fileName = '$userId/${DateTime.now().millisecondsSinceEpoch}_$fileType.jpg';
+
+      // قراءة ملف الصورة كبايتس
+      final bytes = await image.readAsBytes();
+
+      // رفع الملف باستخدام service_role
+      final response = await supabaseAdmin.storage
+          .from('employee_documents')
+          .uploadBinary(
+            fileName, 
+            bytes, 
+            fileOptions: FileOptions(
+              contentType: 'image/jpeg',
+              upsert: false,
+            ),
+          );
+
+      // الحصول على رابط التحميل العام
+      final String publicUrl = supabaseAdmin.storage
+          .from('employee_documents')
+          .getPublicUrl(fileName);
+
+      print('تم رفع الصورة بنجاح: $publicUrl');
+      
+      // إغلاق الاتصال
+      await supabaseAdmin.dispose();
+      
+      return publicUrl;
+    } catch (e) {
+      print('Error uploading image to Supabase: $e');
+      throw Exception('فشل في رفع الصورة: $e');
     }
   }
 
   void _navigateToNextScreen() {
     if (mounted) {
-      Future.delayed(Duration(milliseconds: 500), () {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          UserThing.screenRoot,
-          (route) => false,
-          arguments: {
-            'showSuccessMessage': true,
-            'message': 'تم إنشاء الحساب بنجاح. انتظر حتى يتم التأكد منه'
-          },
-        );
-      });
+      // استخدام Navigator.pushNamed مباشرة
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        UserThing.screenRoot,
+        (route) => false,
+        arguments: {
+          'showSuccessMessage': true,
+          'message': 'تم إنشاء الحساب بنجاح. انتظر حتى يتم التأكد منه',
+        },
+      );
     }
   }
 
@@ -260,65 +367,30 @@ class _RegesyerScreenState extends State<RegesyerScreen>
         SnackBar(
           content: Text(message, style: TextStyle(fontFamily: 'Tajawal')),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
         ),
       );
     }
   }
 
-  void _handleFirebaseError(FirebaseAuthException e) {
+  void _handleSupabaseError(AuthException e) {
     String errorMessage = 'حدث خطأ أثناء إنشاء الحساب';
 
-    switch (e.code) {
-      case 'weak-password':
-        errorMessage = 'كلمة المرور ضعيفة جداً';
-        break;
-      case 'email-already-in-use':
+    switch (e.message) {
+      case 'User already registered':
         errorMessage = 'الحساب موجود مسبقاً';
         break;
-      case 'invalid-email':
+      case 'Invalid email':
         errorMessage = 'البريد الإلكتروني غير صحيح';
         break;
-      case 'operation-not-allowed':
-        errorMessage = 'عملية إنشاء الحساب غير مسموحة';
+      case 'Email not confirmed':
+        errorMessage = 'البريد الإلكتروني لم يتم تأكيده';
         break;
-      case 'network-request-failed':
-        errorMessage = 'فشل في الاتصال بالشبكة';
-        break;
+      default:
+        errorMessage = 'خطأ في المصادقة: ${e.message}';
     }
 
     _showError(errorMessage);
-  }
-
-  Future<String> _uploadImage(File image, String path) async {
-    try {
-      print('بدء رفع الصورة: $path');
-
-      // إنشاء مرجع للملف في Firebase Storage
-      Reference storageReference = FirebaseStorage.instance.ref().child(path);
-
-      // تعيين metadata لتحديد نوع المحتوى
-      SettableMetadata metadata = SettableMetadata(
-        contentType: 'image/jpeg', // أو 'image/png' حسب نوع الصورة
-      );
-
-      // رفع الملف مع metadata
-      UploadTask uploadTask = storageReference.putFile(image, metadata);
-
-      // انتظار اكتمال الرفع مع إمكانية متابعة التقدم
-      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
-
-      // الحصول على رابط التحميل
-      String downloadUrl = await taskSnapshot.ref.getDownloadURL();
-
-      print('تم رفع الصورة بنجاح: $downloadUrl');
-      return downloadUrl;
-    } catch (e) {
-      print('Error uploading image: $e');
-      print('Stack trace: ${StackTrace.current}');
-
-      // لا تعرض رسالة خطأ هنا لتجنب التكرار
-      return '';
-    }
   }
 
   Widget _buildImagePreview(File? image, bool isFront) {

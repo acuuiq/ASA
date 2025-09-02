@@ -12,17 +12,20 @@ import 'package:mang_mu/screens/wecome_screen.dart';
 import 'package:mang_mu/screens/ewecome_screen.dart';
 import 'package:mang_mu/screens/mainscren.dart';
 import 'package:mang_mu/screens/splash_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:mang_mu/screens/water_employee_screen.dart';
 import 'package:mang_mu/screens/electricity_employee_screen.dart';
 import 'package:mang_mu/screens/municipality_employee_screen.dart';
-
-import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // تهيئة Supabase بدلاً من Firebase
+  await Supabase.initialize(
+    url: 'https://xuwxgjiewdlzzpgzvpxb.supabase.co', // استبدل برابط مشروعك
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1d3hnamlld2RsenpwZ3p2cHhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Mzc5MTIsImV4cCI6MjA3MjQxMzkxMn0.i1CD1NxOM7XDoViqSmyb4ECT7uKZFJPFbzjorscInRY', // استبدل بالمفتاح الخاص بك
+  );
+  
   runApp(const MyApp());
 }
 
