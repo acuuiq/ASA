@@ -6,6 +6,9 @@ import 'points_and_gifts_screen.dart';
 import 'waste_schedule_screen.dart';
 import 'container_request_screen.dart';
 import 'settings_screen.dart';
+import 'signin_screen.dart';
+import 'regesyer_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserThing extends StatefulWidget {
   static const String screenRoot = 'user_thing';
@@ -16,7 +19,9 @@ class UserThing extends StatefulWidget {
   _UserThingState createState() => _UserThingState();
 }
 
+
 class _UserThingState extends State<UserThing>
+
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentIndex = 0;
@@ -25,16 +30,93 @@ class _UserThingState extends State<UserThing>
   bool _showExitDialog = false;
 
   // معلومات المستخدم الافتراضية
-  final Map<String, dynamic> _userProfile = {
-    'name': 'أحمد محمد',
-    'email': 'ahmed@example.com',
-    'phone': '+1234567890',
-    'address': 'شارع المدينة المنورة، الرياض',
-    'points': 1500,
-    'subscriptionDate': '2023-01-15',
-    'avatar': Icons.person,
-  };
+   Map<String, dynamic>? _userProfile;
+  bool _isLoading = true;
+  bool _isAccountApproved = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkUserStatus();
+
+  _tabController = TabController(length: _services.length, vsync: this);
+  _tabController.addListener(_handleTabSelection);
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    if (args != null && args['showSuccessMessage'] == true) {
+      setState(() {
+        _showSuccessMessage = true;
+        _successMessage = args['message'] ?? 'تم إنشاء الحساب بنجاح';
+      });
+
+      // إخفاء الرسالة تلقائياً بعد 5 ثواني
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) {
+          setState(() {
+            _showSuccessMessage = false;
+          });
+        }
+      });
+    }
+  }
+  );
+  }
+  Future<void> _checkUserStatus() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      
+      if (user == null) {
+        // إذا لم يكن المستخدم مسجلاً دخولاً، ارجع إلى شاشة تسجيل الدخول
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          SigninScreen.screenroot,
+          (route) => false,
+        );
+        return;
+      }
+
+      // جلب بيانات المستخدم من جدول profiles
+      final userData = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .single();
+
+     // في دالة _checkUserStatus()
+setState(() {
+  _userProfile = userData;
+  _isAccountApproved = true; // جعل جميع الحسابات معتمدة تلقائياً
+  _isLoading = false;
+});
+     
+
+    } catch (e) {
+      print('Error checking user status: $e');
+      // إذا حدث خطأ، ارجع إلى شاشة تسجيل الدخول
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        SigninScreen.screenroot,
+        (route) => false,
+      );
+    }
+  }
+
+  // دالة تسجيل الخروج
+  Future<void> _signOut() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        SigninScreen.screenroot,
+        (route) => false,
+      );
+    } catch (e) {
+      print('Error signing out: $e');
+    }
+  }
   Future<bool> _onWillPop() async {
     if (_showExitDialog) return true;
 
@@ -178,33 +260,6 @@ class _UserThingState extends State<UserThing>
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: _services.length, vsync: this);
-    _tabController.addListener(_handleTabSelection);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args =
-          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-
-      if (args != null && args['showSuccessMessage'] == true) {
-        setState(() {
-          _showSuccessMessage = true;
-          _successMessage = args['message'] ?? 'تم إنشاء الحساب بنجاح';
-        });
-
-        // إخفاء الرسالة تلقائياً بعد 5 ثواني
-        Future.delayed(const Duration(seconds: 5), () {
-          if (mounted) {
-            setState(() {
-              _showSuccessMessage = false;
-            });
-          }
-        });
-      }
-    });
-  }
 
   void _handleTabSelection() {
     if (_tabController.indexIsChanging) {
@@ -338,88 +393,100 @@ class _UserThingState extends State<UserThing>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final currentService = _services[_currentIndex];
-    final serviceColor = currentService['color'] as Color;
-    final serviceGradient = currentService['gradient'] as List<Color>;
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        backgroundColor: Colors.grey[50],
-        appBar: AppBar(
-          toolbarHeight: 70,
-          backgroundColor: serviceColor,
-          elevation: 0,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: serviceGradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+@override
+Widget build(BuildContext context) {
+  if (_isLoading) {
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  
+
+  // إذا كان الحساب معتمداً، عرض الواجهة الكاملة
+  final currentService = _services[_currentIndex];
+  final serviceColor = currentService['color'] as Color;
+  final serviceGradient = currentService['gradient'] as List<Color>;
+  
+  return WillPopScope(
+    onWillPop: _onWillPop,
+    child: Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        toolbarHeight: 70,
+        backgroundColor: serviceColor,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: serviceGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _customIcons[currentService['icon']],
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                currentService['title'],
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          leading: _buildProfileButton(serviceColor),
-          actions: [_buildNotificationButton()],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(60),
-            child: Container(
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: UnderlineTabIndicator(
-                  borderSide: BorderSide(width: 3, color: serviceColor),
-                  insets: const EdgeInsets.symmetric(horizontal: 16),
+              child: Icon(
+                _customIcons[currentService['icon']],
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              currentService['title'],
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        leading: _buildProfileButton(serviceColor),
+        actions: [_buildNotificationButton()],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 2),
                 ),
-                labelColor: serviceColor,
-                unselectedLabelColor: Colors.grey[600],
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                unselectedLabelStyle: const TextStyle(fontSize: 14),
-                tabs: _services.map((service) {
-                  return Tab(
-                    icon: Icon(_customIcons[service['icon']], size: 24),
-                    text: service['title'],
-                  );
-                }).toList(),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: UnderlineTabIndicator(
+                borderSide: BorderSide(width: 3, color: serviceColor),
+                insets: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              labelColor: serviceColor,
+              unselectedLabelColor: Colors.grey[600],
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(fontSize: 14),
+              tabs: _services.map((service) {
+                return Tab(
+                  icon: Icon(_customIcons[service['icon']], size: 24),
+                  text: service['title'],
+                );
+              }).toList(),
               ),
             ),
           ),
@@ -549,7 +616,7 @@ class _UserThingState extends State<UserThing>
               ),
               const SizedBox(height: 16),
               Text(
-                _userProfile['name'],
+                _userProfile?['full_name'] ?? 'غير معروف',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -557,31 +624,43 @@ class _UserThingState extends State<UserThing>
               ),
               const SizedBox(height: 8),
               Text(
-                _userProfile['email'],
+                _userProfile?['email'] ?? 'غير معروف',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 16),
               Divider(height: 1, color: Colors.grey[300]),
               const SizedBox(height: 16),
               _buildProfileInfoItem(
-                Icons.phone,
-                'رقم الهاتف',
-                _userProfile['phone'],
+                Icons.credit_card,
+                'رقم الهوية',
+                _userProfile?['id_number'] ?? 'غير معروف',
               ),
               _buildProfileInfoItem(
-                Icons.location_on,
-                'العنوان',
-                _userProfile['address'],
+                Icons.email,
+                'البريد الإلكتروني',
+                _userProfile?['email'] ?? 'غير معروف',
               ),
               _buildProfileInfoItem(
                 Icons.star,
-                'النقاط',
-                '${_userProfile['points']} نقطة',
+                'حالة الحساب',
+                _userProfile?['status'] == 'approved'
+                    ? 'معتمد'
+                    : _userProfile?['status'] == 'under_review'
+                        ? 'قيد المراجعة'
+                        : 'مرفوض',
               ),
-              _buildProfileInfoItem(
-                Icons.calendar_today,
-                'تاريخ الاشتراك',
-                _userProfile['subscriptionDate'],
+              const SizedBox(height: 16),
+              // زر تسجيل الخروج
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _signOut,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('تسجيل الخروج'),
+                ),
               ),
             ],
           ),
@@ -1799,21 +1878,5 @@ class _PrizesRaffleScreenState extends State<PrizesRaffleScreen> {
   }
 }
 
-class PointsDetailsScreen extends StatelessWidget {
-  final String pointsType;
-  final Color serviceColor;
 
-  const PointsDetailsScreen({
-    super.key,
-    required this.pointsType,
-    required this.serviceColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(pointsType), backgroundColor: serviceColor),
-      body: Center(child: Text('تفاصيل $pointsType')),
-    );
-  }
-}
+ 

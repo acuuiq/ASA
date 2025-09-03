@@ -223,16 +223,11 @@ class _RegesyerScreenState extends State<RegesyerScreen>
           'status': 'under_review',
           'created_at': DateTime.now().toIso8601String(),
         };
-try {
-  await Supabase.instance.client
-      .from('profiles')
-      .insert(insertData);
-  print('تم حفظ بيانات المستخدم في جدول profiles بنجاح');
-} catch (e) {
-  print('خطأ في حفظ البيانات: $e');
-  _showError('فشل في حفظ البيانات: $e');
-  return false;
-}
+
+        await Supabase.instance.client
+            .from('profiles')
+            .insert(insertData);
+        print('تم حفظ بيانات المستخدم في جدول profiles بنجاح');
       } catch (e) {
         print('خطأ في حفظ البيانات في جدول profiles: $e');
         _showError('فشل في حفظ البيانات. يرجى المحاولة مرة أخرى');
@@ -262,21 +257,20 @@ try {
   }
 
   Future<void> _checkUserData(String userId) async {
-   try {
-  final data = await Supabase.instance.client
-      .from('profiles')
-      .select()
-      .eq('id', userId);
-  
-  if (data != null && data.isNotEmpty) {
-    print('بيانات المستخدم في الجدول: $data');
-  } else {
-    print('المستخدم غير موجود في جدول profiles');
-  }
-} catch (e) {
-  print('خطأ في التحقق من البيانات: $e');
-}
-    
+    try {
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', userId);
+      
+      if (data != null && data.isNotEmpty) {
+        print('بيانات المستخدم في الجدول: $data');
+      } else {
+        print('المستخدم غير موجود في جدول profiles');
+      }
+    } catch (e) {
+      print('خطأ في التحقق من البيانات: $e');
+    }
 
     // التحقق من الصور في التخزين
     try {
@@ -392,6 +386,9 @@ try {
 
     _showError(errorMessage);
   }
+
+  
+
 
   Widget _buildImagePreview(File? image, bool isFront) {
     return Stack(

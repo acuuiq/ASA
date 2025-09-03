@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mang_mu/screens/user_thing.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SigninScreen extends StatefulWidget {
   static const String screenroot = 'signin_screen';
@@ -23,6 +24,7 @@ class _SigninScreenState extends State<SigninScreen> with SingleTickerProviderSt
   late Animation<Offset> _slideAnimation;
   bool _isHovering = false;
   int _currentBackground = 0;
+  bool _isLoading = false;
   final List<String> _backgrounds = [
     'assets/bg1.svg',
     'assets/bg2.svg',
@@ -69,6 +71,68 @@ class _SigninScreenState extends State<SigninScreen> with SingleTickerProviderSt
     _controller.dispose();
     super.dispose();
   }
+
+  // دالة تسجيل الدخول
+Future<void> _signIn() async {
+  if (_formKey.currentState!.validate()) {
+    setState(() => _isLoading = true);
+    
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      
+      final AuthResponse response = await Supabase.instance.client.auth
+          .signInWithPassword(email: email, password: password);
+      
+      if (response.user != null) {
+        // التحقق من حالة الحساب في جدول profiles فقط
+        final userData = await Supabase.instance.client
+            .from('profiles')
+            .select('status')
+            .eq('id', response.user!.id)
+            .single();
+
+      
+        
+        // إذا وصل إلى هنا، يعني الحساب مفعل ويمكن الانتقال للشاشة الرئيسية
+        Navigator.pushReplacementNamed(context, UserThing.screenRoot);
+      }
+    } on AuthException catch (e) {
+      _handleAuthError(e);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ أثناء تسجيل الدخول: ${e.toString()}',
+            style: const TextStyle(fontFamily: 'Tajawal'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+}
+
+void _handleAuthError(AuthException e) {
+  String errorMessage = 'حدث خطأ أثناء تسجيل الدخول';
+  
+  if (e.message.contains('Invalid login credentials')) {
+    errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+  } else {
+    errorMessage = 'خطأ في المصادقة: ${e.message}';
+  }
+  
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(errorMessage, style: TextStyle(fontFamily: 'Tajawal')),
+      backgroundColor: Colors.red,
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -378,22 +442,26 @@ class _SigninScreenState extends State<SigninScreen> with SingleTickerProviderSt
                                 
                                 const SizedBox(height: 30),
                                 
-                                _buildEnhancedAuthButton(
-                                  context,
-                                  icon: Icons.login,
-                                  label: 'تسجيل الدخول',
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color.fromARGB(255, 17, 126, 117),
-                                      Color.fromARGB(255, 16, 78, 88),
-                                    ],
-                                  ),
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      Navigator.pushNamed(context, UserThing.screenRoot);
-                                    }
-                                  },
-                                ),
+                                _isLoading
+                                    ? Center(
+                                        child: CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            const Color.fromARGB(255, 17, 126, 117),
+                                          ),
+                                        ),
+                                      )
+                                    : _buildEnhancedAuthButton(
+                                        context,
+                                        icon: Icons.login,
+                                        label: 'تسجيل الدخول',
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color.fromARGB(255, 17, 126, 117),
+                                            Color.fromARGB(255, 16, 78, 88),
+                                          ],
+                                        ),
+                                        onPressed: _signIn,
+                                      ),
                               ],
                             ),
                           ),
@@ -441,6 +509,19 @@ class _SigninScreenState extends State<SigninScreen> with SingleTickerProviderSt
               ),
             ),
           ),
+
+          // مؤشر التحميل
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    const Color.fromARGB(255, 17, 126, 117),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
