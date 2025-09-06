@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mang_mu/screens/chat_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
+import 'package:mang_mu/screens/user/user_thing.dart';
 import 'dart:io';
 import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -16,7 +16,8 @@ class EregesyerScreen extends StatefulWidget {
   State<EregesyerScreen> createState() => _EregesyerScreenState();
 }
 
-class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProviderStateMixin {
+class _EregesyerScreenState extends State<EregesyerScreen>
+    with SingleTickerProviderStateMixin {
   File? _frontIdentityImage;
   File? _backIdentityImage;
   final ImagePicker _picker = ImagePicker();
@@ -26,7 +27,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
   final TextEditingController _idNumberController = TextEditingController();
   int _currentStep = 0;
   bool _isLoading = false;
-  
+
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
@@ -136,7 +137,10 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
               children: [
                 Text(
                   "الرجاء مراجعة المعلومات قبل الإنشاء:",
-                  style: TextStyle(color: Colors.white70, fontFamily: 'Tajawal'),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontFamily: 'Tajawal',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _buildDialogInfoRow("الاسم الرباعي", _fullNameController.text),
@@ -171,7 +175,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                 Navigator.pop(context);
                 await Future.delayed(const Duration(seconds: 1));
                 if (!mounted) return;
-                Navigator.pushNamed(context, ChatScreen.screenroot);
+                Navigator.pushNamed(context, UserThing.screenRoot);
               },
               child: Text(
                 "تأكيد وإنشاء الحساب",
@@ -202,10 +206,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
           ),
           Text(
             value,
-            style: TextStyle(
-              color: Colors.white70,
-              fontFamily: 'Tajawal',
-            ),
+            style: TextStyle(color: Colors.white70, fontFamily: 'Tajawal'),
           ),
         ],
       ),
@@ -268,7 +269,9 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
       height: 30,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? const Color.fromARGB(255, 17, 126, 117) : Colors.grey[400],
+        color: isActive
+            ? const Color.fromARGB(255, 17, 126, 117)
+            : Colors.grey[400],
       ),
       child: Center(
         child: Text(
@@ -378,7 +381,12 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                                 boxShadow: [
                                   BoxShadow(
                                     color: isDarkMode
-                                        ? const Color.fromARGB(255, 185, 37, 37).withOpacity(0.4)
+                                        ? const Color.fromARGB(
+                                            255,
+                                            185,
+                                            37,
+                                            37,
+                                          ).withOpacity(0.4)
                                         : Colors.grey.withOpacity(0.2),
                                     blurRadius: 30,
                                     spreadRadius: 5,
@@ -408,19 +416,21 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                                   const SizedBox(height: 15),
                                   AnimatedDefaultTextStyle(
                                     duration: const Duration(milliseconds: 300),
-                                    style: theme.textTheme.headlineMedium!.copyWith(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w800,
-                                      fontFamily: 'Tajawal',
-                                      color: Colors.white,
-                                      shadows: [
-                                        Shadow(
-                                          color: theme.primaryColor.withOpacity(0.3),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
+                                    style: theme.textTheme.headlineMedium!
+                                        .copyWith(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w800,
+                                          fontFamily: 'Tajawal',
+                                          color: Colors.white,
+                                          shadows: [
+                                            Shadow(
+                                              color: theme.primaryColor
+                                                  .withOpacity(0.3),
+                                              blurRadius: 12,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
                                     child: const Text('إنشاء حساب موظف'),
                                   ),
                                 ],
@@ -441,13 +451,13 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                           child: Column(
                             children: [
                               if (_currentStep == 0) ...[
-                                _buildPersonalInfoStep()
+                                _buildPersonalInfoStep(),
                               ] else if (_currentStep == 1) ...[
-                                _buildAccountInfoStep()
+                                _buildAccountInfoStep(),
                               ] else if (_currentStep == 2) ...[
-                                _buildIdPhotosStep()
+                                _buildIdPhotosStep(),
                               ] else if (_currentStep == 3) ...[
-                                _buildReviewStep()
+                                _buildReviewStep(),
                               ],
                             ],
                           ),
@@ -485,7 +495,9 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                       'بلدية المدينة الذكية © ${DateTime.now().year}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 14,
-                        color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
+                        color: theme.textTheme.bodyLarge?.color?.withOpacity(
+                          0.7,
+                        ),
                         fontFamily: 'Tajawal',
                       ),
                     ),
@@ -551,7 +563,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
             ],
           ),
           onPressed: () {
-            if (_fullNameController.text.isEmpty || 
+            if (_fullNameController.text.isEmpty ||
                 _idNumberController.text.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -601,10 +613,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                 icon: Icons.arrow_back,
                 label: 'السابق',
                 gradient: const LinearGradient(
-                  colors: [
-                    Colors.grey,
-                    Colors.grey,
-                  ],
+                  colors: [Colors.grey, Colors.grey],
                 ),
                 onPressed: () => setState(() => _currentStep = 0),
               ),
@@ -622,7 +631,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                   ],
                 ),
                 onPressed: () {
-                  if (_accountController.text.isEmpty || 
+                  if (_accountController.text.isEmpty ||
                       _codeController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -710,10 +719,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                 icon: Icons.arrow_back,
                 label: 'السابق',
                 gradient: const LinearGradient(
-                  colors: [
-                    Colors.grey,
-                    Colors.grey,
-                  ],
+                  colors: [Colors.grey, Colors.grey],
                 ),
                 onPressed: () => setState(() => _currentStep = 1),
               ),
@@ -731,12 +737,10 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                   ],
                 ),
                 onPressed: () {
-                  if (_frontIdentityImage == null || 
+                  if (_frontIdentityImage == null ||
                       _backIdentityImage == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('الرجاء تحميل صور الهوية'),
-                      ),
+                      const SnackBar(content: Text('الرجاء تحميل صور الهوية')),
                     );
                   } else {
                     setState(() => _currentStep = 3);
@@ -807,10 +811,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                 icon: Icons.arrow_back,
                 label: 'السابق',
                 gradient: const LinearGradient(
-                  colors: [
-                    Colors.grey,
-                    Colors.grey,
-                  ],
+                  colors: [Colors.grey, Colors.grey],
                 ),
                 onPressed: () => setState(() => _currentStep = 2),
               ),
@@ -850,10 +851,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
         ),
         Text(
           value,
-          style: TextStyle(
-            color: Colors.white70,
-            fontFamily: 'Tajawal',
-          ),
+          style: TextStyle(color: Colors.white70, fontFamily: 'Tajawal'),
         ),
       ],
     );
@@ -881,10 +879,7 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
       child: TextFormField(
         controller: controller,
         textAlign: TextAlign.right,
-        style: const TextStyle(
-          color: Colors.white,
-          fontFamily: 'Tajawal',
-        ),
+        style: const TextStyle(color: Colors.white, fontFamily: 'Tajawal'),
         obscureText: obscureText,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
@@ -897,7 +892,10 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
           prefixIcon: Icon(icon, color: Colors.white70),
           filled: true,
           fillColor: const Color.fromARGB(255, 17, 126, 117).withOpacity(0.7),
-          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -908,24 +906,15 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Colors.white,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Colors.white, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Colors.red, width: 1.5),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Colors.red, width: 1.5),
           ),
         ),
       ),
@@ -971,11 +960,11 @@ class _EregesyerScreenState extends State<EregesyerScreen> with SingleTickerProv
                 Text(
                   label,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Tajawal',
-                        fontSize: 16,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Tajawal',
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),

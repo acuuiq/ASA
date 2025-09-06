@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mang_mu/screens/citizen_service.dart';
-import 'package:mang_mu/screens/citizen_model.dart';
+import 'package:mang_mu/screens/user/citizen_service.dart';
+import 'package:mang_mu/screens/user/citizen_model.dart';
 import 'package:intl/intl.dart';
 
 class MunicipalityEmployeeScreen extends StatefulWidget {

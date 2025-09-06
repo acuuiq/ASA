@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'service_details_screen.dart';
 import 'payment_screen.dart';
 import 'points_and_gifts_screen.dart';
-import 'waste_schedule_screen.dart';
+import '../employee/waste_schedule_screen.dart';
 import 'container_request_screen.dart';
 import 'settings_screen.dart';
 import 'signin_screen.dart';
@@ -19,9 +19,7 @@ class UserThing extends StatefulWidget {
   _UserThingState createState() => _UserThingState();
 }
 
-
 class _UserThingState extends State<UserThing>
-
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentIndex = 0;
@@ -30,44 +28,57 @@ class _UserThingState extends State<UserThing>
   bool _showExitDialog = false;
 
   // معلومات المستخدم الافتراضية
-   Map<String, dynamic>? _userProfile;
+  Map<String, dynamic>? _userProfile;
   bool _isLoading = true;
   bool _isAccountApproved = false;
+
+  // الألوان الجديدة للتصميم الرسمي الحكومي
+  final Color _primaryColor = const Color(0xFF0D47A1); // أزبل حكومي داكن
+  final Color _secondaryColor = const Color(0xFF1976D2); // أزرق حكومي
+  final Color _accentColor = const Color(0xFF64B5F6); // أزرق فاتح
+  final Color _backgroundColor = const Color(0xFFF8F9FA); // خلفية رمادية فاتحة
+  final Color _cardColor = Colors.white;
+  final Color _textColor = const Color(0xFF212121);
+  final Color _textSecondaryColor = const Color(0xFF757575);
+  final Color _successColor = const Color(0xFF2E7D32);
+  final Color _warningColor = const Color(0xFFF57C00);
+  final Color _errorColor = const Color(0xFFD32F2F);
+  final Color _borderColor = const Color(0xFFE0E0E0);
 
   @override
   void initState() {
     super.initState();
     _checkUserStatus();
 
-  _tabController = TabController(length: _services.length, vsync: this);
-  _tabController.addListener(_handleTabSelection);
+    _tabController = TabController(length: _services.length, vsync: this);
+    _tabController.addListener(_handleTabSelection);
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-    if (args != null && args['showSuccessMessage'] == true) {
-      setState(() {
-        _showSuccessMessage = true;
-        _successMessage = args['message'] ?? 'تم إنشاء الحساب بنجاح';
-      });
+      if (args != null && args['showSuccessMessage'] == true) {
+        setState(() {
+          _showSuccessMessage = true;
+          _successMessage = args['message'] ?? 'تم إنشاء الحساب بنجاح';
+        });
 
-      // إخفاء الرسالة تلقائياً بعد 5 ثواني
-      Future.delayed(const Duration(seconds: 5), () {
-        if (mounted) {
-          setState(() {
-            _showSuccessMessage = false;
-          });
-        }
-      });
-    }
+        // إخفاء الرسالة تلقائياً بعد 5 ثواني
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            setState(() {
+              _showSuccessMessage = false;
+            });
+          }
+        });
+      }
+    });
   }
-  );
-  }
+
   Future<void> _checkUserStatus() async {
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      
+
       if (user == null) {
         // إذا لم يكن المستخدم مسجلاً دخولاً، ارجع إلى شاشة تسجيل الدخول
         Navigator.pushNamedAndRemoveUntil(
@@ -85,14 +96,12 @@ class _UserThingState extends State<UserThing>
           .eq('id', user.id)
           .single();
 
-     // في دالة _checkUserStatus()
-setState(() {
-  _userProfile = userData;
-  _isAccountApproved = true; // جعل جميع الحسابات معتمدة تلقائياً
-  _isLoading = false;
-});
-     
-
+      // في دالة _checkUserStatus()
+      setState(() {
+        _userProfile = userData;
+        _isAccountApproved = true; // جعل جميع الحسابات معتمدة تلقائياً
+        _isLoading = false;
+      });
     } catch (e) {
       print('Error checking user status: $e');
       // إذا حدث خطأ، ارجع إلى شاشة تسجيل الدخول
@@ -117,6 +126,7 @@ setState(() {
       print('Error signing out: $e');
     }
   }
+
   Future<bool> _onWillPop() async {
     if (_showExitDialog) return true;
 
@@ -160,12 +170,12 @@ setState(() {
   final Map<String, IconData> _customIcons = {
     'electricity': Icons.bolt,
     'water': Icons.water_drop,
-    'waste': Icons.recycling,
+    'waste': Icons.delete,
     'payment': Icons.payment,
     'emergency': Icons.emergency,
     'consumption': Icons.show_chart,
     'problem': Icons.report_problem,
-    'tax': Icons.money_off,
+    'tax': Icons.receipt,
     'offers': Icons.card_giftcard,
     'premium': Icons.star,
     'container': Icons.add_circle,
@@ -177,8 +187,8 @@ setState(() {
     {
       'title': 'الكهرباء',
       'icon': 'electricity',
-      'color': const Color(0xFF6A1B9A),
-      'gradient': [const Color(0xFF9C27B0), const Color(0xFF6A1B9A)],
+      'color': const Color(0xFF0D47A1),
+      'gradient': [const Color(0xFF0D47A1), const Color(0xFF1976D2)],
       'services': [
         {
           'name': 'دفع الفاتورة',
@@ -197,8 +207,11 @@ setState(() {
     {
       'title': 'الماء',
       'icon': 'water',
-      'color': const Color(0xFF00ACC1),
-      'gradient': [const Color(0xFF00BCD4), const Color(0xFF00838F)],
+      'color': const Color(0xFF00B4D8), // تغيير إلى اللون السمائي
+      'gradient': [
+        const Color(0xFF00B4D8),
+        const Color(0xFF90E0EF),
+      ], // تغيير التدرج اللوني
       'services': [
         {
           'name': 'دفع الفاتورة',
@@ -217,8 +230,11 @@ setState(() {
     {
       'title': 'النفايات',
       'icon': 'waste',
-      'color': const Color(0xFF43A047),
-      'gradient': [const Color(0xFF66BB6A), const Color(0xFF2E7D32)],
+      'color': const Color(0xFF4CAF50), // تغيير إلى اللون الأخضر المعروف
+      'gradient': [
+        const Color(0xFF4CAF50),
+        const Color(0xFF8BC34A),
+      ], // تغيير التدرج اللوني
       'services': [
         {
           'name': 'دفع الرسوم',
@@ -245,7 +261,7 @@ setState(() {
     {
       'title': 'فاتورة جديدة',
       'message': 'لديك فاتورة كهرباء جديدة بقيمة 25000 دينار',
-      'color': Colors.blue,
+      'color': const Color(0xFF0D47A1),
       'icon': Icons.receipt,
       'read': false,
       'date': DateTime.now().subtract(const Duration(hours: 2)),
@@ -253,13 +269,12 @@ setState(() {
     {
       'title': 'خصم الدفع المبكر',
       'message': 'احصل على خصم 10% عند الدفع قبل 15/10/2023',
-      'color': Colors.green,
+      'color': const Color(0xFF2E7D32),
       'icon': Icons.discount,
       'read': false,
       'date': DateTime.now().subtract(const Duration(days: 1)),
     },
   ];
-
 
   void _handleTabSelection() {
     if (_tabController.indexIsChanging) {
@@ -281,20 +296,16 @@ setState(() {
     String title,
   ) {
     return Card(
-      elevation: 4,
+      elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: color.withOpacity(0.3), width: 1),
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: _borderColor, width: 1),
       ),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradient,
-          ),
+          borderRadius: BorderRadius.circular(8),
+          color: _cardColor,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -306,22 +317,22 @@ setState(() {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(
                       _customIcons['consumption']!,
-                      color: Colors.white,
-                      size: 24,
+                      color: color,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'الاستهلاك اليومي',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: _textColor,
                     ),
                   ),
                 ],
@@ -336,41 +347,39 @@ setState(() {
                       Text(
                         title == 'الماء' ? '250 لتر' : '25 كيلوواط/ساعة',
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: _textColor,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'اليوم: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
                         style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12,
+                          color: _textSecondaryColor,
                         ),
                       ),
                     ],
                   ),
                   SizedBox(
-                    width: 60,
-                    height: 60,
+                    width: 50,
+                    height: 50,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         CircularProgressIndicator(
                           value: 0.65,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                          strokeWidth: 6,
+                          backgroundColor: Colors.grey.shade300,
+                          valueColor: AlwaysStoppedAnimation<Color>(color),
+                          strokeWidth: 5,
                         ),
                         Text(
                           '65%',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: _textColor,
                           ),
                         ),
                       ],
@@ -381,8 +390,8 @@ setState(() {
               const SizedBox(height: 12),
               LinearProgressIndicator(
                 value: 0.65,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                backgroundColor: Colors.grey.shade300,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
                 minHeight: 6,
                 borderRadius: BorderRadius.circular(3),
               ),
@@ -393,100 +402,81 @@ setState(() {
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  if (_isLoading) {
-    return Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: _backgroundColor,
+        body: Center(child: CircularProgressIndicator(color: _primaryColor)),
+      );
+    }
 
-  
+    // إذا كان الحساب معتمداً، عرض الواجهة الكاملة
+    final currentService = _services[_currentIndex];
+    final serviceColor = currentService['color'] as Color;
+    final serviceGradient = currentService['gradient'] as List<Color>;
 
-  // إذا كان الحساب معتمداً، عرض الواجهة الكاملة
-  final currentService = _services[_currentIndex];
-  final serviceColor = currentService['color'] as Color;
-  final serviceGradient = currentService['gradient'] as List<Color>;
-  
-  return WillPopScope(
-    onWillPop: _onWillPop,
-    child: Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        toolbarHeight: 70,
-        backgroundColor: serviceColor,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: serviceGradient,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _customIcons[currentService['icon']],
-                color: Colors.white,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              currentService['title'],
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        leading: _buildProfileButton(serviceColor),
-        actions: [_buildNotificationButton()],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 2),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: AppBar(
+          toolbarHeight: 70,
+          backgroundColor: _primaryColor,
+          elevation: 0,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: UnderlineTabIndicator(
-                borderSide: BorderSide(width: 3, color: serviceColor),
-                insets: const EdgeInsets.symmetric(horizontal: 16),
+                child: Icon(
+                  _customIcons[currentService['icon']],
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
-              labelColor: serviceColor,
-              unselectedLabelColor: Colors.grey[600],
-              labelStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+              const SizedBox(width: 12),
+              Text(
+                currentService['title'],
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-              unselectedLabelStyle: const TextStyle(fontSize: 14),
-              tabs: _services.map((service) {
-                return Tab(
-                  icon: Icon(_customIcons[service['icon']], size: 24),
-                  text: service['title'],
-                );
-              }).toList(),
+            ],
+          ),
+          leading: _buildProfileButton(serviceColor),
+          actions: [_buildNotificationButton()],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(50),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: _borderColor, width: 1),
+                ),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(width: 3, color: serviceColor),
+                  ),
+                ),
+                labelColor: serviceColor,
+                unselectedLabelColor: _textSecondaryColor,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                unselectedLabelStyle: const TextStyle(fontSize: 14),
+                tabs: _services.map((service) {
+                  return Tab(text: service['title']);
+                }).toList(),
               ),
             ),
           ),
@@ -510,7 +500,7 @@ Widget build(BuildContext context) {
                           serviceGradient,
                           service['title'],
                         ),
-                      _buildServiceGrid(
+                      _buildServiceList(
                         service['services'],
                         serviceColor,
                         serviceGradient,
@@ -532,18 +522,22 @@ Widget build(BuildContext context) {
                 child: Center(
                   child: Material(
                     elevation: 6,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                       decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(12),
+                        color: _successColor,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.check_circle, color: Colors.white),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -551,12 +545,16 @@ Widget build(BuildContext context) {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontFamily: 'Tajawal',
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white),
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             onPressed: () {
                               setState(() {
                                 _showSuccessMessage = false;
@@ -572,16 +570,15 @@ Widget build(BuildContext context) {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: serviceColor,
-          elevation: 6,
+          backgroundColor: _primaryColor,
+          elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.white.withOpacity(0.5), width: 2),
+            borderRadius: BorderRadius.circular(12),
           ),
           onPressed: _showEmergencyDialog,
           child: Icon(
             _customIcons['emergency']!,
-            size: 28,
+            size: 24,
             color: Colors.white,
           ),
         ),
@@ -592,7 +589,7 @@ Widget build(BuildContext context) {
   // دالة لبناء زر الملف الشخصي
   Widget _buildProfileButton(Color serviceColor) {
     return IconButton(
-      icon: Icon(Icons.person, color: Colors.white, size: 28),
+      icon: Icon(Icons.person, color: Colors.white, size: 24),
       onPressed: _showProfileDialog,
       tooltip: 'الملف الشخصي',
     );
@@ -603,7 +600,7 @@ Widget build(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Row(),
         content: SingleChildScrollView(
           child: Column(
@@ -611,21 +608,22 @@ Widget build(BuildContext context) {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: Colors.blue.shade100,
-                child: Icon(Icons.person, size: 40, color: Colors.blue),
+                backgroundColor: _primaryColor.withOpacity(0.1),
+                child: Icon(Icons.person, size: 40, color: _primaryColor),
               ),
               const SizedBox(height: 16),
               Text(
                 _userProfile?['full_name'] ?? 'غير معروف',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: _textColor,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _userProfile?['email'] ?? 'غير معروف',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14, color: _textSecondaryColor),
               ),
               const SizedBox(height: 16),
               Divider(height: 1, color: Colors.grey[300]),
@@ -646,8 +644,8 @@ Widget build(BuildContext context) {
                 _userProfile?['status'] == 'approved'
                     ? 'معتمد'
                     : _userProfile?['status'] == 'under_review'
-                        ? 'قيد المراجعة'
-                        : 'مرفوض',
+                    ? 'قيد المراجعة'
+                    : 'مرفوض',
               ),
               const SizedBox(height: 16),
               // زر تسجيل الخروج
@@ -656,8 +654,11 @@ Widget build(BuildContext context) {
                 child: ElevatedButton(
                   onPressed: _signOut,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: _errorColor,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                   child: const Text('تسجيل الخروج'),
                 ),
@@ -681,20 +682,21 @@ Widget build(BuildContext context) {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.blue),
+          Icon(icon, size: 20, color: _primaryColor),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: _textSecondaryColor),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
+                  color: _textColor,
                 ),
               ),
             ],
@@ -724,7 +726,7 @@ Widget build(BuildContext context) {
           IconButton(
             icon: const Icon(
               Icons.notifications,
-              size: 28,
+              size: 24,
               color: Colors.white,
             ),
             onPressed: _showNotifications,
@@ -737,7 +739,7 @@ Widget build(BuildContext context) {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: _errorColor,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                 ),
@@ -758,119 +760,85 @@ Widget build(BuildContext context) {
     );
   }
 
-  Widget _buildServiceGrid(
+  Widget _buildServiceList(
     List<dynamic> services,
     Color color,
     List<Color> gradient,
   ) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.9,
-        ),
-        itemCount: services.length,
-        itemBuilder: (context, index) {
-          return _buildServiceCard(services[index], color, gradient);
-        },
+      child: Column(
+        children: services.map((service) {
+          return _buildServiceListItem(service, color, gradient);
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildServiceCard(
+  Widget _buildServiceListItem(
     Map<String, dynamic> service,
     Color color,
     List<Color> gradient,
   ) {
     return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: _borderColor, width: 1),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         onTap: () => _handleServiceTap(service['name']),
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, color.withOpacity(0.1)],
-            ),
-          ),
+          decoration: BoxDecoration(color: _cardColor),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
-                if (service['premium'])
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.amber,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'مدفوع',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Icon(Icons.star, color: Colors.black, size: 14),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 8),
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: gradient,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     _customIcons[service['icon']],
-                    color: Colors.white,
-                    size: 24,
+                    color: color,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Column(
-                  children: [
-                    Text(
-                      service['name'],
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        service['name'],
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _textColor,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 3,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ],
+                      if (service['premium']) const SizedBox(height: 4),
+                      if (service['premium'])
+                        Text(
+                          'خدمة مدفوعة',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: const Color.fromARGB(255, 226, 155, 0),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: _textSecondaryColor,
+                  size: 16,
                 ),
               ],
             ),
@@ -892,16 +860,18 @@ Widget build(BuildContext context) {
         context,
         MaterialPageRoute(
           builder: (context) => PaymentScreen(
-            serviceName: serviceTitle,
-            serviceColor: serviceColor,
-            serviceGradient: serviceGradient,
-            amount: 185.75,
-            hasDiscount:
-                (currentService['services'].firstWhere(
-                          (s) => s['name'] == serviceName,
-                        )['hasEarlyPaymentDiscount'] ??
-                        false)
-                    as bool,
+            services: [
+              ServiceItem(
+                id: '1',
+                name: serviceName,
+                amount: 185.75,
+                color: serviceColor,
+                gradient: serviceGradient,
+                additionalInfo: null, // أو أي معلومات إضافية
+              ),
+            ],
+            primaryColor: serviceColor,
+            primaryGradient: serviceGradient,
           ),
         ),
       );
@@ -949,7 +919,7 @@ Widget build(BuildContext context) {
         'type': 'صغيرة (120 لتر)',
         'price': isFirstContainerFree ? 0 : 5000,
         'icon': Icons.delete,
-        'color': Colors.green,
+        'color': _successColor,
         'dimensions': '60x60x80 سم',
         'weight': '8 كغ',
         'description': 'مناسبة للاستخدام المنزلي اليومي',
@@ -958,7 +928,7 @@ Widget build(BuildContext context) {
         'type': 'متوسطة (240 لتر)',
         'price': 7500,
         'icon': Icons.delete_outline,
-        'color': Colors.blue,
+        'color': _primaryColor,
         'dimensions': '70x70x100 سم',
         'weight': '12 كغ',
         'description': 'مناسبة للعائلات الكبيرة',
@@ -967,7 +937,7 @@ Widget build(BuildContext context) {
         'type': 'كبيرة (360 لتر)',
         'price': 10000,
         'icon': Icons.delete_forever,
-        'color': Colors.orange,
+        'color': _secondaryColor,
         'dimensions': '80x80x120 سم',
         'weight': '15 كغ',
         'description': 'مناسبة للمطاعم والمحلات التجارية',
@@ -998,10 +968,10 @@ Widget build(BuildContext context) {
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withOpacity(0.1),
                 spreadRadius: 2,
                 blurRadius: 10,
               ),
@@ -1026,7 +996,7 @@ Widget build(BuildContext context) {
                     Text(
                       'الإشعارات',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: serviceColor,
                       ),
@@ -1129,11 +1099,11 @@ Widget build(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
           children: [
-            Icon(Icons.emergency, color: Colors.red),
-            SizedBox(width: 8),
+            Icon(Icons.emergency, color: _errorColor),
+            const SizedBox(width: 8),
             Text('طلب طارئ'),
           ],
         ),
@@ -1142,11 +1112,11 @@ Widget build(BuildContext context) {
           children: [
             const Text('هل تريد إرسال طلب طارئ لخدمة الإسعافات الأولية؟'),
             const SizedBox(height: 16),
-            const Icon(Icons.emergency, size: 60, color: Colors.red),
+            Icon(Icons.emergency, size: 60, color: _errorColor),
             const SizedBox(height: 16),
             Text(
               'سيتم إرسال موقعك الحالي تلقائياً',
-              style: TextStyle(color: Colors.red[700]),
+              style: TextStyle(color: _errorColor),
             ),
           ],
         ),
@@ -1159,13 +1129,18 @@ Widget build(BuildContext context) {
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('تم إرسال الطلب الطارئ'),
-                  backgroundColor: Colors.green,
+                  backgroundColor: _successColor,
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _errorColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
             child: const Text('تأكيد الإرسال'),
           ),
         ],
@@ -1331,7 +1306,11 @@ class PointsAndGiftsScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.bolt, color: Colors.purple),
+              leading: const Icon(
+                Icons.bolt,
+                color: Color.fromARGB(255, 7, 113, 235),
+                size: 27,
+              ),
               title: const Text('الكهرباء'),
               onTap: () {
                 Navigator.pop(context);
@@ -1339,7 +1318,10 @@ class PointsAndGiftsScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.water_drop, color: Colors.blue),
+              leading: const Icon(
+                Icons.water_drop,
+                color: Color.fromARGB(255, 33, 201, 243),
+              ),
               title: const Text('الماء'),
               onTap: () {
                 Navigator.pop(context);
@@ -1391,15 +1373,28 @@ class PointsAndGiftsScreen extends StatelessWidget {
         };
     }
 
+    final List<Color> serviceGradient =
+        (serviceData['gradient'] as List<Color>?) ??
+        [serviceColor, serviceColor];
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PaymentScreen(
-          serviceName: serviceName,
-          serviceColor: serviceData['color'] as Color,
-          serviceGradient: serviceData['gradient'] as List<Color>,
-          amount: amount,
-          hasDiscount: true,
+          services: [
+            ServiceItem(
+              id: '1',
+              name: serviceName,
+              amount: 185.75,
+              color: serviceColor,
+              gradient: serviceGradient,
+              // إزالة الحقل hasDiscount لأنه غير موجود في تعريف ServiceItem
+              // يمكنك استخدام additionalInfo إذا كنت بحاجة لمعلومات إضافية
+              additionalInfo: "معلومات إضافية عن الخدمة", // اختياري
+            ),
+          ],
+          primaryColor: serviceColor,
+          primaryGradient: serviceGradient,
         ),
       ),
     );
@@ -1877,6 +1872,3 @@ class _PrizesRaffleScreenState extends State<PrizesRaffleScreen> {
     );
   }
 }
-
-
- 

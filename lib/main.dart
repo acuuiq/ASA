@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
-import 'package:mang_mu/screens/chat_screen.dart';
-import 'package:mang_mu/screens/regesyer_screen.dart';
-import 'package:mang_mu/screens/user_thing.dart';
-import 'package:mang_mu/screens/signin_screen.dart';
-import 'package:mang_mu/screens/eregesyer_screen.dart';
-import 'package:mang_mu/screens/esignin_screen.dart';
-import 'package:mang_mu/screens/wecome_screen.dart';
-import 'package:mang_mu/screens/ewecome_screen.dart';
+import 'package:mang_mu/screens/user/regesyer_screen.dart';
+import 'package:mang_mu/screens/user/user_thing.dart';
+import 'package:mang_mu/screens/user/signin_screen.dart';
+import 'package:mang_mu/screens/employee/eregesyer_screen.dart';
+import 'package:mang_mu/screens/employee/esignin_screen.dart';
+import 'package:mang_mu/screens/user/wecome_screen.dart';
+import 'package:mang_mu/screens/employee/ewecome_screen.dart';
 import 'package:mang_mu/screens/mainscren.dart';
 import 'package:mang_mu/screens/splash_screen.dart';
-import 'package:mang_mu/screens/water_employee_screen.dart';
-import 'package:mang_mu/screens/electricity_employee_screen.dart';
-import 'package:mang_mu/screens/municipality_employee_screen.dart';
+import 'package:mang_mu/screens/employee/water_employee_screen.dart';
+import 'package:mang_mu/screens/employee/electricity_employee_screen.dart';
+import 'package:mang_mu/screens/employee/municipality_employee_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -95,7 +94,6 @@ class MyApp extends StatelessWidget {
               RegesyerScreen.screenRoot: (context) => const RegesyerScreen(),
               EsigninScreen.screenroot: (context) => const EsigninScreen(),
               EregesyerScreen.screenroot: (context) => const EregesyerScreen(),
-              ChatScreen.screenroot: (context) => const ChatScreen(),
               WaterEmployeeScreen.screenRoute: (context) =>
                   const WaterEmployeeScreen(),
               ElectricityEmployeeScreen.screenRoute: (context) =>

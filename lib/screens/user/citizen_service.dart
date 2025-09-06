@@ -1,4 +1,4 @@
-import 'package:mang_mu/screens/citizen_model.dart';
+import 'package:mang_mu/screens/user/citizen_model.dart';
 
 class CitizenService {
   // قائمة مؤقتة لتخزين بيانات المواطنين (يمكن استبدالها بقاعدة بيانات)
