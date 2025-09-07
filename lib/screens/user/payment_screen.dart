@@ -457,152 +457,149 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!_showAddServiceForm) ...[
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('إضافة خدمة جديدة'),
-              onPressed: () {
-                setState(() {
-                  _showAddServiceForm = true;
-                });
-              },
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+        // عرض الخدمات المتاحة للاختيار
+        if (_allServices.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              'الخدمات المتاحة',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(height: 10),
-        ],
+          const SizedBox(height: 20),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _allServices.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final service = _allServices[index];
+              final isSelected = _selectedServices.contains(service);
 
-        if (_showAddServiceForm) ...[
-          Card(
-            elevation: 3,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'إضافة خدمة جديدة',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 15),
-                  TextFormField(
-                    controller: _serviceNameController,
-                    decoration: InputDecoration(
-                      labelText: 'اسم الخدمة',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+              return GestureDetector(
+                onTap: () {
+                  if (isSelected) {
+                    _removeService(service);
+                  } else {
+                    _selectService(service);
+                  }
+                },
+                child: Container(
+                  height: 100, // ارتفاع أكبر للمستطيل
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? service.color.withOpacity(0.15)
+                        : Colors.grey[50],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? service.color : Colors.grey[300]!,
+                      width: isSelected ? 2.0 : 1.5,
                     ),
-                  ),
-                  const SizedBox(height: 15),
-                  TextFormField(
-                    controller: _serviceAmountController,
-                    decoration: InputDecoration(
-                      labelText: 'المبلغ (د.ع)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    keyboardType: TextInputType.number,
+                    ],
                   ),
-                  const SizedBox(height: 15),
-                  TextFormField(
-                    controller: _serviceInfoController,
-                    decoration: InputDecoration(
-                      labelText: 'معلومات إضافية (اختياري)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
+                  child: Stack(
                     children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _addNewService,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: widget.primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                      // تدرج لوني خلفي - تم تكبيره وتمديده
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          width: 100, // عرض أكبر للتدرج
+                          height: 100, // ارتفاع مساوي لارتفاع المستطيل
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
                             ),
-                          ),
-                          child: const Text(
-                            'إضافة',
-                            style: TextStyle(color: Colors.white),
+                            gradient: LinearGradient(
+                              colors: service.gradient,
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            setState(() {
-                              _showAddServiceForm = false;
-                            });
-                          },
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          service.name,
+                                          style: TextStyle(
+                                            fontSize: 18, // حجم نص أكبر
+                                            fontWeight: FontWeight.bold,
+                                            color: isSelected
+                                                ? service.color
+                                                : Colors.grey[800],
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: service.color,
+                                          size: 24, // حجم أيقونة أكبر
+                                        ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 8),
+
+                                  Text(
+                                    '${service.amount.toStringAsFixed(2)} د.ع',
+                                    style: TextStyle(
+                                      fontSize: 20, // حجم نص أكبر للسعر
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? service.color
+                                          : widget.primaryColor,
+                                    ),
+                                  ),
+
+                                  if (service.additionalInfo != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      service.additionalInfo!,
+                                      style: TextStyle(
+                                        fontSize:
+                                            16, // حجم نص أكبر للمعلومات الإضافية
+                                        color: Colors.grey[600],
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      maxLines: 1,
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
-                          ),
-                          child: const Text('إلغاء'),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 15),
-        ],
-
-        // عرض الخدمات المتاحة للاختيار
-        if (_allServices.isNotEmpty) ...[
-          const Text(
-            'الخدمات المتاحة',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _allServices.map((service) {
-              return FilterChip(
-                label: Text('${service.name} - ${service.amount} د.ع'),
-                selected: _selectedServices.contains(service),
-                onSelected: (selected) {
-                  if (selected) {
-                    _selectService(service);
-                  } else {
-                    _removeService(service);
-                  }
-                },
-                backgroundColor: Colors.grey[200],
-                selectedColor: widget.primaryColor.withOpacity(0.2),
-                labelStyle: TextStyle(
-                  color: _selectedServices.contains(service)
-                      ? widget.primaryColor
-                      : Colors.black,
                 ),
               );
-            }).toList(),
+            },
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
         ],
       ],
     );
