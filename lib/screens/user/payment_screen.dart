@@ -187,27 +187,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
   // دالة لتحميل الخدمات من Supabase - الإصدار المصحح
   // دالة لتحميل الخدمات من Supabase - بدون execute
   Future<void> _loadServicesFromSupabase() async {
-    try {
-      final response = await Supabase.instance.client
-          .from('services')
-          .select()
-          .order('created_at', ascending: false);
+  try {
+    final response = await Supabase.instance.client
+        .from('services')
+        .select()
+        .order('created_at', ascending: false);
 
-      if (response != null && response is List) {
-        setState(() {
-          _allServices = response
-              .map((item) => ServiceItem.fromMap(item))
-              .toList();
-        });
-      }
-    } catch (e) {
-      print('Exception loading services: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('فشل في تحميل الخدمات: $e')));
+    if (response != null && response is List) {
+      setState(() {
+        _allServices = response
+            .map((item) => ServiceItem.fromMap(item))
+            .toList();
+      });
     }
+  } catch (e) {
+    print('Exception loading services: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('فشل في تحميل الخدمات: $e')),
+    );
   }
-
+}
   Future<void> _saveServiceToSupabase(ServiceItem service) async {
     try {
       final response = await Supabase.instance.client
@@ -351,14 +350,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   // دالة لاختيار خدمة من القائمة المتاحة
-  void _selectService(ServiceItem service) {
-    setState(() {
-      if (!_selectedServices.contains(service)) {
-        _selectedServices.add(service);
-        _updateFinalAmount();
-      }
-    });
+ void _selectService(ServiceItem service) {
+  setState(() {
+    if (!_selectedServices.contains(service)) {
+      _selectedServices.add(service);
+      _updateFinalAmount();
+      
+      // حذف الخدمة من قاعدة البيانات بعد إضافتها للسلة
+      _deleteServiceFromSupabase(service);
+    }
+  });
+}
+
+// دالة جديدة لحذف الخدمة من Supabase
+Future<void> _deleteServiceFromSupabase(ServiceItem service) async {
+  try {
+    final response = await Supabase.instance.client
+        .from('services')
+        .delete()
+        .eq('id', service.id);
+
+    if (response != null) {
+      // إعادة تحميل الخدمات لتحديث القائمة
+      _loadServicesFromSupabase();
+    }
+  } catch (e) {
+    print('Exception deleting service: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('فشل في حذف الخدمة: $e')),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -453,158 +475,202 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildAddServiceSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // عرض الخدمات المتاحة للاختيار
-        if (_allServices.isNotEmpty) ...[
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text(
-              'الخدمات المتاحة',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+Widget _buildAddServiceSection() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (_allServices.isNotEmpty) ...[
+        const Padding(
+          padding: EdgeInsets.only(right: 16.0, bottom: 8.0),
+          child: Text(
+            'الخدمات المتاحة',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 20),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _allServices.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final service = _allServices[index];
-              final isSelected = _selectedServices.contains(service);
+        ),
+        const SizedBox(height: 16),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _allServices.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 20),
+          itemBuilder: (context, index) {
+            final service = _allServices[index];
+            final isSelected = _selectedServices.contains(service);
 
-              return GestureDetector(
-                onTap: () {
-                  if (isSelected) {
-                    _removeService(service);
-                  } else {
-                    _selectService(service);
-                  }
-                },
-                child: Container(
-                  height: 100, // ارتفاع أكبر للمستطيل
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? service.color.withOpacity(0.15)
-                        : Colors.grey[50],
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? service.color : Colors.grey[300]!,
-                      width: isSelected ? 2.0 : 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.15),
-                        blurRadius: 6,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+            return GestureDetector(
+              onTap: () {
+                if (isSelected) {
+                  _removeService(service);
+                } else {
+                  _selectService(service);
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                height: 130,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? service.color.withOpacity(0.08)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? service.color : Colors.grey[200]!,
+                    width: isSelected ? 1.5 : 1.0,
                   ),
-                  child: Stack(
-                    children: [
-                      // تدرج لوني خلفي - تم تكبيره وتمديده
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Container(
-                          width: 100, // عرض أكبر للتدرج
-                          height: 100, // ارتفاع مساوي لارتفاع المستطيل
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(16),
-                              topRight: Radius.circular(16),
-                            ),
-                            gradient: LinearGradient(
-                              colors: service.gradient,
-                              begin: Alignment.topRight,
-                              end: Alignment.bottomLeft,
-                            ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    // الشريط الجانبي الملون
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 8,
+                        decoration: BoxDecoration(
+                          color: service.color,
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
                           ),
                         ),
                       ),
-
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          service.name,
-                                          style: TextStyle(
-                                            fontSize: 18, // حجم نص أكبر
-                                            fontWeight: FontWeight.bold,
-                                            color: isSelected
-                                                ? service.color
-                                                : Colors.grey[800],
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                      if (isSelected)
-                                        Icon(
-                                          Icons.check_circle,
-                                          color: service.color,
-                                          size: 24, // حجم أيقونة أكبر
-                                        ),
-                                    ],
-                                  ),
-
-                                  const SizedBox(height: 8),
-
-                                  Text(
-                                    '${service.amount.toStringAsFixed(2)} د.ع',
-                                    style: TextStyle(
-                                      fontSize: 20, // حجم نص أكبر للسعر
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected
-                                          ? service.color
-                                          : widget.primaryColor,
-                                    ),
-                                  ),
-
-                                  if (service.additionalInfo != null) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      service.additionalInfo!,
-                                      style: TextStyle(
-                                        fontSize:
-                                            16, // حجم نص أكبر للمعلومات الإضافية
-                                        color: Colors.grey[600],
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      maxLines: 1,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
+                    ),
+                    
+                    // التصميم الدائري الخلفي
+                    Positioned(
+                      left: -20,
+                      top: -20,
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: service.color.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    
+                    // محتوى البطاقة
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Row(
+                        children: [
+                          // الجزء الأيسر: أيقونة الخدمة
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: service.color.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getServiceIcon(service.name),
+                              color: service.color,
+                              size: 28,
+                            ),
+                          ),
+                          
+                          const SizedBox(width: 16),
+                          
+                          // الجزء الأوسط: معلومات الخدمة
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  service.name,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.grey[800],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                
+                                const SizedBox(height: 6),
+                                
+                                Text(
+                                  '${service.amount.toStringAsFixed(2)} د.ع',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: service.color,
+                                  ),
+                                ),
+                                
+                                if (service.additionalInfo != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    service.additionalInfo!,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          
+                          // الجزء الأيمن: حالة التحديد
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: isSelected ? service.color : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? service.color : Colors.grey[400]!,
+                                width: 2,
+                              ),
+                            ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 18,
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-        ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
       ],
-    );
-  }
+    ],
+  );
+}
 
+// دالة مساعدة للحصول على الأيقونة المناسبة لكل خدمة
+IconData _getServiceIcon(String serviceName) {
+  if (serviceName.contains('عدادات')) return Icons.speed;
+  if (serviceName.contains('نفايات')) return Icons.delete;
+  if (serviceName.contains('تدوير')) return Icons.recycling;
+  if (serviceName.contains('تنظيف')) return Icons.clean_hands;
+  return Icons.home_repair_service;
+}
   Widget _buildServicesList() {
     return Card(
       elevation: 3,

@@ -11,9 +11,8 @@ import 'package:mang_mu/screens/user/wecome_screen.dart';
 import 'package:mang_mu/screens/employee/ewecome_screen.dart';
 import 'package:mang_mu/screens/mainscren.dart';
 import 'package:mang_mu/screens/splash_screen.dart';
-import 'package:mang_mu/screens/employee/water_employee_screen.dart';
-import 'package:mang_mu/screens/employee/electricity_employee_screen.dart';
-import 'package:mang_mu/screens/employee/municipality_employee_screen.dart';
+
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -94,12 +93,7 @@ class MyApp extends StatelessWidget {
               RegesyerScreen.screenRoot: (context) => const RegesyerScreen(),
               EsigninScreen.screenroot: (context) => const EsigninScreen(),
               EregesyerScreen.screenroot: (context) => const EregesyerScreen(),
-              WaterEmployeeScreen.screenRoute: (context) =>
-                  const WaterEmployeeScreen(),
-              ElectricityEmployeeScreen.screenRoute: (context) =>
-                  const ElectricityEmployeeScreen(),
-              MunicipalityEmployeeScreen.screenRoute: (context) =>
-                  const MunicipalityEmployeeScreen(),
+              
             },
           );
         },
