@@ -606,7 +606,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildServicesList() {
-    return Card(
+    return Card(# التأكد من حالة المشروع
+git status
+
+git add .
+git commit -m "وصف التغييرات قبل المزامنة"                                                                                                          
+git push origin main            
+
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
