@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'service_details_screen.dart';
 import 'payment_screen.dart';
 import 'points_and_gifts_screen.dart';
-import '../employee/waste_schedule_screen.dart';
+import 'waste_schedule_screen.dart';
 import 'container_request_screen.dart';
 import 'settings_screen.dart';
 import 'signin_screen.dart';
