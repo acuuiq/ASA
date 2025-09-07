@@ -11,20 +11,18 @@ import 'package:mang_mu/screens/user/wecome_screen.dart';
 import 'package:mang_mu/screens/employee/ewecome_screen.dart';
 import 'package:mang_mu/screens/mainscren.dart';
 import 'package:mang_mu/screens/splash_screen.dart';
-import 'package:mang_mu/screens/employee/water_employee_screen.dart';
-import 'package:mang_mu/screens/employee/electricity_employee_screen.dart';
-import 'package:mang_mu/screens/employee/municipality_employee_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // تهيئة Supabase بدلاً من Firebase
   await Supabase.initialize(
     url: 'https://xuwxgjiewdlzzpgzvpxb.supabase.co', // استبدل برابط مشروعك
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1d3hnamlld2RsenpwZ3p2cHhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Mzc5MTIsImV4cCI6MjA3MjQxMzkxMn0.i1CD1NxOM7XDoViqSmyb4ECT7uKZFJPFbzjorscInRY', // استبدل بالمفتاح الخاص بك
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1d3hnamlld2RsenpwZ3p2cHhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Mzc5MTIsImV4cCI6MjA3MjQxMzkxMn0.i1CD1NxOM7XDoViqSmyb4ECT7uKZFJPFbzjorscInRY', // استبدل بالمفتاح الخاص بك
   );
-  
+
   runApp(const MyApp());
 }
 
@@ -94,12 +92,6 @@ class MyApp extends StatelessWidget {
               RegesyerScreen.screenRoot: (context) => const RegesyerScreen(),
               EsigninScreen.screenroot: (context) => const EsigninScreen(),
               EregesyerScreen.screenroot: (context) => const EregesyerScreen(),
-              WaterEmployeeScreen.screenRoute: (context) =>
-                  const WaterEmployeeScreen(),
-              ElectricityEmployeeScreen.screenRoute: (context) =>
-                  const ElectricityEmployeeScreen(),
-              MunicipalityEmployeeScreen.screenRoute: (context) =>
-                  const MunicipalityEmployeeScreen(),
             },
           );
         },

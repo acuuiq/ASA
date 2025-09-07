@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // نموذج بيانات الخدمة
 class ServiceItem {
@@ -18,6 +19,46 @@ class ServiceItem {
     required this.gradient,
     this.additionalInfo,
   });
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'amount': amount,
+      // حول قيمة اللون من رقم إلى نص
+      'color': color.value.toString(), // التغيير هنا
+      'gradient': gradient
+          .map((c) => c.value.toString())
+          .toList(), // والتغيير هنا أيضًا
+      'additionalInfo': additionalInfo,
+    };
+  }
+
+  factory ServiceItem.fromMap(Map<String, dynamic> map) {
+    return ServiceItem(
+      id: map['id'].toString(), // تأكد من تحويل إلى نص
+      name: map['name'].toString(),
+      amount: (map['amount'] is int)
+          ? (map['amount'] as int).toDouble()
+          : (map['amount'] as double),
+      // التعامل مع قيم اللون سواء كانت نصاً أو رقماً
+      color: Color(
+        map['color'] is String
+            ? int.parse(map['color'])
+            : (map['color'] as int),
+      ),
+      // التعامل مع قائمة التدرج بأنواع مختلفة
+      gradient: (map['gradient'] as List).map((c) {
+        if (c is String) {
+          return Color(int.parse(c));
+        } else if (c is int) {
+          return Color(c);
+        } else {
+          return Colors.blue; // قيمة افتراضية في حالة الخطأ
+        }
+      }).toList(),
+      additionalInfo: map['additionalInfo']?.toString(),
+    );
+  }
 }
 
 class PaymentScreen extends StatefulWidget {
@@ -48,6 +89,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final _ibanController = TextEditingController();
   final _friendIdController = TextEditingController();
 
+  // متحكمات جديدة لإضافة الخدمات يدوياً
+  final _serviceNameController = TextEditingController();
+  final _serviceAmountController = TextEditingController();
+  final _serviceInfoController = TextEditingController();
+
   // متغيرات الدفع عن صديق
   bool _payForFriend = false;
   String _friendName = '';
@@ -62,11 +108,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   double _finalAmount = 0.0;
   final DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
 
+  // متغيرات جديدة لإدارة الخدمات
+  bool _showAddServiceForm = false;
+  List<ServiceItem> _allServices = []; // جميع الخدمات المتاحة
+  List<ServiceItem> _selectedServices = []; // الخدمات المختارة
+
   // نظام النقاط
   final int _userPoints = 500;
   final double _pointsRate = 0.01;
-
-
 
   // تعريف قائمة فئات الدفع
   final List<Map<String, dynamic>> _paymentCategories = [
@@ -129,12 +178,64 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedServices = List.from(widget.services);
+    _loadServicesFromSupabase();
     _finalAmount = _calculateTotalAmount();
     _calculatePointsDiscount();
   }
 
+  // دالة لتحميل الخدمات من Supabase - الإصدار المصحح
+  // دالة لتحميل الخدمات من Supabase - بدون execute
+  Future<void> _loadServicesFromSupabase() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('services')
+          .select()
+          .order('created_at', ascending: false);
+
+      if (response != null && response is List) {
+        setState(() {
+          _allServices = response
+              .map((item) => ServiceItem.fromMap(item))
+              .toList();
+        });
+      }
+    } catch (e) {
+      print('Exception loading services: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل في تحميل الخدمات: $e')));
+    }
+  }
+
+  Future<void> _saveServiceToSupabase(ServiceItem service) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('services')
+          .insert(service.toMap());
+
+      // في الإصدارات الحديثة، الإدراج الناجح يرجع البيانات المُدرجة
+      if (response != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تم حفظ الخدمة بنجاح')));
+        _loadServicesFromSupabase();
+      } else {
+        print('Error: Insert returned null');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('فشل في حفظ الخدمة')));
+      }
+    } catch (e) {
+      print('Exception saving service: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل في حفظ الخدمة: $e')));
+    }
+  }
+
   double _calculateTotalAmount() {
-    return widget.services.fold(0.0, (sum, service) => sum + service.amount);
+    return _selectedServices.fold(0.0, (sum, service) => sum + service.amount);
   }
 
   void _calculatePointsDiscount() {
@@ -155,6 +256,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     _accountNumberController.dispose();
     _ibanController.dispose();
     _friendIdController.dispose();
+    _serviceNameController.dispose();
+    _serviceAmountController.dispose();
+    _serviceInfoController.dispose();
     super.dispose();
   }
 
@@ -172,9 +276,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _friendName = 'أحمد محمد'; // سيتم استبدالها بالقيمة الفعلية من API
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('تم التحقق من $_friendName')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('تم التحقق من $_friendName')));
   }
 
   void _updateFinalAmount() {
@@ -194,10 +298,72 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
   }
 
+  // دالة لإضافة خدمة جديدة
+  void _addNewService() {
+    final name = _serviceNameController.text.trim();
+    final amountText = _serviceAmountController.text.trim();
+    final info = _serviceInfoController.text.trim();
+
+    if (name.isEmpty || amountText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('الرجاء إدخال اسم الخدمة والمبلغ')),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(amountText) ?? 0.0;
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('المبلغ يجب أن يكون أكبر من صفر')),
+      );
+      return;
+    }
+
+    final newService = ServiceItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      amount: amount,
+      color: Colors.blue, // لون افتراضي
+      gradient: [Colors.blue, Colors.lightBlue], // تدرج افتراضي
+      additionalInfo: info.isNotEmpty ? info : null,
+    );
+
+    // حفظ الخدمة في Supabase
+    _saveServiceToSupabase(newService);
+
+    // إضافة الخدمة إلى القائمة المختارة
+    setState(() {
+      _selectedServices.add(newService);
+      _showAddServiceForm = false;
+      _serviceNameController.clear();
+      _serviceAmountController.clear();
+      _serviceInfoController.clear();
+      _updateFinalAmount();
+    });
+  }
+
+  // دالة لإزالة خدمة من القائمة المختارة
+  void _removeService(ServiceItem service) {
+    setState(() {
+      _selectedServices.remove(service);
+      _updateFinalAmount();
+    });
+  }
+
+  // دالة لاختيار خدمة من القائمة المتاحة
+  void _selectService(ServiceItem service) {
+    setState(() {
+      if (!_selectedServices.contains(service)) {
+        _selectedServices.add(service);
+        _updateFinalAmount();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final totalAmount = _calculateTotalAmount();
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('سلة التسوق والدفع'),
@@ -212,10 +378,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ),
         ),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -225,6 +387,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             // عرض قائمة الخدمات في السلة
             _buildServicesList(),
             const SizedBox(height: 20),
+
+            // زر إضافة خدمة جديدة
+            _buildAddServiceSection(),
 
             _buildInvoiceSummary(totalAmount),
             const SizedBox(height: 30),
@@ -288,6 +453,161 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
+  Widget _buildAddServiceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!_showAddServiceForm) ...[
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('إضافة خدمة جديدة'),
+              onPressed: () {
+                setState(() {
+                  _showAddServiceForm = true;
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        if (_showAddServiceForm) ...[
+          Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'إضافة خدمة جديدة',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: _serviceNameController,
+                    decoration: InputDecoration(
+                      labelText: 'اسم الخدمة',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: _serviceAmountController,
+                    decoration: InputDecoration(
+                      labelText: 'المبلغ (د.ع)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: _serviceInfoController,
+                    decoration: InputDecoration(
+                      labelText: 'معلومات إضافية (اختياري)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _addNewService,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'إضافة',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              _showAddServiceForm = false;
+                            });
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('إلغاء'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+        ],
+
+        // عرض الخدمات المتاحة للاختيار
+        if (_allServices.isNotEmpty) ...[
+          const Text(
+            'الخدمات المتاحة',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _allServices.map((service) {
+              return FilterChip(
+                label: Text('${service.name} - ${service.amount} د.ع'),
+                selected: _selectedServices.contains(service),
+                onSelected: (selected) {
+                  if (selected) {
+                    _selectService(service);
+                  } else {
+                    _removeService(service);
+                  }
+                },
+                backgroundColor: Colors.grey[200],
+                selectedColor: widget.primaryColor.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: _selectedServices.contains(service)
+                      ? widget.primaryColor
+                      : Colors.black,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 15),
+        ],
+      ],
+    );
+  }
+
   Widget _buildServicesList() {
     return Card(
       elevation: 3,
@@ -297,23 +617,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.shopping_cart, color: widget.primaryColor),
-                const SizedBox(width: 10),
-                const Text(
-                  'الخدمات المختارة',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
+            const Text(
+              'الخدمات المختارة',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            ...widget.services.map((service) => _buildServiceItem(service)).toList(),
+            if (_selectedServices.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    'لا توجد خدمات مختارة',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ),
+            ..._selectedServices
+                .map((service) => _buildServiceItem(service))
+                .toList(),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('الإجمالي:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text(
+                  'الإجمالي:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 Text(
                   '${_calculateTotalAmount().toStringAsFixed(2)} د.ع',
                   style: TextStyle(
@@ -335,16 +664,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            service.color.withOpacity(0.1),
-            service.color.withOpacity(0.05),
-        ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: service.color.withOpacity(0.2)),
+        color: service.color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: service.color.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -352,11 +674,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: service.gradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: service.color,
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.check, color: Colors.white, size: 20),
@@ -378,19 +696,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: service.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              '${service.amount.toStringAsFixed(2)} د.ع',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: service.color,
-              ),
-            ),
+          Text(
+            '${service.amount.toStringAsFixed(2)} د.ع',
+            style: TextStyle(fontWeight: FontWeight.bold, color: service.color),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle, color: Colors.red),
+            onPressed: () => _removeService(service),
           ),
         ],
       ),
@@ -444,7 +756,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             children: [
               const Text('عدد الخدمات:'),
               Text(
-                '${widget.services.length} خدمة',
+                '${_selectedServices.length} خدمة',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -488,7 +800,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
             // خيار الدفع بالنقاط
             _buildDiscountOption(
-              title: 'استخدام النقاط (${_pointsDiscount.toStringAsFixed(2)} د.ع)',
+              title:
+                  'استخدام النقاط (${_pointsDiscount.toStringAsFixed(2)} د.ع)',
               subtitle: 'لديك $_userPoints نقطة',
               value: _usePoints,
               onChanged: (value) {
@@ -611,21 +924,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.green.shade400,
-                          Colors.green.shade600,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.person, color: Colors.white),
+                  const CircleAvatar(
+                    backgroundColor: Colors.green,
+                    child: Icon(Icons.person, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -661,7 +962,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
-          ] else if (_friendIdController.text.isNotEmpty && !_isFriendVerified) ...[
+          ] else if (_friendIdController.text.isNotEmpty &&
+              !_isFriendVerified) ...[
             const SizedBox(height: 10),
             Text(
               'لم يتم العثور على صديق بهذا الرقم',
@@ -911,477 +1213,480 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                     prefixIcon: const Icon(Icons.calendar_today),
                   ),
-                    keyboardType: TextInputType.datetime,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'الرجاء إدخال تاريخ الانتهاء';
-                      }
-                      if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(value)) {
-                        return 'الصيغة MM/YY';
-                      }
-                      return null;
-                    },
-                  ),
+                  keyboardType: TextInputType.datetime,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'الرجاء إدخال تاريخ الانتهاء';
+                    }
+                    if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(value)) {
+                      return 'الصيغة MM/YY';
+                    }
+                    return null;
+                  },
                 ),
-
-                const SizedBox(width: 16),
-
-                Expanded(
-                  child: TextFormField(
-                    controller: _cvvController,
-                    decoration: InputDecoration(
-                      labelText: 'CVV',
-                      hintText: '123',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      prefixIcon: const Icon(Icons.lock),
-                    ),
-                    keyboardType: TextInputType.number,
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'الرجاء إدخال CVV';
-                      }
-                      if (value.length < 3) {
-                        return 'CVV يجب أن يكون 3 أو 4 أرقام';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-      )
-        );
-      }
-
-      Widget _buildWalletForm() {
-        return Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _phoneController,
-                decoration: InputDecoration(
-                  labelText: 'رقم الهاتف',
-                  hintText: '07XX XXX XXXX',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: const Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال رقم الهاتف';
-                  }
-                  if (value.length < 10) {
-                    return 'رقم الهاتف يجب أن يكون 10 أرقام';
-                  }
-                  return null;
-                },
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(width: 16),
 
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'كلمة المرور',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: const Icon(Icons.lock),
-                ),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال كلمة المرور';
-                  }
-                  if (value.length < 6) {
-                    return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        );
-      }
-
-      Widget _buildBankTransferForm() {
-        return Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _accountNumberController,
-                decoration: InputDecoration(
-                  labelText: 'رقم الحساب',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: const Icon(Icons.numbers),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال رقم الحساب';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _ibanController,
-                decoration: InputDecoration(
-                  labelText: 'رقم IBAN',
-                  hintText: 'IQXX XXXX XXXX XXXX XXXX XXXX',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: const Icon(Icons.code),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال رقم IBAN';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        );
-      }
-
-      Widget _buildPayButton() {
-        return SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: widget.primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 3,
-            ),
-            onPressed: _processPayment,
-            child: const Text(
-              'تأكيد الدفع',
-              style: TextStyle(fontSize: 18, color: Colors.white),
-            ),
-          ),
-        );
-      }
-
-      void _processPayment() {
-        if (_formKey.currentState?.validate() ?? false) {
-          if (_payForFriend && !_isFriendVerified) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('الرجاء التحقق من هوية الصديق أولاً')),
-            );
-            return;
-          }
-          _showPaymentConfirmation();
-        }
-      }
-
-      void _showPaymentConfirmation() {
-        int pointsUsed = _usePoints ? (_pointsDiscount / _pointsRate).ceil() : 0;
-        int pointsEarned = (_isEarlyPayment ? 100 : 50) + (_finalAmount * 0.1).ceil();
-        if (_payForFriend && _isFriendVerified) {
-          pointsEarned += 100; // نقاط إضافية للإحالة
-        }
-        int newPoints = _userPoints - pointsUsed + pointsEarned;
-
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) {
-            return Container(
-              padding: const EdgeInsets.all(25),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 5,
-                    margin: const EdgeInsets.only(bottom: 15),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
+              Expanded(
+                child: TextFormField(
+                  controller: _cvvController,
+                  decoration: InputDecoration(
+                    labelText: 'CVV',
+                    hintText: '123',
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                    prefixIcon: const Icon(Icons.lock),
                   ),
-                  Icon(Icons.verified, size: 60, color: widget.primaryColor),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'تأكيد الدفع',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'سيتم خصم مبلغ ${_finalAmount.toStringAsFixed(2)} د.ع عبر $_selectedPaymentOption',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 30),
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildDetailRow('طريقة الدفع', _selectedPaymentOption),
-                        const Divider(height: 15),
-                        _buildDetailRow('المبلغ الأصلي', '${_calculateTotalAmount().toStringAsFixed(2)} د.ع'),
-                        if (_isEarlyPayment)
-                          _buildDetailRow(
-                            'خصم الدفع المبكر',
-                            '-${_discountAmount.toStringAsFixed(2)} د.ع',
-                          ),
-                        if (_usePoints)
-                          _buildDetailRow(
-                            'خصم النقاط',
-                            '-${_pointsDiscount.toStringAsFixed(2)} د.ع',
-                          ),
-                        if (_payForFriend && _isFriendVerified)
-                          _buildDetailRow('الدفع عن', _friendName),
-                        const Divider(height: 15),
-                        _buildDetailRow(
-                          'المبلغ النهائي',
-                          '${_finalAmount.toStringAsFixed(2)} د.ع',
-                          isTotal: true,
-                        ),
-                        if (_usePoints) ...[
-                          const Divider(height: 15),
-                          _buildDetailRow('النقاط المستخدمة', '$pointsUsed نقطة'),
-                        ],
-                        const Divider(height: 15),
-                        _buildDetailRow(
-                          'التاريخ',
-                          DateFormat('yyyy-MM-dd – hh:mm a').format(DateTime.now()),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            side: BorderSide(color: widget.primaryColor),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            'إلغاء',
-                            style: TextStyle(
-                              color: widget.primaryColor,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: widget.primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showPaymentSuccess(
-                              newPoints,
-                              pointsEarned,
-                              pointsUsed,
-                            );
-                          },
-                          child: const Text(
-                            'تأكيد الدفع',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'الرجاء إدخال CVV';
+                    }
+                    if (value.length < 3) {
+                      return 'CVV يجب أن يكون 3 أو 4 أرقام';
+                    }
+                    return null;
+                  },
+                ),
               ),
-            );
-          },
-        );
-      }
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-      void _showPaymentSuccess(int newPoints, int pointsEarned, int pointsUsed) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Dialog(
-            insetPadding: const EdgeInsets.all(20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(25),
+  Widget _buildWalletForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _phoneController,
+            decoration: InputDecoration(
+              labelText: 'رقم الهاتف',
+              hintText: '07XX XXX XXXX',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              prefixIcon: const Icon(Icons.phone),
+            ),
+            keyboardType: TextInputType.phone,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال رقم الهاتف';
+              }
+              if (value.length < 10) {
+                return 'رقم الهاتف يجب أن يكون 10 أرقام';
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _passwordController,
+            decoration: InputDecoration(
+              labelText: 'كلمة المرور',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              prefixIcon: const Icon(Icons.lock),
+            ),
+            obscureText: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال كلمة المرور';
+              }
+              if (value.length < 6) {
+                return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBankTransferForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _accountNumberController,
+            decoration: InputDecoration(
+              labelText: 'رقم الحساب',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              prefixIcon: const Icon(Icons.numbers),
+            ),
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال رقم الحساب';
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _ibanController,
+            decoration: InputDecoration(
+              labelText: 'رقم IBAN',
+              hintText: 'IQXX XXXX XXXX XXXX XXXX XXXX',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              prefixIcon: const Icon(Icons.code),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال رقم IBAN';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: widget.primaryColor,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 3,
+        ),
+        onPressed: _processPayment,
+        child: const Text(
+          'تأكيد الدفع',
+          style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  void _processPayment() {
+    if (_formKey.currentState?.validate() ?? false) {
+      if (_payForFriend && !_isFriendVerified) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('الرجاء التحقق من هوية الصديق أولاً')),
+        );
+        return;
+      }
+      _showPaymentConfirmation();
+    }
+  }
+
+  void _showPaymentConfirmation() {
+    int pointsUsed = _usePoints ? (_pointsDiscount / _pointsRate).ceil() : 0;
+    int pointsEarned =
+        (_isEarlyPayment ? 100 : 50) + (_finalAmount * 0.1).ceil();
+    if (_payForFriend && _isFriendVerified) {
+      pointsEarned += 100; // نقاط إضافية للإحالة
+    }
+    int newPoints = _userPoints - pointsUsed + pointsEarned;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(25),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 15),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Icon(Icons.verified, size: 60, color: widget.primaryColor),
+              const SizedBox(height: 20),
+              const Text(
+                'تأكيد الدفع',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'سيتم خصم مبلغ ${_finalAmount.toStringAsFixed(2)} د.ع عبر $_selectedPaymentOption',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 30),
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(15),
+                ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check_circle,
-                        color: Colors.green,
-                        size: 60,
-                      ),
+                    _buildDetailRow('طريقة الدفع', _selectedPaymentOption),
+                    const Divider(height: 15),
+                    _buildDetailRow(
+                      'المبلغ الأصلي',
+                      '${_calculateTotalAmount().toStringAsFixed(2)} د.ع',
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'تم الدفع بنجاح!',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                    if (_isEarlyPayment)
+                      _buildDetailRow(
+                        'خصم الدفع المبكر',
+                        '-${_discountAmount.toStringAsFixed(2)} د.ع',
                       ),
+                    if (_usePoints)
+                      _buildDetailRow(
+                        'خصم النقاط',
+                        '-${_pointsDiscount.toStringAsFixed(2)} د.ع',
+                      ),
+                    if (_payForFriend && _isFriendVerified)
+                      _buildDetailRow('الدفع عن', _friendName),
+                    const Divider(height: 15),
+                    _buildDetailRow(
+                      'المبلغ النهائي',
+                      '${_finalAmount.toStringAsFixed(2)} د.ع',
+                      isTotal: true,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'تم خصم مبلغ ${_finalAmount.toStringAsFixed(2)} د.ع',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Column(
-                        children: [
-                          if (_payForFriend && _isFriendVerified) ...[
-                            _buildDetailRow('تم الدفع عن', _friendName),
-                            const Divider(height: 15),
-                          ],
-                          _buildDetailRow(
-                            'رقم المرجع',
-                            '#${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-                          ),
-                          const Divider(height: 15),
-                          _buildDetailRow(
-                            'التاريخ والوقت',
-                            DateFormat('yyyy-MM-dd – hh:mm a').format(DateTime.now()),
-                          ),
-                          const Divider(height: 15),
-                          if (pointsEarned > 0)
-                            _buildDetailRow(
-                              'النقاط المكتسبة',
-                              '+$pointsEarned نقطة',
-                            ),
-                          if (pointsUsed > 0)
-                            _buildDetailRow(
-                              'النقاط المستخدمة',
-                              '-$pointsUsed نقطة',
-                            ),
-                          const Divider(height: 15),
-                          _buildDetailRow(
-                            'رصيد النقاط الجديد',
-                            '$newPoints نقطة',
-                            isTotal: true,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: widget.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'حسناً',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ),
+                    if (_usePoints) ...[
+                      const Divider(height: 15),
+                      _buildDetailRow('النقاط المستخدمة', '$pointsUsed نقطة'),
+                    ],
+                    const Divider(height: 15),
+                    _buildDetailRow(
+                      'التاريخ',
+                      DateFormat('yyyy-MM-dd – hh:mm a').format(DateTime.now()),
                     ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(color: widget.primaryColor),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'إلغاء',
+                        style: TextStyle(
+                          color: widget.primaryColor,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: widget.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showPaymentSuccess(
+                          newPoints,
+                          pointsEarned,
+                          pointsUsed,
+                        );
+                      },
+                      child: const Text(
+                        'تأكيد الدفع',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         );
-      }
-    }
+      },
+    );
+  }
 
-    // مثال على استخدام الشاشة
-    void main() {
-      runApp(MaterialApp(
-        home: PaymentScreen(
-          services: [
-            ServiceItem(
-              id: '1',
-              name: 'خدمة الكهرباء',
-              amount: 25000,
-              color: Colors.blue,
-              gradient: [Colors.blue.shade400, Colors.blue.shade600],
-              additionalInfo: 'فبراير 2024',
+  void _showPaymentSuccess(int newPoints, int pointsEarned, int pointsUsed) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(25),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, size: 50, color: Colors.green),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'تم الدفع بنجاح',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'تم دفع ${_finalAmount.toStringAsFixed(2)} د.ع بنجاح',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                if (_isEarlyPayment)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'وفرت ${_discountAmount.toStringAsFixed(2)} د.ع بخصم الدفع المبكر',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                if (_usePoints)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'وفرت ${_pointsDiscount.toStringAsFixed(2)} د.ع باستخدام النقاط',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                if (_payForFriend && _isFriendVerified)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'تم الدفع عن $_friendName',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'ربحت $pointsEarned نقطة جديدة!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildDetailRow('طريقة الدفع', _selectedPaymentOption),
+                      const Divider(height: 15),
+                      _buildDetailRow(
+                        'رقم المرجع',
+                        'PAY-${DateTime.now().millisecondsSinceEpoch}',
+                      ),
+                      if (_usePoints) ...[
+                        const Divider(height: 15),
+                        _buildDetailRow('النقاط المستخدمة', '$pointsUsed نقطة'),
+                      ],
+                      if (_payForFriend && _isFriendVerified) ...[
+                        const Divider(height: 15),
+                        _buildDetailRow('مكافأة الإحالة', '+100 نقطة'),
+                      ],
+                      const Divider(height: 15),
+                      _buildDetailRow('النقاط المكتسبة', '+$pointsEarned نقطة'),
+                      const Divider(height: 15),
+                      _buildDetailRow(
+                        'النقاط الإجمالية',
+                        '$newPoints نقطة',
+                        isTotal: true,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 25),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'حسناً',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            ServiceItem(
-              id: '2',
-              name: 'خدمة المياه',
-              amount: 15000,
-              color: Colors.green,
-              gradient: [Colors.green.shade400, Colors.green.shade600],
-              additionalInfo: 'فبراير 2024',
-            ),
-          ],
-          primaryColor: const Color(0xFF4CAF50),
-          primaryGradient: const [
-            Color(0xFF4CAF50),
-            Color(0xFF45a049),
-          ],
+          ),
         ),
-      ));
-    }
+      ),
+    );
+  }
+}

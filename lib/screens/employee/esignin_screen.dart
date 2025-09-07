@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mang_mu/screens/user/user_thing.dart';
-import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
-// استيراد الشاشات الجديدة
-import 'package:mang_mu/screens/employee/water_employee_screen.dart';
-import 'package:mang_mu/screens/employee/electricity_employee_screen.dart';
-import 'package:mang_mu/screens/employee/municipality_employee_screen.dart';
 
 class EsigninScreen extends StatefulWidget {
   static const String screenroot = 'esignin_screen';
-  
+
   const EsigninScreen({super.key});
 
   @override
@@ -23,7 +17,8 @@ class _EsigninScreenState extends State<EsigninScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  String? _selectedDepartment; // حقل جديد لتخزين التخصص
+  String? _selectedSection; // حقل لتخزين القسم (كهرباء، ماء، نفايات)
+  String? _selectedSpecialization; // حقل لتخزين التخصص
 
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
@@ -36,8 +31,44 @@ class _EsigninScreenState extends State<EsigninScreen>
     'assets/bg3.svg',
   ];
 
-  // قائمة التخصصات المتاحة
-  final List<String> _departments = ['ماء', 'كهرباء', 'بلدية'];
+  // قائمة الأقسام الرئيسية
+  final List<String> _sections = ['كهرباء', 'ماء', 'نفايات'];
+
+  // قائمة التخصصات لكل قسم
+  final Map<String, List<String>> _specializations = {
+    'كهرباء': [
+      'فني كهرباء',
+      'مهندس كهرباء',
+      'مراقب شبكات كهرباء',
+      'فني عدادات كهرباء',
+      'مشرف محطة تحويل',
+      'فني صيانة كهربائية',
+      'مهندس توزيع كهرباء',
+      'مراقب جودة كهرباء',
+    ],
+    'ماء': [
+      'فني مياه',
+      'مهندس مياه',
+      'مراقب شبكات مياه',
+      'فني عدادات مياه',
+      'مشرف محطة تنقية',
+      'فني صيانة شبكات مياه',
+      'مهندس توزيع مياه',
+      'مراقب جودة مياه',
+      'فني مختبر مياه',
+      'مشرف خزانات مياه',
+    ],
+    'نفايات': [
+      'عامل نظافة',
+      'سائق شاحنة نفايات',
+      'مشرف جمع النفايات',
+      'فني فرز نفايات',
+      'مراقب عمليات النظافة',
+      'مشرف مكب النفايات',
+      'فني إعادة تدوير',
+      'مراقب جودة النظافة',
+    ],
+  };
 
   @override
   void initState() {
@@ -86,17 +117,22 @@ class _EsigninScreenState extends State<EsigninScreen>
       Future.delayed(const Duration(seconds: 1), () {
         setState(() => _isLoading = false);
 
-        // التوجيه إلى الشاشة المناسبة حسب التخصص
-        if (_selectedDepartment == 'ماء') {
-          Navigator.pushNamed(context, WaterEmployeeScreen.screenRoute);
-        } else if (_selectedDepartment == 'كهرباء') {
-          Navigator.pushNamed(context, ElectricityEmployeeScreen.screenRoute);
-        } else if (_selectedDepartment == 'بلدية') {
-          Navigator.pushNamed(context, MunicipalityEmployeeScreen.screenRoute);
-        } else {
-          // إذا لم يتم اختيار تخصص، يتم التوجيه إلى الشاشة الافتراضية
-          Navigator.pushNamed(context, UserThing.screenRoot);
+        // هنا يمكنك إضافة التوجيه إلى الشاشات الجديدة التي تحتاجها
+        // بناءً على القسم المختار (_selectedSection)
+        print(
+          'تم تسجيل الدخول كـ: $_selectedSection - $_selectedSpecialization',
+        );
+
+        // مثال للتنقل حسب القسم:
+        /*
+        if (_selectedSection == 'كهرباء') {
+          Navigator.pushNamed(context, 'شاشة_الكهرباء_الجديدة');
+        } else if (_selectedSection == 'ماء') {
+          Navigator.pushNamed(context, 'شاشة_الماء_الجديدة');
+        } else if (_selectedSection == 'نفايات') {
+          Navigator.pushNamed(context, 'شاشة_النفايات_الجديدة');
         }
+        */
       });
     }
   }
@@ -263,9 +299,15 @@ class _EsigninScreenState extends State<EsigninScreen>
                             key: _formKey,
                             child: Column(
                               children: [
-                                // حقل اختيار التخصص
-                                _buildDepartmentDropdown(),
+                                // حقل اختيار القسم
+                                _buildSectionDropdown(),
                                 const SizedBox(height: 20),
+
+                                // حقل اختيار التخصص (يظهر فقط عند اختيار قسم)
+                                if (_selectedSection != null)
+                                  _buildSpecializationDropdown(),
+                                if (_selectedSection != null)
+                                  const SizedBox(height: 20),
 
                                 // حقل البريد الإلكتروني
                                 _buildTextField(
@@ -287,7 +329,7 @@ class _EsigninScreenState extends State<EsigninScreen>
                                 // حقل كلمة المرور
                                 _buildTextField(
                                   controller: _passwordController,
-                                  hintText: 'كلمة المرор',
+                                  hintText: 'كلمة المرور',
                                   icon: Icons.lock,
                                   obscureText: true,
                                   validator: (value) {
@@ -394,7 +436,7 @@ class _EsigninScreenState extends State<EsigninScreen>
     );
   }
 
-  Widget _buildDepartmentDropdown() {
+  Widget _buildSectionDropdown() {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -407,7 +449,72 @@ class _EsigninScreenState extends State<EsigninScreen>
         ],
       ),
       child: DropdownButtonFormField<String>(
-        value: _selectedDepartment,
+        value: _selectedSection,
+        decoration: InputDecoration(
+          hintText: 'اختر القسم',
+          hintStyle: const TextStyle(
+            color: Colors.white70,
+            fontFamily: 'Tajawal',
+          ),
+          prefixIcon: const Icon(Icons.category, color: Colors.white70),
+          filled: true,
+          fillColor: const Color.fromARGB(255, 17, 126, 117).withOpacity(0.7),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Colors.white, width: 1.5),
+          ),
+        ),
+        style: const TextStyle(color: Colors.white, fontFamily: 'Tajawal'),
+        dropdownColor: const Color.fromARGB(255, 17, 126, 117),
+        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+        items: _sections.map((String section) {
+          return DropdownMenuItem<String>(value: section, child: Text(section));
+        }).toList(),
+        onChanged: (String? newValue) {
+          setState(() {
+            _selectedSection = newValue;
+            _selectedSpecialization =
+                null; // إعادة تعيين التخصص عند تغيير القسم
+          });
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'الرجاء اختيار القسم';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildSpecializationDropdown() {
+    final specializations = _specializations[_selectedSection] ?? [];
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedSpecialization,
         decoration: InputDecoration(
           hintText: 'اختر التخصص',
           hintStyle: const TextStyle(
@@ -437,15 +544,15 @@ class _EsigninScreenState extends State<EsigninScreen>
         style: const TextStyle(color: Colors.white, fontFamily: 'Tajawal'),
         dropdownColor: const Color.fromARGB(255, 17, 126, 117),
         icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-        items: _departments.map((String department) {
+        items: specializations.map((String specialization) {
           return DropdownMenuItem<String>(
-            value: department,
-            child: Text(department),
+            value: specialization,
+            child: Text(specialization),
           );
         }).toList(),
         onChanged: (String? newValue) {
           setState(() {
-            _selectedDepartment = newValue;
+            _selectedSpecialization = newValue;
           });
         },
         validator: (value) {

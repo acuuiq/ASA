@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'monthly_consumption_screen.dart';
 import 'dart:io';
+import 'payment_screen.dart'; // تأكد من أن المسار صحيح
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ServiceDetailsScreen extends StatefulWidget {
   static const String screenroot = '/service-details';
@@ -180,51 +182,52 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   }
 
   Widget _buildProblemReportContent() {
-  // تحديد الأيقونة حسب نوع الخدمة
-  IconData serviceIcon;
-  Color iconColor;
-  
-  if (widget.serviceTitle.contains('الماء')) {
-    serviceIcon = Icons.water_drop;
-    iconColor = Colors.blue;
-  } else if (widget.serviceTitle.contains('الكهرباء')) {
-    serviceIcon = Icons.bolt;
-    iconColor = Colors.amber;
-  } else if (widget.serviceTitle.contains('النفايات')) {
-    serviceIcon = Icons.delete_outline;
-    iconColor = Colors.green;
-  } else {
-    serviceIcon = Icons.help_outline;
-    iconColor = Colors.grey;
+    // تحديد الأيقونة حسب نوع الخدمة
+    IconData serviceIcon;
+    Color iconColor;
+
+    if (widget.serviceTitle.contains('الماء')) {
+      serviceIcon = Icons.water_drop;
+      iconColor = Colors.blue;
+    } else if (widget.serviceTitle.contains('الكهرباء')) {
+      serviceIcon = Icons.bolt;
+      iconColor = Colors.amber;
+    } else if (widget.serviceTitle.contains('النفايات')) {
+      serviceIcon = Icons.delete_outline;
+      iconColor = Colors.green;
+    } else {
+      serviceIcon = Icons.help_outline;
+      iconColor = Colors.grey;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 10),
+        _buildSectionTitle('اختر نوع البلاغ'),
+        const SizedBox(height: 10),
+        _buildReportTypeCard(
+          title: "الإبلاغ عن مشكلة في خدمة ${widget.serviceTitle}",
+          icon: serviceIcon, // استخدام الأيقونة المحددة
+          color: iconColor, // استخدام اللون المحدد
+          onTap: () => _showServiceProblemReport(),
+        ),
+        _buildReportTypeCard(
+          title: "الإبلاغ عن تقصير الموظفين",
+          icon: Icons.people_alt_outlined,
+          color: Colors.blue,
+          onTap: () => _showEmployeeProblemReport(),
+        ),
+        _buildReportTypeCard(
+          title: "الإبلاغ عن مشكلة في التطبيق",
+          icon: Icons.bug_report_outlined,
+          color: Colors.red,
+          onTap: () => _showAppProblemReport(),
+        ),
+      ],
+    );
   }
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const SizedBox(height: 10),
-      _buildSectionTitle('اختر نوع البلاغ'),
-      const SizedBox(height: 10),
-      _buildReportTypeCard(
-        title: "الإبلاغ عن مشكلة في خدمة ${widget.serviceTitle}",
-        icon: serviceIcon, // استخدام الأيقونة المحددة
-        color: iconColor,   // استخدام اللون المحدد
-        onTap: () => _showServiceProblemReport(),
-      ),
-      _buildReportTypeCard(
-        title: "الإبلاغ عن تقصير الموظفين",
-        icon: Icons.people_alt_outlined,
-        color: Colors.blue,
-        onTap: () => _showEmployeeProblemReport(),
-      ),
-      _buildReportTypeCard(
-        title: "الإبلاغ عن مشكلة في التطبيق",
-        icon: Icons.bug_report_outlined,
-        color: Colors.red,
-        onTap: () => _showAppProblemReport(),
-      ),
-    ],
-  );
-}
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -241,51 +244,51 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   }
 
   void _showServiceProblemReport() {
-  final formKey = GlobalKey<FormState>();
-  final problemController = TextEditingController();
-  String? selectedProblemType;
-  List<XFile> attachedImages = [];
+    final formKey = GlobalKey<FormState>();
+    final problemController = TextEditingController();
+    String? selectedProblemType;
+    List<XFile> attachedImages = [];
 
-  // تحديد أنواع المشاكل حسب الخدمة
-  List<String> problemTypes;
-  IconData serviceIcon;
-  Color serviceColor;
+    // تحديد أنواع المشاكل حسب الخدمة
+    List<String> problemTypes;
+    IconData serviceIcon;
+    Color serviceColor;
 
-  if (widget.serviceTitle.contains('الماء')) {
-    problemTypes = [
-      'انقطاع الماء',
-      'مشكلة في عدادات الماء',
-      'تسرب المياه',
-      'جودة المياه',
-      'أخرى'
-    ];
-    serviceIcon = Icons.water_drop;
-    serviceColor = Colors.blue;
-  } else if (widget.serviceTitle.contains('الكهرباء')) {
-    problemTypes = [
-      'انقطاع التيار الكهربائي',
-      'مشكلة في العدادات',
-      'مشكلة في الفولتية',
-      'أخطار كهربائية',
-      'أخرى'
-    ];
-    serviceIcon = Icons.bolt;
-    serviceColor = Colors.amber;
-  } else if (widget.serviceTitle.contains('النفايات')) {
-    problemTypes = [
-      'عدم جمع النفايات',
-      'تسرب من الحاويات',
-      'روائح كريهة',
-      'حاويات تالفة',
-      'أخرى'
-    ];
-    serviceIcon = Icons.delete_outline;
-    serviceColor = Colors.green;
-  } else {
-    problemTypes = ['مشكلة عامة', 'أخرى'];
-    serviceIcon = Icons.help_outline;
-    serviceColor = Colors.grey;
-  }
+    if (widget.serviceTitle.contains('الماء')) {
+      problemTypes = [
+        'انقطاع الماء',
+        'مشكلة في عدادات الماء',
+        'تسرب المياه',
+        'جودة المياه',
+        'أخرى',
+      ];
+      serviceIcon = Icons.water_drop;
+      serviceColor = Colors.blue;
+    } else if (widget.serviceTitle.contains('الكهرباء')) {
+      problemTypes = [
+        'انقطاع التيار الكهربائي',
+        'مشكلة في العدادات',
+        'مشكلة في الفولتية',
+        'أخطار كهربائية',
+        'أخرى',
+      ];
+      serviceIcon = Icons.bolt;
+      serviceColor = Colors.amber;
+    } else if (widget.serviceTitle.contains('النفايات')) {
+      problemTypes = [
+        'عدم جمع النفايات',
+        'تسرب من الحاويات',
+        'روائح كريهة',
+        'حاويات تالفة',
+        'أخرى',
+      ];
+      serviceIcon = Icons.delete_outline;
+      serviceColor = Colors.green;
+    } else {
+      problemTypes = ['مشكلة عامة', 'أخرى'];
+      serviceIcon = Icons.help_outline;
+      serviceColor = Colors.grey;
+    }
     Future<void> takePhoto() async {
       try {
         final ImagePicker picker = ImagePicker();
@@ -1851,164 +1854,21 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     );
   }
 
+  // استبدال دالة _showServiceRequestDialog بالكامل بالدالة الجديدة التالية:
   void _showServiceRequestDialog(String serviceName) {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
-    final addressController = TextEditingController();
-    final detailsController = TextEditingController();
-    DateTime? selectedDate;
-    TimeOfDay? selectedTime;
-
-    Future<void> selectDateTime() async {
-      final DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime.now(),
-        lastDate: DateTime.now().add(const Duration(days: 30)),
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: widget.serviceColor,
-                onPrimary: Colors.white,
-                onSurface: Colors.black,
-              ),
-              textButtonTheme: TextButtonThemeData(
-                style: TextButton.styleFrom(
-                  foregroundColor: widget.serviceColor,
-                ),
-              ),
-            ),
-            child: child!,
-          );
-        },
-      );
-
-      if (pickedDate != null) {
-        final TimeOfDay? pickedTime = await showTimePicker(
-          context: context,
-          initialTime: TimeOfDay.now(),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(
-                  primary: widget.serviceColor,
-                  onPrimary: Colors.white,
-                  onSurface: Colors.black,
-                ),
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                    foregroundColor: widget.serviceColor,
-                  ),
-                ),
-              ),
-              child: child!,
-            );
-          },
-        );
-
-        if (pickedTime != null) {
-          setState(() {
-            selectedDate = pickedDate;
-            selectedTime = pickedTime;
-          });
-        }
-      }
-    }
+    final servicePrice = _getServicePrice(serviceName);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'طلب خدمة: $serviceName',
-          style: TextStyle(color: widget.serviceColor),
-          textAlign: TextAlign.center,
-        ),
-        content: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'الاسم بالكامل',
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'الرجاء إدخال الاسم';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم الجوال',
-                    prefixIcon: Icon(Icons.phone),
-                  ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'الرجاء إدخال رقم الجوال';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'العنوان التفصيلي',
-                    prefixIcon: Icon(Icons.location_on),
-                  ),
-                  maxLines: 2,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'الرجاء إدخال العنوان';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: detailsController,
-                  decoration: const InputDecoration(
-                    labelText: 'تفاصيل إضافية (اختياري)',
-                    prefixIcon: Icon(Icons.note),
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: selectDateTime,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.calendar_today, color: Colors.grey[600]),
-                        const SizedBox(width: 10),
-                        Text(
-                          selectedDate == null
-                              ? 'اختر التاريخ والوقت'
-                              : '${DateFormat.yMd().format(selectedDate!)} - ${selectedTime!.format(context)}',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        title: Text('طلب خدمة: $serviceName'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('سعر الخدمة: ${servicePrice.toStringAsFixed(2)} د.ع'),
+            const SizedBox(height: 16),
+            const Text('سيتم حفظ هذه الخدمة في قائمة الخدمات المتاحة'),
+          ],
         ),
         actions: [
           TextButton(
@@ -2019,35 +1879,87 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: widget.serviceColor,
             ),
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                if (selectedDate == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('الرجاء اختيار التاريخ والوقت'),
-                    ),
-                  );
-                  return;
-                }
-                _submitServiceRequest(
-                  serviceName: serviceName,
-                  customerName: nameController.text,
-                  phone: phoneController.text,
-                  address: addressController.text,
-                  details: detailsController.text,
-                  date: selectedDate!,
-                  time: selectedTime!,
-                );
-              }
+            onPressed: () async {
+              Navigator.pop(context);
+
+              // إنشاء خدمة جديدة وحفظها في Supabase
+              final newService = ServiceItem(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: serviceName,
+                amount: servicePrice,
+                color: widget.serviceColor,
+                gradient: widget.serviceGradient,
+                additionalInfo:
+                    'خدمة متميزة - ${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
+              );
+
+              // حفظ الخدمة في Supabase
+              await _saveServiceToSupabase(newService);
+
+              // الانتقال إلى صفحة الدفع
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PaymentScreen(
+                    services: [newService],
+                    primaryColor: widget.serviceColor,
+                    primaryGradient: widget.serviceGradient,
+                  ),
+                ),
+              );
             },
             child: const Text(
-              'تأكيد الطلب',
+              'موافق ومتابعة الدفع',
               style: TextStyle(color: Colors.white),
             ),
           ),
         ],
       ),
     );
+  }
+
+  // دالة لحفظ الخدمة في Supabase
+  Future<void> _saveServiceToSupabase(ServiceItem service) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('services')
+          .insert(service.toMap());
+
+      if (response != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تم حفظ الخدمة "${service.name}" في القائمة المتاحة'),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Exception saving service: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('فشل في حفظ الخدمة: $e')));
+    }
+  }
+
+  // دالة مساعدة للحصول على سعر الخدمة (ستحتاج لتنفيذها حسب بياناتك)
+  double _getServicePrice(String serviceName) {
+    // هذه قائمة افتراضية - يجب استبدالها ببياناتك الفعلية
+    final Map<String, double> servicePrices = {
+      'تركيب عدادات ذكية': 150.0,
+      'فحص وصيانة لوحة الكهرباء': 200.0,
+      'تمديدات كهربائية إضافية': 80.0,
+      'تركيب أنظمة الطاقة الشمسية': 5000.0,
+      'تركيب عداد مياه إضافي': 250.0,
+      'كشف تسربات المياه': 150.0,
+      'تنظيف خزانات المياه': 300.0,
+      'تركيب أنظمة الري الذكية': 1000.0,
+      'إزالة نفايات البناء': 500.0,
+      'تركيب حاويات نفايات كبيرة': 200.0,
+      'تدوير النفايات المنزلية': 100.0,
+      'تنظيف مواقع الأحداث': 800.0,
+    };
+
+    return servicePrices[serviceName] ??
+        100.0; // قيمة افتراضية إذا لم يجد السعر
   }
 
   void _submitServiceRequest({
