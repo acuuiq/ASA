@@ -256,7 +256,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     problemTypes = [
       'انقطاع الماء',
       'مشكلة في عدادات الماء',
-      'تسرب المياه',
+    
       'جودة المياه',
       'أخرى'
     ];
@@ -670,7 +670,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     final List<String> employeeTypes = [
       'موظف الصيانة',
       'موظف الفواتير',
-      'موظف الاستقبال',
+     'موظف استقبال البلاغات',
       'آخر',
     ];
 
@@ -1144,7 +1144,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                           maxLines: 1,
                           validator: (value) => null,
                           icon: Icons.phone,
-                        ),
+                        ), 
                         const SizedBox(height: 24),
                         _buildSubmitButton(
                           color: Colors.red,

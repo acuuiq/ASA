@@ -1297,50 +1297,6 @@ class PointsAndGiftsScreen extends StatelessWidget {
   final Color serviceColor;
 
   const PointsAndGiftsScreen({super.key, required this.serviceColor});
-  void _showServiceSelectionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('اختر الخدمة'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(
-                Icons.bolt,
-                color: Color.fromARGB(255, 7, 113, 235),
-                size: 27,
-              ),
-              title: const Text('الكهرباء'),
-              onTap: () {
-                Navigator.pop(context);
-                _navigateToPaymentScreen(context, 'الكهرباء');
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.water_drop,
-                color: Color.fromARGB(255, 33, 201, 243),
-              ),
-              title: const Text('الماء'),
-              onTap: () {
-                Navigator.pop(context);
-                _navigateToPaymentScreen(context, 'الماء');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.recycling, color: Colors.green),
-              title: const Text('النفايات'),
-              onTap: () {
-                Navigator.pop(context);
-                _navigateToPaymentScreen(context, 'النفايات');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _navigateToPaymentScreen(BuildContext context, String serviceName) {
     // تحديد بيانات الخدمة بناءً على الاسم
@@ -1465,7 +1421,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
 
             // قسم كيفية كسب النقاط
             Column(
@@ -1510,16 +1466,18 @@ class PointsAndGiftsScreen extends StatelessWidget {
                   },
                 ),
                 _buildPointsItem(
-                  icon: Icons.group_add,
-                  title: 'إحالة أصدقاء',
-                  points: '+200 نقطة',
+                  icon: Icons.swipe_vertical_sharp,
+                  title: 'فعاليات متجددة ',
+                  points: '  ',
+
                   color: Colors.purple,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PointsDetailsScreen(
-                          pointsType: 'إحالة أصدقاء',
+                          pointsType: 'فعاليات متجددة ',
+
                           serviceColor: serviceColor,
                         ),
                       ),
@@ -1527,46 +1485,24 @@ class PointsAndGiftsScreen extends StatelessWidget {
                   },
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 0),
               ],
             ),
-            const SizedBox(height: 30),
 
             // قسم استخدام النقاط
             const Text(
               'استخدام النقاط',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 15),
             _buildUsageItem(
-              icon: Icons.receipt,
-              title: 'خصومات على الفواتير',
-              description: '100 نقطة = 1 دينار',
+              icon: Icons.quiz_sharp,
+              title: 'ما فائدة النقاط وكيف تستخدمها؟  ',
+              description:
+                  'تستخدم هذه النقاط في واجهات الدفع للخصم من سعر الفواتير كل 100 نقطة = 1 دينار',
             ),
-
             const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _showServiceSelectionDialog(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: serviceColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 3,
-                ),
-                child: const Text(
-                  'استخدام النقاط',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-            ),
           ],
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 class PointsDetailsScreen extends StatelessWidget {
   final String pointsType;
   final Color serviceColor;
@@ -56,21 +57,6 @@ class PointsDetailsScreen extends StatelessWidget {
     },
   ];
 
-  final List<Map<String, dynamic>> _referralHistory = const [
-    {
-      'date': '2023-10-10',
-      'amount': 200.0,
-      'friendName': 'أحمد محمد',
-      'friendPhone': '0912345678',
-    },
-    {
-      'date': '2023-09-20',
-      'amount': 200.0,
-      'friendName': 'سارة علي',
-      'friendPhone': '0923456789',
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> historyData;
@@ -90,12 +76,6 @@ class PointsDetailsScreen extends StatelessWidget {
         totalPoints = '${_earlyPaymentHistory.length * 100} نقطة';
         description = 'تحصل على 100 نقطة لكل دفعة مبكرة';
         historyData = _earlyPaymentHistory;
-        break;
-      case 'إحالة أصدقاء':
-        title = 'سجل الإحالات';
-        totalPoints = '${_referralHistory.length * 200} نقطة';
-        description = 'تحصل على 200 نقطة لكل إحالة ناجحة';
-        historyData = _referralHistory;
         break;
       default:
         title = 'سجل النقاط';
@@ -211,13 +191,6 @@ class PointsDetailsScreen extends StatelessWidget {
         title = 'دفع مبكر لفاتورة ${item['billNumber']} (${item['service']})';
         subtitle =
             'تم الدفع قبل ${item['daysEarly']} أيام - ${item['amount']} نقطة';
-        break;
-      case 'إحالة أصدقاء':
-        icon = Icons.person_add;
-        iconColor = Colors.purple;
-        title = 'إحالة ${item['friendName']}';
-        subtitle =
-            'رقم الجوال: ${item['friendPhone']} - ${item['amount']} نقطة';
         break;
       default:
         icon = Icons.star;
