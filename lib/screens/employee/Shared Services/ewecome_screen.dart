@@ -1,20 +1,20 @@
-import 'package:mang_mu/screens/user/signin_screen.dart';
-import 'package:mang_mu/screens/user/regesyer_screen.dart';
-import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter/material.dart';
+import 'package:mang_mu/widgets/my_buttn.dart';
+import 'package:mang_mu/screens/employee/Shared%20Services/esignin_screen.dart';
+import 'package:mang_mu/screens/employee/Shared%20Services/eregesyer_screen.dart';
 import 'package:mang_mu/screens/mainscren.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
 
-class WecomeScreen extends StatefulWidget {
-  static const String screenroot = 'wcome_screen';
-  const WecomeScreen({super.key});
+class EwecomeScreen extends StatefulWidget {
+  static const String screenroot = 'ewcome_screen';
+  const EwecomeScreen({super.key});
 
   @override
-  State<WecomeScreen> createState() => _WecomeScreenState();
+  State<EwecomeScreen> createState() => _EwecomeScreenState();
 }
 
-class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderStateMixin {
+class _EwecomeScreenState extends State<EwecomeScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
@@ -196,13 +196,13 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Container(
-                                              width: 200,
-                                              height: 150,
+                                              width: 120,
+                                              height: 120,
                                               decoration: BoxDecoration(
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
                                               child: Image.asset(
-                                                'images/lbbb.png', 
+                                                'images/lbbb.png',
                                                 fit: BoxFit.contain,
                                               ),
                                             ),
@@ -222,14 +222,14 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
                                                   ),
                                                 ],
                                               ),
-                                              child: const Text('واجهة دخول المواطنين'),
+                                              child: const Text('النظام الإداري'),
                                             ),
                                             const SizedBox(height: 10),
                                             AnimatedOpacity(
                                               duration: const Duration(milliseconds: 500),
                                               opacity: _isHovering ? 1 : 0.8,
                                               child: Text(
-                                                'من أجل حياة أفضل',
+                                                'واجهة دخول الموظفين',
                                                 style: theme.textTheme.titleMedium!.copyWith(
                                                   color: Colors.white,
                                                   fontFamily: 'Tajawal',
@@ -257,7 +257,7 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
                               children: [
                                 _buildEnhancedAuthButton(
                                   context,
-                                  icon: Icons.login,
+                                  icon: Icons.security,
                                   label: 'تسجيل الدخول',
                                   gradient: const LinearGradient(
                                     colors: [
@@ -266,13 +266,13 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
                                     ],
                                   ),
                                   onPressed: () {
-                                    Navigator.pushNamed(context, SigninScreen.screenroot);
+                                    Navigator.pushNamed(context, EsigninScreen.screenroot);
                                   },
                                 ),
                                 const SizedBox(height: 20),
                                 _buildEnhancedAuthButton(
                                   context,
-                                  icon: Icons.person_add,
+                                  icon: Icons.person_add_alt_1,
                                   label: 'إنشاء حساب جديد',
                                   gradient: const LinearGradient(
                                     colors: [
@@ -281,7 +281,7 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
                                     ],
                                   ),
                                   onPressed: () {
-                                    Navigator.pushNamed(context, RegesyerScreen.screenRoot);
+                                    Navigator.pushNamed(context, EregesyerScreen.screenroot);
                                   },
                                 ),
                               ],

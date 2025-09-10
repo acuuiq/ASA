@@ -267,7 +267,6 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       'انقطاع التيار الكهربائي',
       'مشكلة في العدادات',
       'مشكلة في الفولتية',
-      'أخطار كهربائية',
       'أخرى'
     ];
     serviceIcon = Icons.bolt;

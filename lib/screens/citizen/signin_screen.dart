@@ -1,6 +1,6 @@
 import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter/material.dart';
-import 'package:mang_mu/screens/user/user_thing.dart';
+import 'package:mang_mu/screens/citizen/user_thing.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
 import 'package:supabase_flutter/supabase_flutter.dart';
