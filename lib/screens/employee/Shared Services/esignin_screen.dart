@@ -340,6 +340,18 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => WastePremiumSpecialistScreen(),
             ),
           );
+        } else if (_selectedSection == 'نفايات' &&
+            _selectedSpecialization == 'جدول النفايات') {
+          // التنقل إلى شاشة جدول النفايات
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => WasteSchedulerScreen()),
+          );
+        } else {
+          // إذا لم يكن هناك تطابق، يمكنك عرض رسالة خطأ أو التعامل مع الحالة بشكل مناسب
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('القسم أو التخصص غير معروف')),
+          );
         }
       });
     }
