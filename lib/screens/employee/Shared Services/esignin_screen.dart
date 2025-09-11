@@ -160,7 +160,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             MaterialPageRoute(builder: (context) => BillingAccountantScreen()),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'مراقب استهلاك الكهرباء') {
+            _selectedSpecialization == 'مراقبة استهلاك الكهرباء') {
           // التنقل إلى شاشة مراقب استهلاك الكهرباء
           Navigator.pushReplacement(
             context,
@@ -346,11 +346,6 @@ class _EsigninScreenState extends State<EsigninScreen>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => WasteSchedulerScreen()),
-          );
-        } else {
-          // إذا لم يكن هناك تطابق، يمكنك عرض رسالة خطأ أو التعامل مع الحالة بشكل مناسب
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('القسم أو التخصص غير معروف')),
           );
         }
       });
