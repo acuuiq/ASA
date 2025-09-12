@@ -3,7 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:mang_mu/screens/citizen/user_thing.dart';
+import 'package:mang_mu/screens/citizen/screens/user_main_screen.dart';
 import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
@@ -345,7 +345,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
       // استخدام Navigator.pushNamed مباشرة
       Navigator.pushNamedAndRemoveUntil(
         context,
-        UserThing.screenRoot,
+        UserMainScreen.screenRoot,
         (route) => false,
         arguments: {
           'showSuccessMessage': true,

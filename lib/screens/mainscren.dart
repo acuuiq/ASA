@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:mang_mu/screens/citizen/wecome_screen.dart';
+import 'package:mang_mu/screens/citizen/auth/welcome_screen.dart';
 import 'package:mang_mu/screens/employee/Shared%20Services/ewecome_screen.dart';
 import 'dart:ui';
 import 'dart:math';

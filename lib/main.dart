@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
-import 'package:mang_mu/screens/citizen/regesyer_screen.dart';
-import 'package:mang_mu/screens/citizen/user_thing.dart';
-import 'package:mang_mu/screens/citizen/signin_screen.dart';
+import 'package:mang_mu/screens/citizen/auth/regesyer_screen.dart';
+import 'package:mang_mu/screens/citizen/screens/user_main_screen.dart';
+import 'package:mang_mu/screens/citizen/auth/signin_screen.dart';
 import 'package:mang_mu/screens/employee/Shared%20Services/eregesyer_screen.dart';
 import 'package:mang_mu/screens/employee/Shared%20Services/esignin_screen.dart';
-import 'package:mang_mu/screens/citizen/wecome_screen.dart';
+import 'package:mang_mu/screens/citizen/auth/welcome_screen.dart';
 import 'package:mang_mu/screens/employee/Shared%20Services/ewecome_screen.dart';
 import 'package:mang_mu/screens/mainscren.dart';
 import 'package:mang_mu/screens/splash_screen.dart';
@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
               WecomeScreen.screenroot: (context) => const WecomeScreen(),
               EwecomeScreen.screenroot: (context) => const EwecomeScreen(),
               SigninScreen.screenroot: (context) => const SigninScreen(),
-              UserThing.screenRoot: (context) => const UserThing(),
+              UserMainScreen.screenRoot: (context) => const UserMainScreen(),
               RegesyerScreen.screenRoot: (context) => const RegesyerScreen(),
               EsigninScreen.screenroot: (context) => const EsigninScreen(),
               EregesyerScreen.screenroot: (context) => const EregesyerScreen(),

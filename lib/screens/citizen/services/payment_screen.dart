@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mang_mu/screens/citizen/screens/user_main_screen.dart';
 
 // نموذج بيانات الخدمة
 class ServiceItem {
@@ -1263,29 +1264,27 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     }
 
     // الانتقال إلى شاشة تفاصيل الدفع حسب الطريقة المختارة
-   Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => PaymentDetailsScreen(
-      paymentMethod: _paymentMethods.firstWhere(
-        (method) => method['id'] == _selectedMethod,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentDetailsScreen(
+          paymentMethod: _paymentMethods.firstWhere(
+            (method) => method['id'] == _selectedMethod,
+          ),
+          services: widget.services,
+          finalAmount: widget.finalAmount,
+          primaryColor: widget.primaryColor,
+          primaryGradient: widget.primaryGradient,
+          onPaymentSuccess: widget.onPaymentSuccess,
+          usePoints: widget.usePoints, // إضافة هذا
+          pointsDiscount: widget.pointsDiscount, // إضافة هذا
+          userPoints: 500, // يمكنك استبدال هذا بقيمة حقيقية من قاعدة البيانات
+        ),
       ),
-      services: widget.services,
-      finalAmount: widget.finalAmount,
-      primaryColor: widget.primaryColor,
-      primaryGradient: widget.primaryGradient,
-      onPaymentSuccess: widget.onPaymentSuccess,
-      usePoints: widget.usePoints, // إضافة هذا
-      pointsDiscount: widget.pointsDiscount, // إضافة هذا
-      userPoints: 500, // يمكنك استبدال هذا بقيمة حقيقية من قاعدة البيانات
-    ),
-  ),
-);
-       
+    );
   }
 }
 
-// شاشة تفاصيل الدفع
 // شاشة تفاصيل الدفع
 class PaymentDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> paymentMethod;
@@ -1294,9 +1293,9 @@ class PaymentDetailsScreen extends StatefulWidget {
   final Color primaryColor;
   final List<Color> primaryGradient;
   final VoidCallback? onPaymentSuccess;
-  final bool usePoints; // إضافة هذه المعلمة
-  final double pointsDiscount; // إضافة هذه المعلمة
-  final int userPoints; // إضافة هذه المعلمة
+  final bool usePoints;
+  final double pointsDiscount;
+  final int userPoints;
 
   const PaymentDetailsScreen({
     super.key,
@@ -1306,9 +1305,9 @@ class PaymentDetailsScreen extends StatefulWidget {
     required this.primaryColor,
     required this.primaryGradient,
     this.onPaymentSuccess,
-    required this.usePoints, // إضافة هذه المعلمة
-    required this.pointsDiscount, // إضافة هذه المعلمة
-    required this.userPoints, // إضافة هذه المعلمة
+    required this.usePoints,
+    required this.pointsDiscount,
+    required this.userPoints,
   });
 
   @override
@@ -1316,63 +1315,31 @@ class PaymentDetailsScreen extends StatefulWidget {
 }
 
 class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
-  final _cardNumberController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
-  final _cardHolderController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _expiryController = TextEditingController();
+  final TextEditingController _cvvController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   bool _isProcessing = false;
-  bool _usePoints = false; // حالة استخدام النقاط
-  final double _pointsRate = 0.01; // نسبة تحويل النقاط
-
-  @override
-  void initState() {
-    super.initState();
-    // تعيين الحالة الافتراضية بناءً على القيمة الممررة
-    _usePoints = widget.usePoints;
-  }
 
   @override
   void dispose() {
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
-    _cardHolderController.dispose();
+    _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     super.dispose();
   }
 
-  // حساب الخصم بناءً على النقاط
-  double _calculatePointsDiscount() {
-    return widget.userPoints * _pointsRate;
-  }
-
-  // حساب المبلغ النهائي بعد الخصم
-  double _calculateFinalAmount() {
-    double amount = widget.finalAmount;
-    
-    if (_usePoints) {
-      double discount = _calculatePointsDiscount();
-      if (discount > amount) {
-        return 0.0;
-      }
-      return amount - discount;
-    }
-    
-    return amount;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final double pointsDiscount = _calculatePointsDiscount();
-    final double finalAmount = _calculateFinalAmount();
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('الدفع باستخدام ${widget.paymentMethod['name']}'),
+        title: Text('الدفع بـ ${widget.paymentMethod['name']}'),
         backgroundColor: widget.primaryColor,
         flexibleSpace: Container(
           decoration: BoxDecoration(
@@ -1390,177 +1357,25 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // خيار استخدام النقاط
-            _buildPointsOption(pointsDiscount, finalAmount),
-
-            const SizedBox(height: 16),
-
             // ملخص الطلب
-            _buildOrderSummary(finalAmount, pointsDiscount),
+            _buildOrderSummary(),
 
             const SizedBox(height: 24),
 
             // نموذج الدفع
             _buildPaymentForm(),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
             // زر تأكيد الدفع
-            _buildConfirmButton(finalAmount),
+            _buildConfirmButton(),
           ],
         ),
       ),
     );
   }
 
- Widget _buildPointsOption(double pointsDiscount, double finalAmount) {
-  return Card(
-    elevation: 3,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // تصميم مميز مع خلفية للنقاط
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.amber.withOpacity(0.5)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber[700],
-                      size: 20,
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'استخدام النقاط',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 255, 154, 22),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: _usePoints,
-                onChanged: (value) {
-                  setState(() {
-                    _usePoints = value;
-                  });
-                },
-                activeColor: widget.primaryColor,
-                activeTrackColor: widget.primaryColor.withOpacity(0.5),
-              ),
-            ],
-          ),
-          
-          if (_usePoints) ...[
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            
-            // معلومات النقاط مع تصميم بطاقات صغيرة
-            _buildPointsInfoCard(
-              icon: Icons.star,
-              iconColor: Colors.amber,
-              title: 'النقاط المتاحة',
-              value: '${widget.userPoints} نقطة',
-            ),
-            
-            const SizedBox(height: 8),
-            
-            _buildPointsInfoCard(
-              icon: Icons.attach_money,
-              iconColor: Colors.green,
-              title: 'قيمة النقاط',
-              value: '${pointsDiscount.toStringAsFixed(2)} د.ع',
-            ),
-            
-            const SizedBox(height: 8),
-            
-            _buildPointsInfoCard(
-              icon: Icons.payment,
-              iconColor: widget.primaryColor,
-              title: 'المبلغ بعد الخصم',
-              value: '${finalAmount.toStringAsFixed(2)} د.ع',
-              isHighlighted: true,
-            ),
-          ],
-        ],
-      ),
-    ),
-  );
-}
-
-// دالة مساعدة لإنشاء بطاقات معلومات النقاط
-Widget _buildPointsInfoCard({
-  required IconData icon,
-  required Color iconColor,
-  required String title,
-  required String value,
-  bool isHighlighted = false,
-}) {
-  return Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: isHighlighted ? iconColor.withOpacity(0.1) : Colors.grey[50],
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: isHighlighted ? iconColor : Colors.grey[300]!,
-        width: isHighlighted ? 1.5 : 1,
-      ),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: isHighlighted ? iconColor : Colors.black,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-  
-
-  Widget _buildOrderSummary(double finalAmount, double pointsDiscount) {
+  Widget _buildOrderSummary() {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -1574,77 +1389,42 @@ Widget _buildPointsInfoCard({
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            ...widget.services
-                .map(
-                  (service) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            service.name,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        Text(
-                          '${service.amount.toStringAsFixed(2)} د.ع',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(),
-            const Divider(),
-            
-            // إجمالي قبل الخصم
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('الإجمالي:'),
-                Text(
-                  '${widget.finalAmount.toStringAsFixed(2)} د.ع',
-                  style: const TextStyle(fontSize: 14),
+            ...widget.services.map(
+              (service) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(service.name),
+                    Text('${service.amount.toStringAsFixed(2)} د.ع'),
+                  ],
                 ),
-              ],
+              ),
             ),
-            
-            // خصم النقاط (إذا تم تفعيله)
-            if (_usePoints) ...[
-              const SizedBox(height: 8),
+            const Divider(),
+            if (widget.usePoints) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('خصم النقاط:'),
-                  Text(
-                    '-${pointsDiscount.toStringAsFixed(2)} د.ع',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('خصم النقاط (${widget.userPoints} نقطة)'),
+                  Text('-${widget.pointsDiscount.toStringAsFixed(2)} د.ع'),
                 ],
               ),
+              const Divider(),
             ],
-            
-            const SizedBox(height: 8),
-            const Divider(),
-            
-            // المبلغ النهائي
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'المبلغ النهائي:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  'المبلغ الإجمالي:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  '${finalAmount.toStringAsFixed(2)} د.ع',
+                  '${widget.finalAmount.toStringAsFixed(2)} د.ع',
                   style: TextStyle(
-                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: widget.primaryColor,
+                    fontSize: 16,
                   ),
                 ),
               ],
@@ -1655,22 +1435,21 @@ Widget _buildPointsInfoCard({
     );
   }
 
-  // باقي الدوال تبقى كما هي (_buildPaymentForm, _buildCardPaymentForm, etc.)
-
-
   Widget _buildPaymentForm() {
     final methodType = widget.paymentMethod['type'];
 
     if (methodType == 'card') {
-      return _buildCardPaymentForm();
+      return _buildCardForm();
     } else if (methodType == 'wallet') {
-      return _buildWalletPaymentForm();
+      return _buildWalletForm();
+    } else if (methodType == 'bank') {
+      return _buildBankTransferForm();
     } else {
-      return _buildBankPaymentForm();
+      return _buildDigitalForm();
     }
   }
 
-  Widget _buildCardPaymentForm() {
+  Widget _buildCardForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1716,7 +1495,7 @@ Widget _buildPointsInfoCard({
         ),
         const SizedBox(height: 16),
         TextFormField(
-          controller: _cardHolderController,
+          controller: _nameController,
           decoration: const InputDecoration(
             labelText: 'اسم حامل البطاقة',
             border: OutlineInputBorder(),
@@ -1727,7 +1506,7 @@ Widget _buildPointsInfoCard({
     );
   }
 
-  Widget _buildWalletPaymentForm() {
+  Widget _buildWalletForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1759,47 +1538,62 @@ Widget _buildPointsInfoCard({
     );
   }
 
-  Widget _buildBankPaymentForm() {
-    return Column(
+  Widget _buildBankTransferForm() {
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'معلومات التحويل',
+        Text(
+          'معلومات التحويل البنكي',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 16),
-        const Text(
-          'يرجى التحويل إلى الحساب البنكي التالي:',
-          style: TextStyle(fontSize: 16),
+        SizedBox(height: 16),
+        ListTile(
+          leading: Icon(Icons.info, color: Colors.blue),
+          title: Text('اسم البنك: الرافدين'),
+          subtitle: Text('رقم الحساب: 1234567890'),
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'اسم البنك: البنك العراقي\nرقم الحساب: 1234567890\nIBAN: IQ00ABCD1234567890',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _cardHolderController,
-          decoration: const InputDecoration(
-            labelText: 'اسم المحول',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.person),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          decoration: const InputDecoration(
-            labelText: 'رقم المرجع',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.receipt),
-          ),
+        ListTile(
+          leading: Icon(Icons.info, color: Colors.blue),
+          title: Text('اسم المستفيد: بلدية الكوت'),
+          subtitle: Text('IBAN: IQ12 RAFD 1234 5678 9012 3456'),
         ),
       ],
     );
   }
 
+  Widget _buildDigitalForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'معلومات الدفع',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _phoneController,
+          decoration: const InputDecoration(
+            labelText: 'رقم الهاتف',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.phone),
+          ),
+          keyboardType: TextInputType.phone,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _emailController,
+          decoration: const InputDecoration(
+            labelText: 'البريد الإلكتروني',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.email),
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+      ],
+    );
+  }
 
-  Widget _buildConfirmButton(double finalAmount) {
+  Widget _buildConfirmButton() {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -1811,18 +1605,18 @@ Widget _buildPointsInfoCard({
           ),
           elevation: 3,
         ),
-        onPressed: _isProcessing ? null : () => _processPayment(finalAmount),
+        onPressed: _isProcessing ? null : _processPayment,
         child: _isProcessing
             ? const CircularProgressIndicator(color: Colors.white)
-            : Text(
-                'تأكيد الدفع ${finalAmount.toStringAsFixed(2)} د.ع',
-                style: const TextStyle(fontSize: 18, color: Colors.white),
+            : const Text(
+                'تأكيد الدفع',
+                style: TextStyle(fontSize: 18, color: Colors.white),
               ),
       ),
     );
   }
 
-  Future<void> _processPayment(double finalAmount) async {
+  Future<void> _processPayment() async {
     setState(() {
       _isProcessing = true;
     });
@@ -1834,68 +1628,189 @@ Widget _buildPointsInfoCard({
       _isProcessing = false;
     });
 
-    // عرض نتيجة الدفع
-    final success = true; // يمكن تغيير هذا بناءً على نتيجة الدفع الفعلية
-
-    if (success) {
-      // حذف الخدمات من قاعدة البيانات بعد اكتمال الدفع بنجاح
-      for (final service in widget.services) {
-        await _deleteServiceFromSupabase(service);
-      }
-
-      // عرض رسالة النجاح
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تمت عملية الدفع بنجاح')));
-
-      // استدعاء callback النجاح
-      widget.onPaymentSuccess?.call();
-
-      // العودة إلى الشاشة السابقة
-      Navigator.pop(context);
-    } else {
-      // عرض رسالة الخطأ
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('فشلت عملية الدفع، يرجى المحاولة مرة أخرى'),
-        ),
-      );
-    }
+    // عرض الفاتورة في شاشة منبثقة
+    _showInvoiceDialog();
   }
 
-  Future<void> _deleteServiceFromSupabase(ServiceItem service) async {
-    try {
-      final response = await Supabase.instance.client
-          .from('services')
-          .delete()
-          .eq('id', service.id);
+  void _showInvoiceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // رأس الفاتورة
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'تم الدفع بنجاح',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-      if (response != null) {
-        print('تم حذف الخدمة بنجاح: ${service.name}');
-      }
-    } catch (e) {
-      print('Exception deleting service: $e');
-    }
+                const SizedBox(height: 24),
+                const Divider(),
+
+                // تفاصيل الفاتورة
+                const Text(
+                  'تفاصيل الفاتورة',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 16),
+
+                // رقم الفاتورة
+                _buildInvoiceDetailRow(
+                  'رقم الفاتورة',
+                  '#${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+                ),
+
+                // تاريخ الدفع
+                _buildInvoiceDetailRow(
+                  'تاريخ الدفع',
+                  DateFormat('yyyy/MM/dd - HH:mm').format(DateTime.now()),
+                ),
+
+                // طريقة الدفع
+                _buildInvoiceDetailRow(
+                  'طريقة الدفع',
+                  widget.paymentMethod['name'],
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(),
+
+                // المبلغ الإجمالي
+                _buildInvoiceDetailRow(
+                  'المبلغ الإجمالي',
+                  '${widget.finalAmount.toStringAsFixed(2)} د.ع',
+                  isTotal: true,
+                ),
+
+                const SizedBox(height: 24),
+
+                // زر الموافقة
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (widget.onPaymentSuccess != null) {
+                        widget.onPaymentSuccess!();
+                      }
+                      Navigator.pushReplacementNamed(
+                        context,
+                        UserMainScreen.screenRoot,
+                      );
+                    },
+                    child: const Text(
+                      'حسناً',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                  ),
+                  
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInvoiceDetailRow(
+    String label,
+    String value, {
+    bool isTotal = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isTotal ? 16 : 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+              color: Colors.grey[600],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isTotal ? 18 : 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+              color: isTotal ? widget.primaryColor : Colors.grey[800],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'نظام الدفع',
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+  runApp(
+    MaterialApp(
       home: PaymentScreen(
-        services: [],
+        services: [
+          ServiceItem(
+            id: '1',
+            name: 'خدمة المياه',
+            amount: 25000,
+            color: Colors.blue,
+            gradient: [Colors.blue, Colors.lightBlue],
+          ),
+          ServiceItem(
+            id: '2',
+            name: 'خدمة الكهرباء',
+            amount: 35000,
+            color: Colors.orange,
+            gradient: [Colors.orange, Colors.deepOrange],
+          ),
+        ],
         primaryColor: Colors.blue,
         primaryGradient: [Colors.blue, Colors.lightBlue],
       ),
-    );
-  }
+    ),
+  );
 }

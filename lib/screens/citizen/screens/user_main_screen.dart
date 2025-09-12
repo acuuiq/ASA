@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'service_details_screen.dart';
-import 'payment_screen.dart';
-import 'points_and_gifts_screen.dart';
-import 'waste_schedule_screen.dart';
-import 'container_request_screen.dart';
-import 'settings_screen.dart';
-import 'signin_screen.dart';
-import 'regesyer_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/service_details_screen.dart';
+import '../services/payment_screen.dart';
+import '../services/points_and_gifts_screen.dart';
+import '../services/waste_schedule_screen.dart';
+import '../services/container_request_screen.dart';
+import 'profile_screen.dart';
+import 'notifications_screen.dart';
+import '../auth/signin_screen.dart';
 
-class UserThing extends StatefulWidget {
-  static const String screenRoot = 'user_thing';
+class UserMainScreen extends StatefulWidget {
+  static const String screenRoot = 'user_main';
 
-  const UserThing({super.key});
+  const UserMainScreen({super.key});
 
   @override
-  _UserThingState createState() => _UserThingState();
+  _UserMainScreenState createState() => _UserMainScreenState();
 }
 
-class _UserThingState extends State<UserThing>
+class _UserMainScreenState extends State<UserMainScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentIndex = 0;
@@ -590,130 +590,22 @@ class _UserThingState extends State<UserThing>
   Widget _buildProfileButton(Color serviceColor) {
     return IconButton(
       icon: Icon(Icons.person, color: Colors.white, size: 24),
-      onPressed: _showProfileDialog,
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfileScreen(
+              userProfile: _userProfile,
+              onSignOut: _signOut,
+              primaryColor: _primaryColor,
+              textColor: _textColor,
+              textSecondaryColor: _textSecondaryColor,
+              errorColor: _errorColor,
+            ),
+          ),
+        );
+      },
       tooltip: 'الملف الشخصي',
-    );
-  }
-
-  // دالة لعرض نافذة الملف الشخصي
-  void _showProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Row(),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: _primaryColor.withOpacity(0.1),
-                child: Icon(Icons.person, size: 40, color: _primaryColor),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _userProfile?['full_name'] ?? 'غير معروف',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _textColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _userProfile?['email'] ?? 'غير معروف',
-                style: TextStyle(fontSize: 14, color: _textSecondaryColor),
-              ),
-              const SizedBox(height: 16),
-              Divider(height: 1, color: Colors.grey[300]),
-              const SizedBox(height: 16),
-              _buildProfileInfoItem(
-                Icons.credit_card,
-                'رقم الهوية',
-                _userProfile?['id_number'] ?? 'غير معروف',
-              ),
-              _buildProfileInfoItem(
-                Icons.email,
-                'البريد الإلكتروني',
-                _userProfile?['email'] ?? 'غير معروف',
-              ),
-              _buildProfileInfoItem(
-                Icons.star,
-                'حالة الحساب',
-                _userProfile?['status'] == 'approved'
-                    ? 'معتمد'
-                    : _userProfile?['status'] == 'under_review'
-                    ? 'قيد المراجعة'
-                    : 'مرفوض',
-              ),
-              const SizedBox(height: 16),
-              // زر تسجيل الخروج
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _signOut,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _errorColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  child: const Text('تسجيل الخروج'),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // دالة لبناء عنصر معلومات الملف الشخصي
-  Widget _buildProfileInfoItem(IconData icon, String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: _primaryColor),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(fontSize: 12, color: _textSecondaryColor),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: _textColor,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCleaningSchedule(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WasteScheduleScreen(
-          serviceColor: _services[_currentIndex]['color'] as Color,
-        ),
-      ),
     );
   }
 
@@ -729,7 +621,17 @@ class _UserThingState extends State<UserThing>
               size: 24,
               color: Colors.white,
             ),
-            onPressed: _showNotifications,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NotificationsScreen(
+                    notifications: _notifications,
+                    serviceColor: _services[_currentIndex]['color'] as Color,
+                  ),
+                ),
+              );
+            },
             tooltip: 'الإشعارات',
           ),
           if (_notifications.any((n) => !n['read']))
@@ -956,142 +858,14 @@ class _UserThingState extends State<UserThing>
     );
   }
 
-  void _showNotifications() {
-    final serviceColor = _services[_currentIndex]['color'] as Color;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                spreadRadius: 2,
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 60,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'الإشعارات',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: serviceColor,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: Colors.grey[600]),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, thickness: 1, color: Colors.grey),
-              Expanded(
-                child: _notifications.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.notifications_off,
-                              size: 60,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'لا يوجد إشعارات',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(top: 8),
-                        itemCount: _notifications.length,
-                        itemBuilder: (context, index) {
-                          final notification = _notifications[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: (notification['color'] as Color)
-                                  .withOpacity(0.1),
-                              child: Icon(
-                                notification['icon'] as IconData,
-                                color: notification['color'] as Color,
-                              ),
-                            ),
-                            title: Text(
-                              notification['title'],
-                              style: TextStyle(
-                                fontWeight: (notification['read'] as bool)
-                                    ? FontWeight.normal
-                                    : FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(notification['message']),
-                                const SizedBox(height: 4),
-                                Text(
-                                  DateFormat(
-                                    'yyyy-MM-dd - hh:mm a',
-                                  ).format(notification['date'] as DateTime),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            trailing: !(notification['read'] as bool)
-                                ? Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: serviceColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  )
-                                : null,
-                            onTap: () {
-                              setState(() {
-                                notification['read'] = true;
-                              });
-                            },
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+  void _showCleaningSchedule(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WasteScheduleScreen(
+          serviceColor: _services[_currentIndex]['color'] as Color,
+        ),
+      ),
     );
   }
 
@@ -1225,7 +999,7 @@ class OffersAndPrizesScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          PointsAndGiftsScreen(serviceColor: serviceColor),
+                                  PointsAndGiftsScreen(serviceColor: serviceColor),
                     ),
                   );
                 },
@@ -1288,522 +1062,6 @@ class OffersAndPrizesScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class PointsAndGiftsScreen extends StatelessWidget {
-  final Color serviceColor;
-
-  const PointsAndGiftsScreen({super.key, required this.serviceColor});
-
-  void _navigateToPaymentScreen(BuildContext context, String serviceName) {
-    // تحديد بيانات الخدمة بناءً على الاسم
-    Map<String, dynamic> serviceData;
-    const double amount = 185.75;
-
-    switch (serviceName) {
-      case 'الكهرباء':
-        serviceData = {
-          'color': const Color(0xFF6A1B9A),
-          'gradient': [const Color(0xFF9C27B0), const Color(0xFF6A1B9A)],
-        };
-        break;
-      case 'الماء':
-        serviceData = {
-          'color': const Color(0xFF00ACC1),
-          'gradient': [const Color(0xFF00BCD4), const Color(0xFF00838F)],
-        };
-        break;
-      case 'النفايات':
-        serviceData = {
-          'color': const Color(0xFF43A047),
-          'gradient': [const Color(0xFF66BB6A), const Color(0xFF2E7D32)],
-        };
-        break;
-      default:
-        serviceData = {
-          'color': Colors.blue,
-          'gradient': [Colors.blue, Colors.blue.shade700],
-        };
-    }
-
-    final List<Color> serviceGradient =
-        (serviceData['gradient'] as List<Color>?) ??
-        [serviceColor, serviceColor];
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(
-          services: [
-            ServiceItem(
-              id: '1',
-              name: serviceName,
-              amount: 185.75,
-              color: serviceColor,
-              gradient: serviceGradient,
-              // إزالة الحقل hasDiscount لأنه غير موجود في تعريف ServiceItem
-              // يمكنك استخدام additionalInfo إذا كنت بحاجة لمعلومات إضافية
-              additionalInfo: "معلومات إضافية عن الخدمة", // اختياري
-            ),
-          ],
-          primaryColor: serviceColor,
-          primaryGradient: serviceGradient,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(' النقاط'),
-        backgroundColor: serviceColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // بطاقة النقاط
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [serviceColor.withOpacity(0.8), serviceColor],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, size: 40, color: Colors.white),
-                    const SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'نقاطك الحالية',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
-                        ),
-                        Text(
-                          '1500 نقطة',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          'تعادل 15.00 دينار',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // قسم كيفية كسب النقاط
-            Column(
-              children: [
-                const Text(
-                  'كيفية كسب النقاط',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 15),
-                _buildPointsItem(
-                  icon: Icons.payment,
-                  title: 'الدفع في الموعد',
-                  points: '+50 نقطة',
-                  color: Colors.green,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PointsDetailsScreen(
-                          pointsType: 'الدفع في الموعد',
-                          serviceColor: serviceColor,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                _buildPointsItem(
-                  icon: Icons.alarm,
-                  title: 'الدفع المبكر',
-                  points: '+100 نقطة',
-                  color: Colors.blue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PointsDetailsScreen(
-                          pointsType: 'الدفع المبكر',
-                          serviceColor: serviceColor,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                _buildPointsItem(
-                  icon: Icons.swipe_vertical_sharp,
-                  title: 'فعاليات متجددة ',
-                  points: '  ',
-
-                  color: Colors.purple,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PointsDetailsScreen(
-                          pointsType: 'فعاليات متجددة ',
-
-                          serviceColor: serviceColor,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 0),
-              ],
-            ),
-
-            // قسم استخدام النقاط
-            const Text(
-              'استخدام النقاط',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 15),
-            _buildUsageItem(
-              icon: Icons.quiz_sharp,
-              title: 'ما فائدة النقاط وكيف تستخدمها؟  ',
-              description:
-                  'تستخدم هذه النقاط في واجهات الدفع للخصم من سعر الفواتير كل 100 نقطة = 1 دينار',
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPointsItem({
-    required IconData icon,
-    required String title,
-    required String points,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(child: Text(title, style: const TextStyle(fontSize: 16))),
-            Text(
-              points,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUsageItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 28, color: serviceColor),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class PrizesRaffleScreen extends StatefulWidget {
-  final Color serviceColor;
-
-  const PrizesRaffleScreen({super.key, required this.serviceColor});
-
-  @override
-  _PrizesRaffleScreenState createState() => _PrizesRaffleScreenState();
-}
-
-class _PrizesRaffleScreenState extends State<PrizesRaffleScreen> {
-  bool _paymentVerified = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _paymentVerified = true;
-        });
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('السحب على الجوائز'),
-        backgroundColor: widget.serviceColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            Center(
-              child: Icon(
-                Icons.celebration,
-                size: 80,
-                color: widget.serviceColor,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: Text(
-                _paymentVerified
-                    ? 'تم التحقق من دفعتك بنجاح!'
-                    : 'جاري التحقق من دفعتك...',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: _paymentVerified ? Colors.green : Colors.orange,
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            const Text(
-              'اختر الجائزة التي ترغب بالمشاركة في السحب عليها:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-
-            if (_paymentVerified) ...[
-              _buildPrizeCard(
-                title: "السحب على سيارة",
-                description: "فرصة لربح سيارة جديدة كلياً",
-                icon: Icons.directions_car,
-                color: Colors.blue,
-                onTap: () => _showRaffleConfirmation(context, "سيارة جديدة"),
-              ),
-              const SizedBox(height: 15),
-              _buildPrizeCard(
-                title: "السحب على مكيف سبليت",
-                description: "ربح مكيف سبليت عالي الجودة",
-                icon: Icons.ac_unit,
-                color: Colors.teal,
-                onTap: () => _showRaffleConfirmation(context, "مكيف سبليت"),
-              ),
-              const SizedBox(height: 15),
-              _buildPrizeCard(
-                title: 'السحب على 1000 نقطة',
-                description: '1000 نقطة قابلة للاستبدال بهدايا',
-                icon: Icons.star,
-                color: Colors.amber,
-                onTap: () => _showRaffleConfirmation(context, '1000 نقطة'),
-              ),
-            ] else ...[
-              const Center(child: CircularProgressIndicator()),
-            ],
-
-            const SizedBox(height: 30),
-            if (_paymentVerified) ...[
-              const Text(
-                'شروط المشاركة:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              _buildConditionItem('الدفع في الموعد المحدد'),
-              _buildConditionItem('عدم وجود متأخرات سابقة'),
-              _buildConditionItem('صحة بيانات المستخدم'),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPrizeCard({
-    required String title,
-    required String description,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(15),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, size: 30, color: color),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      description,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_left, color: Colors.grey[400]),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConditionItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: widget.serviceColor, size: 20),
-          const SizedBox(width: 8),
-          Text(text),
-        ],
-      ),
-    );
-  }
-
-  void _showRaffleConfirmation(BuildContext context, String prize) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('المشاركة في السحب على $prize'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, size: 60, color: Colors.green),
-            const SizedBox(height: 20),
-            Text(
-              'تمت مشاركتك في السحب على $prize بنجاح!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'سيتم الإعلان عن النتائج عبر التطبيق والبريد الإلكتروني',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('حسناً'),
-          ),
-        ],
       ),
     );
   }
