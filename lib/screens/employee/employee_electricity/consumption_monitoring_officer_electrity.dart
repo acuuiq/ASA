@@ -1,4 +1,5 @@
 //مراقب الاستهلاك
+// مراقب الاستهلاك - تصميم محسّن
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -14,18 +15,20 @@ class ConsumptionMonitoringOfficerScreen extends StatefulWidget {
 
 class ConsumptionMonitoringOfficerScreenState
     extends State<ConsumptionMonitoringOfficerScreen> {
-  // الألوان للتصميم الرسمي
-  final Color _primaryColor = const Color(0xFF0D47A1);
-  final Color _secondaryColor = const Color(0xFF1976D2);
-  final Color _accentColor = const Color(0xFF64B5F6);
-  final Color _backgroundColor = const Color(0xFFF8F9FA);
+  // الألوان للتصميم الجديد
+  final Color _primaryColor = const Color(0xFF1A237E);
+  final Color _secondaryColor = const Color(0xFF3949AB);
+  final Color _accentColor = const Color(0xFF536DFE);
+  final Color _backgroundColor = const Color(0xFFF5F7FF);
   final Color _cardColor = Colors.white;
-  final Color _textColor = const Color(0xFF212121);
-  final Color _textSecondaryColor = const Color(0xFF757575);
-  final Color _successColor = const Color(0xFF2E7D32);
-  final Color _warningColor = const Color(0xFFF57C00);
-  final Color _errorColor = const Color(0xFFD32F2F);
-  final Color _borderColor = const Color(0xFFE0E0E0);
+  final Color _textColor = const Color(0xFF263238);
+  final Color _textSecondaryColor = const Color(0xFF78909C);
+  final Color _successColor = const Color(0xFF4CAF50);
+  final Color _warningColor = const Color(0xFFFF9800);
+  final Color _errorColor = const Color(0xFFF44336);
+  final Color _borderColor = const Color(0xFFE3E8F2);
+  final Color _gradientStart = const Color(0xFF1A237E);
+  final Color _gradientEnd = const Color(0xFF283593);
 
   int _selectedTab = 0;
   String _selectedArea = 'جميع المناطق';
@@ -126,6 +129,15 @@ class ConsumptionMonitoringOfficerScreenState
         title: const Text('مراقبة استهلاك الكهرباء'),
         backgroundColor: _primaryColor,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_gradientStart, _gradientEnd],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -167,8 +179,17 @@ class ConsumptionMonitoringOfficerScreenState
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: _borderColor, width: 1)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: _borderColor, width: 1),
       ),
+      margin: const EdgeInsets.all(12),
       child: Row(
         children: [
           _buildTabButton(0, 'نظرة عامة', Icons.dashboard),
@@ -182,39 +203,38 @@ class ConsumptionMonitoringOfficerScreenState
   Widget _buildTabButton(int index, String title, IconData icon) {
     final isSelected = _selectedTab == index;
     return Expanded(
-      child: TextButton(
-        onPressed: () {
-          setState(() {
-            _selectedTab = index;
-          });
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: isSelected ? _primaryColor : _textSecondaryColor,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Container(
+        margin: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? _primaryColor.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            if (isSelected)
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                height: 3,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: _primaryColor,
-                  borderRadius: BorderRadius.circular(2),
+        child: TextButton(
+          onPressed: () {
+            setState(() {
+              _selectedTab = index;
+            });
+          },
+          style: TextButton.styleFrom(
+            foregroundColor: isSelected ? _primaryColor : _textSecondaryColor,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -245,7 +265,13 @@ class ConsumptionMonitoringOfficerScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // بطاقات الإحصائيات
-          Row(
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 1.5,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
             children: [
               _buildStatCard(
                 'إجمالي الاستهلاك',
@@ -253,25 +279,18 @@ class ConsumptionMonitoringOfficerScreenState
                 Icons.bolt,
                 _primaryColor,
               ),
-              const SizedBox(width: 12),
               _buildStatCard(
                 'متوسط الاستهلاك',
                 '${avgConsumption.toStringAsFixed(1)} ك.و.س/عميل',
                 Icons.show_chart,
                 _secondaryColor,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
               _buildStatCard(
                 'عدد العملاء',
                 NumberFormat('#,###').format(totalCustomers),
                 Icons.people,
                 _successColor,
               ),
-              const SizedBox(width: 12),
               _buildStatCard(
                 'المناطق',
                 '${_consumptionData.length}',
@@ -283,12 +302,15 @@ class ConsumptionMonitoringOfficerScreenState
           const SizedBox(height: 20),
 
           // عنوان قسم المناطق
-          Text(
-            'أداء المناطق',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _textColor,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              'أداء المناطق',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _textColor,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -345,12 +367,12 @@ class ConsumptionMonitoringOfficerScreenState
           ),
           const SizedBox(height: 16),
 
-          // مخطط الاستهلاك الشهري (بديل عن syncfusion)
+          // مخطط الاستهلاك الشهري
           Container(
             height: 300,
             decoration: BoxDecoration(
               color: _cardColor,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -402,9 +424,19 @@ class ConsumptionMonitoringOfficerScreenState
   }
 
   Widget _buildCustomChart() {
-    return CustomPaint(
-      size: const Size(double.infinity, 200),
-      painter: _ConsumptionChartPainter(_monthlyData),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade50, Colors.white],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: CustomPaint(
+        size: const Size(double.infinity, 200),
+        painter: _ConsumptionChartPainter(_monthlyData),
+      ),
     );
   }
 
@@ -428,39 +460,52 @@ class ConsumptionMonitoringOfficerScreenState
     IconData icon,
     Color color,
   ) {
-    return Expanded(
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: _textColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(fontSize: 12, color: _textSecondaryColor),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                Icon(Icons.more_vert, color: _textSecondaryColor, size: 20),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: _textColor,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: TextStyle(fontSize: 12, color: _textSecondaryColor),
+            ),
+          ],
         ),
       ),
     );
@@ -469,10 +514,19 @@ class ConsumptionMonitoringOfficerScreenState
   Widget _buildAreaCard(Map<String, dynamic> areaData) {
     final isIncrease = areaData['changePercent'] > 0;
 
-    return Card(
-      elevation: 2,
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -538,20 +592,6 @@ class ConsumptionMonitoringOfficerScreenState
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: areaData['avgConsumption'] / 100,
-              backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(
-                areaData['avgConsumption'] > 60
-                    ? _errorColor
-                    : areaData['avgConsumption'] > 40
-                    ? _warningColor
-                    : _successColor,
-              ),
-              minHeight: 6,
-              borderRadius: BorderRadius.circular(3),
-            ),
           ],
         ),
       ),
@@ -576,37 +616,34 @@ class ConsumptionMonitoringOfficerScreenState
   }
 
   Widget _buildHighConsumptionCard(Map<String, dynamic> customer) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      customer['name'],
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: _textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      customer['id'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _textSecondaryColor,
-                      ),
-                    ),
-                  ],
+                Text(
+                  customer['name'],
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: _textColor,
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -618,7 +655,7 @@ class ConsumptionMonitoringOfficerScreenState
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '+${customer['percentage']}%',
+                    '${customer['percentage']}%',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -628,53 +665,45 @@ class ConsumptionMonitoringOfficerScreenState
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            Text(
+              customer['address'],
+              style: TextStyle(fontSize: 14, color: _textSecondaryColor),
+            ),
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildCustomerStat(
-                  'الاستهلاك',
+                  'الاستهلاك الحالي',
                   '${customer['consumption']} ك.و.س',
                 ),
                 _buildCustomerStat(
-                  'المتوسط',
-                  '${customer['avgAreaConsumption']} ك.و.س',
+                  'المتوسط السابق',
+                  '${customer['previousConsumption']} ك.و.س',
                 ),
                 _buildCustomerStat(
-                  'التغير',
-                  '${((customer['consumption'] - customer['previousConsumption']) / customer['previousConsumption'] * 100).toStringAsFixed(1)}%',
+                  'متوسط المنطقة',
+                  '${customer['avgAreaConsumption']} ك.و.س',
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              customer['address'],
-              style: TextStyle(
-                fontSize: 12,
-                color: _textSecondaryColor,
-                fontStyle: FontStyle.italic,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _contactCustomer(customer),
+                icon: const Icon(Icons.phone, size: 18),
+                label: const Text('اتصال بالعميل'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _contactCustomer(customer),
-                  child: const Text('اتصال'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _primaryColor,
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () => _sendWarning(customer),
-                  child: const Text('إرسال تنبيه'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _warningColor,
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -700,60 +729,88 @@ class ConsumptionMonitoringOfficerScreenState
   }
 
   Widget _buildComparisonStats() {
-    final totalCurrent = _monthlyData.fold<double>(
+    final currentYearTotal = _monthlyData.fold<int>(
       0,
-      (sum, item) => sum + item.currentYear,
+      (sum, data) => sum + data.currentYear,
     );
-    final totalPrevious = _monthlyData.fold<double>(
+    final previousYearTotal = _monthlyData.fold<int>(
       0,
-      (sum, item) => sum + item.previousYear,
+      (sum, data) => sum + data.previousYear,
     );
-    final changePercent =
-        ((totalCurrent - totalPrevious) / totalPrevious * 100);
+    final changePercent = previousYearTotal > 0
+        ? ((currentYearTotal - previousYearTotal) / previousYearTotal) * 100
+        : 0;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildComparisonItem(
-              'هذا العام',
-              '${NumberFormat('#,###').format(totalCurrent)} ك.و.س',
-              _primaryColor,
-            ),
-            _buildComparisonItem(
-              'العام الماضي',
-              '${NumberFormat('#,###').format(totalPrevious)} ك.و.س',
-              _secondaryColor,
-            ),
-            _buildComparisonItem(
-              'التغير',
-              '${changePercent.toStringAsFixed(1)}%',
-              changePercent > 0 ? _errorColor : _successColor,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildComparisonItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: _textSecondaryColor)),
-      ],
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'إجمالي هذا العام',
+                style: TextStyle(fontSize: 14, color: _textColor),
+              ),
+              Text(
+                '${NumberFormat('#,###').format(currentYearTotal)} ك.و.س',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: _textColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'إجمالي العام الماضي',
+                style: TextStyle(fontSize: 14, color: _textColor),
+              ),
+              Text(
+                '${NumberFormat('#,###').format(previousYearTotal)} ك.و.س',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: _textColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'نسبة التغير',
+                style: TextStyle(fontSize: 14, color: _textColor),
+              ),
+              Text(
+                '${changePercent.toStringAsFixed(1)}%',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: changePercent >= 0 ? _errorColor : _successColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -763,59 +820,60 @@ class ConsumptionMonitoringOfficerScreenState
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('تصفية البيانات'),
-          content: SingleChildScrollView(
+          content: SizedBox(
+            width: double.maxFinite,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ListTile(
-                  title: const Text('الفترة الزمنية'),
-                  trailing: DropdownButton<String>(
-                    value: _selectedPeriod,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedPeriod = newValue!;
-                      });
-                      Navigator.pop(context);
-                    },
-                    items:
-                        <String>[
-                          'هذا الشهر',
-                          'الربع الأول',
-                          'الربع الثاني',
-                          'الربع الثالث',
-                          'الربع الرابع',
-                          'هذا العام',
-                        ].map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                DropdownButtonFormField<String>(
+                  value: _selectedArea,
+                  items:
+                      [
+                        'جميع المناطق',
+                        ..._consumptionData.map((e) => e['area'] as String),
+                      ].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedArea = newValue!;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'المنطقة',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                ListTile(
-                  title: const Text('المنطقة'),
-                  trailing: DropdownButton<String>(
-                    value: _selectedArea,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedArea = newValue!;
-                      });
-                      Navigator.pop(context);
-                    },
-                    items:
-                        <String>[
-                          'جميع المناطق',
-                          'حي الرياض',
-                          'حي النخيل',
-                          'حي العليا',
-                          'حي الصفا',
-                        ].map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedPeriod,
+                  items:
+                      [
+                        'هذا الشهر',
+                        'الربع الأول',
+                        'الربع الثاني',
+                        'الربع الثالث',
+                        'الربع الرابع',
+                        'هذا العام',
+                      ].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedPeriod = newValue!;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'الفترة',
+                    border: OutlineInputBorder(),
                   ),
                 ),
               ],
@@ -823,12 +881,14 @@ class ConsumptionMonitoringOfficerScreenState
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
               child: const Text('إلغاء'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context).pop();
               },
               child: const Text('تطبيق'),
             ),
@@ -839,69 +899,42 @@ class ConsumptionMonitoringOfficerScreenState
   }
 
   void _showNotifications() {
-    // implementation for showing notifications
+    // TODO: Implement notifications screen
   }
 
   void _generateReport() {
-    // implementation for generating reports
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('جاري إنشاء التقرير...'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    // TODO: Implement report generation
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('جاري إنشاء التقرير...')));
   }
 
   void _contactCustomer(Map<String, dynamic> customer) {
+    // TODO: Implement customer contact
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('اتصال بالعميل: ${customer['name']}'),
+          title: Text('اتصال بـ ${customer['name']}'),
           content: Text('هل تريد الاتصال بالعميل ${customer['name']}؟'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء'),
-            ),
-            TextButton(
               onPressed: () {
-                Navigator.pop(context);
-                // implementation for calling customer
+                Navigator.of(context).pop();
               },
-              child: const Text('اتصال'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _sendWarning(Map<String, dynamic> customer) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('إرسال تنبيه إلى: ${customer['name']}'),
-          content: const Text(
-            'هل تريد إرسال تنبيه استهلاك مرتفع إلى هذا العميل؟',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
               child: const Text('إلغاء'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context).pop();
+                // TODO: Implement actual call
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('تم إرسال التنبيه إلى ${customer['name']}'),
-                    backgroundColor: _successColor,
+                    content: Text('جاري الاتصال بـ ${customer['name']}...'),
                   ),
                 );
               },
-              child: const Text('إرسال'),
+              child: const Text('اتصال'),
             ),
           ],
         );
@@ -912,13 +945,12 @@ class ConsumptionMonitoringOfficerScreenState
 
 class MonthlyConsumption {
   final String month;
-  final double currentYear;
-  final double previousYear;
+  final int currentYear;
+  final int previousYear;
 
   MonthlyConsumption(this.month, this.currentYear, this.previousYear);
 }
 
-// رسام مخصص للرسم البياني
 class _ConsumptionChartPainter extends CustomPainter {
   final List<MonthlyConsumption> data;
 
@@ -926,106 +958,89 @@ class _ConsumptionChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+    final maxValue = data
+        .map(
+          (e) =>
+              e.currentYear > e.previousYear ? e.currentYear : e.previousYear,
+        )
+        .reduce((a, b) => a > b ? a : b)
+        .toDouble();
 
-    final maxValue =
-        data.fold<double>(
-          0,
-          (max, item) => item.currentYear > max ? item.currentYear : max,
-        ) *
-        1.1;
+    final width = size.width;
+    final height = size.height;
+    final barWidth = width / (data.length * 3 - 1);
+    final spacing = barWidth / 2;
 
-    // رسم المحور X
-    final xAxisPaint = Paint()
-      ..color = Colors.grey
-      ..strokeWidth = 1;
+    final currentYearPaint = Paint()
+      ..color = const Color(0xFF1A237E)
+      ..style = PaintingStyle.fill;
 
-    canvas.drawLine(
-      Offset(0, size.height - 20),
-      Offset(size.width, size.height - 20),
-      xAxisPaint,
-    );
+    final previousYearPaint = Paint()
+      ..color = const Color(0xFF3949AB)
+      ..style = PaintingStyle.fill;
 
-    // رسم الخطوط للبيانات
-    _drawLine(
-      canvas,
-      size,
-      data.map((e) => e.currentYear).toList(),
-      Colors.blue,
-      maxValue,
-    );
-    _drawLine(
-      canvas,
-      size,
-      data.map((e) => e.previousYear).toList(),
-      Colors.green,
-      maxValue,
-    );
+    // رسم الأعمدة
+    for (var i = 0; i < data.length; i++) {
+      final item = data[i];
+      final x = i * (barWidth * 2 + spacing);
 
-    // رسم التسميات
-    drawLabels(canvas, size, data.map((e) => e.month).toList());
-  }
+      // العمود للعام الحالي
+      final currentYearHeight = (item.currentYear / maxValue) * height;
+      canvas.drawRect(
+        Rect.fromPoints(
+          Offset(x, height - currentYearHeight),
+          Offset(x + barWidth, height),
+        ),
+        currentYearPaint,
+      );
 
-  void _drawLine(
-    Canvas canvas,
-    Size size,
-    List<double> values,
-    Color color,
-    double maxValue,
-  ) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final path = Path();
-    final xStep = size.width / (values.length - 1);
-    final yFactor = (size.height - 40) / maxValue;
-
-    for (int i = 0; i < values.length; i++) {
-      final x = i * xStep;
-      final y = size.height - 20 - (values[i] * yFactor);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
+      // العمود للعام الماضي
+      final previousYearHeight = (item.previousYear / maxValue) * height;
+      canvas.drawRect(
+        Rect.fromPoints(
+          Offset(x + barWidth + spacing, height - previousYearHeight),
+          Offset(x + barWidth * 2 + spacing, height),
+        ),
+        previousYearPaint,
+      );
     }
 
-    canvas.drawPath(path, paint);
-  }
+    // رسم النصوص (الشهور)
+    final textStyle = ui.TextStyle(
+      color: const Color(0xFF263238),
+      fontSize: 10,
+    );
 
-  void drawLabels(Canvas canvas, Size size, List<String> labels) {
-    final xstep = size.width / (labels.length - 1);
-    final textStyle = TextStyle(fontSize: 10, color: Colors.black);
+    for (var i = 0; i < data.length; i++) {
+      final item = data[i];
+      final x = i * (barWidth * 2 + spacing) + barWidth;
 
-    for (int i = 0; i < labels.length; i++) {
-      if (i % 2 == 0) {
-        const ltr = ui.TextDirection.ltr;
+      final paragraph =
+          ui.ParagraphBuilder(
+              ui.ParagraphStyle(
+                textDirection: ui.TextDirection.rtl,
+                fontSize: 10,
+              ),
+            )
+            ..pushStyle(textStyle)
+            ..addText(item.month);
 
-        final paragraphBuilder = ui.ParagraphBuilder(
-          ui.ParagraphStyle(
-            textDirection: ltr, // تم التصحيح هنا
-            fontSize: 10,
-          ),
-        );
+      final paragraphLayout = paragraph.build()
+        ..layout(ui.ParagraphConstraints(width: barWidth * 2));
 
-        paragraphBuilder.pushStyle(textStyle as ui.TextStyle);
-        paragraphBuilder.addText(labels[i]);
-        final paragraph = paragraphBuilder.build();
-        paragraph.layout(ui.ParagraphConstraints(width: size.width));
-
-        final x = i * xstep - (paragraph.width / 2);
-        final y = size.height - 5;
-
-        canvas.drawParagraph(paragraph, Offset(x, y));
-      }
+      canvas.drawParagraph(
+        paragraphLayout,
+        Offset(x - paragraphLayout.width / 2, height - paragraphLayout.height),
+      );
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+void main() {
+  runApp(const MaterialApp(home: ConsumptionMonitoringOfficerScreen()));
 }
