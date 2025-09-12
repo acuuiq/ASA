@@ -1,3 +1,4 @@
+//مراقب الاستهلاك
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -7,11 +8,11 @@ class ConsumptionMonitoringOfficerScreen extends StatefulWidget {
   static const String screenroot = 'consumption_monitoring_officer_screen';
 
   @override
-  _ConsumptionMonitoringOfficerScreenState createState() =>
-      _ConsumptionMonitoringOfficerScreenState();
+  ConsumptionMonitoringOfficerScreenState createState() =>
+      ConsumptionMonitoringOfficerScreenState();
 }
 
-class _ConsumptionMonitoringOfficerScreenState
+class ConsumptionMonitoringOfficerScreenState
     extends State<ConsumptionMonitoringOfficerScreen> {
   // الألوان للتصميم الرسمي
   final Color _primaryColor = const Color(0xFF0D47A1);

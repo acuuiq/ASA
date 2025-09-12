@@ -1,14 +1,15 @@
-//محاسب فاتورة الكهرباء
+//محاسب الفواتير
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class BillingAccountantScreen extends StatefulWidget {
+  const BillingAccountantScreen({super.key});
+
   @override
-  _BillingAccountantScreenState createState() =>
-      _BillingAccountantScreenState();
+  BillingAccountantScreenState createState() => BillingAccountantScreenState();
 }
 
-class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
+class BillingAccountantScreenState extends State<BillingAccountantScreen> {
   final List<Map<String, dynamic>> pendingBills = [
     {
       'id': 'INV-2024-001',

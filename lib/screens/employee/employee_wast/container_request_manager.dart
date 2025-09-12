@@ -1,11 +1,6 @@
-import 'package:flutter/material.dart';    
-import 'package:intl/intl.dart';
-
-
-
 //شاشه مدير طلبات الحاويات ولنفايات
-
-
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ContainerRequestManager extends StatefulWidget {
   static const String screenRoute = 'container_request_manager';
@@ -13,10 +8,12 @@ class ContainerRequestManager extends StatefulWidget {
   const ContainerRequestManager({super.key});
 
   @override
-  State<ContainerRequestManager> createState() => _ContainerRequestManagerState();
+  State<ContainerRequestManager> createState() =>
+      _ContainerRequestManagerState();
 }
 
-class _ContainerRequestManagerState extends State<ContainerRequestManager> with SingleTickerProviderStateMixin {
+class _ContainerRequestManagerState extends State<ContainerRequestManager>
+    with SingleTickerProviderStateMixin {
   // ألوان التصميم المميز عالمياً
   final Color _primaryColor = const Color(0xFF2E7D32); // أخضر أساسي
   final Color _secondaryColor = const Color(0xFF66BB6A); // أخضر فاتح
@@ -128,9 +125,11 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
       backgroundColor: _backgroundColor,
       appBar: AppBar(
         title: Text(
-          _selectedGateway != null 
-            ? _gateways.firstWhere((g) => g['id'] == _selectedGateway)['title']
-            : 'مدير طلبات الحاويات - النفايات',
+          _selectedGateway != null
+              ? _gateways.firstWhere(
+                  (g) => g['id'] == _selectedGateway,
+                )['title']
+              : 'مدير طلبات الحاويات - النفايات',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -154,22 +153,24 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
             }
           },
         ),
-        actions: _selectedGateway != null ? [
-          IconButton(
-            icon: Icon(Icons.home, color: Colors.white),
-            onPressed: () {
-              setState(() {
-                _selectedGateway = null;
-                _animationController.reset();
-                _animationController.forward();
-              });
-            },
-          )
-        ] : null,
+        actions: _selectedGateway != null
+            ? [
+                IconButton(
+                  icon: Icon(Icons.home, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      _selectedGateway = null;
+                      _animationController.reset();
+                      _animationController.forward();
+                    });
+                  },
+                ),
+              ]
+            : null,
       ),
-      body: _selectedGateway != null 
-        ? _buildGatewayContent(_selectedGateway!)
-        : _buildWheelView(),
+      body: _selectedGateway != null
+          ? _buildGatewayContent(_selectedGateway!)
+          : _buildWheelView(),
     );
   }
 
@@ -186,7 +187,7 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
               // شريط البحث
               _buildSearchBar(),
               SizedBox(height: 20),
-              
+
               Text(
                 'إدارة طلبات الحاويات',
                 style: TextStyle(
@@ -198,13 +199,10 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
               SizedBox(height: 10),
               Text(
                 'اختر البوابة المطلوبة للبدء',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: _textSecondaryColor,
-                ),
+                style: TextStyle(fontSize: 16, color: _textSecondaryColor),
               ),
               SizedBox(height: 30),
-              
+
               // بناء العجلة من دوائر
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
@@ -224,9 +222,9 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
                   },
                 ),
               ),
-              
+
               SizedBox(height: 20),
-              
+
               // إحصائيات سريعة
               _buildQuickStats(),
             ],
@@ -243,11 +241,7 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: TextField(
@@ -283,9 +277,24 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildQuickStatItem('جديدة', '5', Icons.new_releases, Colors.blue),
-                _buildQuickStatItem('قيد المعالجة', '12', Icons.hourglass_bottom, Colors.orange),
-                _buildQuickStatItem('مكتملة', '24', Icons.check_circle, Colors.green),
+                _buildQuickStatItem(
+                  'جديدة',
+                  '5',
+                  Icons.new_releases,
+                  Colors.blue,
+                ),
+                _buildQuickStatItem(
+                  'قيد المعالجة',
+                  '12',
+                  Icons.hourglass_bottom,
+                  Colors.orange,
+                ),
+                _buildQuickStatItem(
+                  'مكتملة',
+                  '24',
+                  Icons.check_circle,
+                  Colors.green,
+                ),
               ],
             ),
           ],
@@ -294,7 +303,12 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
     );
   }
 
-  Widget _buildQuickStatItem(String title, String value, IconData icon, Color color) {
+  Widget _buildQuickStatItem(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Container(
@@ -310,10 +324,7 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
           value,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        Text(
-          title,
-          style: TextStyle(fontSize: 12, color: _textSecondaryColor),
-        ),
+        Text(title, style: TextStyle(fontSize: 12, color: _textSecondaryColor)),
       ],
     );
   }
@@ -395,7 +406,7 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
   // بناء محتوى البوابة المحددة
   Widget _buildGatewayContent(String gatewayId) {
     final gateway = _gateways.firstWhere((g) => g['id'] == gatewayId);
-    
+
     return AnimatedSwitcher(
       duration: Duration(milliseconds: 300),
       child: _getGatewayContent(gateway),
@@ -434,11 +445,13 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
         children: [
           _buildGatewayHeader(gateway),
           SizedBox(height: 20),
-          
+
           // مخطط إحصائي
           Card(
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Column(
@@ -466,32 +479,52 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
               ),
             ),
           ),
-          
+
           SizedBox(height: 20),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatCard('الطلبات الجديدة', '5', Icons.new_releases, Colors.blue),
-              _buildStatCard('قيد المعالجة', '12', Icons.hourglass_bottom, Colors.orange),
+              _buildStatCard(
+                'الطلبات الجديدة',
+                '5',
+                Icons.new_releases,
+                Colors.blue,
+              ),
+              _buildStatCard(
+                'قيد المعالجة',
+                '12',
+                Icons.hourglass_bottom,
+                Colors.orange,
+              ),
             ],
           ),
           SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatCard('المكتملة', '24', Icons.check_circle, Colors.green),
+              _buildStatCard(
+                'المكتملة',
+                '24',
+                Icons.check_circle,
+                Colors.green,
+              ),
               _buildStatCard('الملغاة', '3', Icons.cancel, Colors.red),
             ],
           ),
-          
+
           SizedBox(height: 20),
           Text(
             'آخر الطلبات',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),
-          _buildRequestItem('طلب #1234', 'محمود أحمد', 'قيد المعالجة', Colors.orange),
+          _buildRequestItem(
+            'طلب #1234',
+            'محمود أحمد',
+            'قيد المعالجة',
+            Colors.orange,
+          ),
           _buildRequestItem('طلب #1233', 'سعيد محمد', 'مكتمل', Colors.green),
           _buildRequestItem('طلب #1232', 'فاطمة علي', 'جديد', Colors.blue),
         ],
@@ -513,15 +546,9 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
           ),
         ),
         SizedBox(height: 5),
-        Text(
-          value.toString(),
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        Text(value.toString(), style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(height: 5),
-        Text(
-          label,
-          style: TextStyle(fontSize: 10),
-        ),
+        Text(label, style: TextStyle(fontSize: 10)),
       ],
     );
   }
@@ -535,7 +562,7 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
         children: [
           _buildGatewayHeader(gateway),
           SizedBox(height: 20),
-          
+
           // فلترة الطلبات
           Row(
             children: [
@@ -556,13 +583,45 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
               ),
             ],
           ),
-          
+
           SizedBox(height: 15),
-          _buildRequestItem('طلب #1235', 'أحمد السيد', 'جديد', Colors.blue, showActions: true, isUrgent: true),
-          _buildRequestItem('طلب #1234', 'محمد نور', 'جديد', Colors.blue, showActions: true),
-          _buildRequestItem('طلب #1233', 'سارة عبدالله', 'جديد', Colors.blue, showActions: true, isUrgent: true),
-          _buildRequestItem('طلب #1232', 'خالد أمين', 'جديد', Colors.blue, showActions: true),
-          _buildRequestItem('طلب #1231', 'ليلى مصطفى', 'جديد', Colors.blue, showActions: true),
+          _buildRequestItem(
+            'طلب #1235',
+            'أحمد السيد',
+            'جديد',
+            Colors.blue,
+            showActions: true,
+            isUrgent: true,
+          ),
+          _buildRequestItem(
+            'طلب #1234',
+            'محمد نور',
+            'جديد',
+            Colors.blue,
+            showActions: true,
+          ),
+          _buildRequestItem(
+            'طلب #1233',
+            'سارة عبدالله',
+            'جديد',
+            Colors.blue,
+            showActions: true,
+            isUrgent: true,
+          ),
+          _buildRequestItem(
+            'طلب #1232',
+            'خالد أمين',
+            'جديد',
+            Colors.blue,
+            showActions: true,
+          ),
+          _buildRequestItem(
+            'طلب #1231',
+            'ليلى مصطفى',
+            'جديد',
+            Colors.blue,
+            showActions: true,
+          ),
         ],
       ),
     );
@@ -610,7 +669,12 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
   }
 
   // بناء بطاقة إحصائية
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       elevation: 4,
       child: Padding(
@@ -632,8 +696,14 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
   }
 
   // بناء عنصر طلب
-  Widget _buildRequestItem(String id, String customer, String status, Color statusColor, 
-      {bool showActions = false, bool isUrgent = false}) {
+  Widget _buildRequestItem(
+    String id,
+    String customer,
+    String status,
+    Color statusColor, {
+    bool showActions = false,
+    bool isUrgent = false,
+  }) {
     return Card(
       margin: EdgeInsets.only(bottom: 10),
       color: isUrgent ? statusColor.withOpacity(0.1) : null,
@@ -645,7 +715,7 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
         title: Row(
           children: [
             Text(id, style: TextStyle(fontWeight: FontWeight.bold)),
-            if (isUrgent) 
+            if (isUrgent)
               Padding(
                 padding: EdgeInsets.only(left: 8),
                 child: Icon(Icons.error, color: Colors.red, size: 16),
@@ -679,7 +749,9 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
                 Text('نوع الحاوية: بلاستيك'),
                 Text('الكمية: 5 حاويات'),
                 Text('الحالة: قيد المعالجة'),
-                Text('تاريخ الطلب: ${DateFormat('yyyy/MM/dd').format(DateTime.now())}'),
+                Text(
+                  'تاريخ الطلب: ${DateFormat('yyyy/MM/dd').format(DateTime.now())}',
+                ),
               ],
             ),
           ),
@@ -688,10 +760,7 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
               onPressed: () => Navigator.of(context).pop(),
               child: Text('إغلاق'),
             ),
-            ElevatedButton(
-              onPressed: () {},
-              child: Text('تغيير الحالة'),
-            ),
+            ElevatedButton(onPressed: () {}, child: Text('تغيير الحالة')),
           ],
         );
       },
@@ -707,9 +776,24 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
         children: [
           _buildGatewayHeader(gateway),
           SizedBox(height: 20),
-          _buildRequestItem('طلب #1225', 'علي حسن', 'قيد التوصيل', Colors.orange),
-          _buildRequestItem('طلب #1224', 'ناصر محمد', 'قيد التجميع', Colors.orange),
-          _buildRequestItem('طلب #1223', 'ريم عبدالله', 'قيد التوصيل', Colors.orange),
+          _buildRequestItem(
+            'طلب #1225',
+            'علي حسن',
+            'قيد التوصيل',
+            Colors.orange,
+          ),
+          _buildRequestItem(
+            'طلب #1224',
+            'ناصر محمد',
+            'قيد التجميع',
+            Colors.orange,
+          ),
+          _buildRequestItem(
+            'طلب #1223',
+            'ريم عبدالله',
+            'قيد التوصيل',
+            Colors.orange,
+          ),
         ],
       ),
     );
@@ -760,7 +844,10 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('إحصائيات الطلبات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    'إحصائيات الطلبات',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 15),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -774,7 +861,13 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('معدل الإكمال:'),
-                      Text('85%', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                      Text(
+                        '85%',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(height: 10),
@@ -782,7 +875,10 @@ class _ContainerRequestManagerState extends State<ContainerRequestManager> with 
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('متوسط وقت التنفيذ:'),
-                      Text('2.5 يوم', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        '2.5 يوم',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 ],
