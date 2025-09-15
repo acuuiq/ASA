@@ -179,7 +179,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'خصائي العروض والهدايا') {
+            _selectedSpecialization == 'خصائي الخدمات المميزة') {
           // التنقل إلى شاشة خدمات متميزة متخصصة في الكهرباء
           Navigator.pushReplacement(
             context,
