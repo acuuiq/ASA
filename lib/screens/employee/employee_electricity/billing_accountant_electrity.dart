@@ -1,14 +1,14 @@
-//محاسب فاتورة الكهرباء
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class BillingAccountantScreen extends StatefulWidget {
+  const BillingAccountantScreen({super.key});
+
   @override
-  _BillingAccountantScreenState createState() =>
-      _BillingAccountantScreenState();
+  BillingAccountantScreenState createState() => BillingAccountantScreenState();
 }
 
-class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
+class BillingAccountantScreenState extends State<BillingAccountantScreen> {
   final List<Map<String, dynamic>> pendingBills = [
     {
       'id': 'INV-2024-001',
@@ -68,99 +68,68 @@ class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
   ];
 
   int _selectedIndex = 0;
-  final Color _primaryColor = Color(0xFF0D47A1);
-  final Color _secondaryColor = Color(0xFF1976D2);
-  final Color _accentColor = Color(0xFF64B5F6);
+  final Color _primaryColor = Color(0xFF4361EE);
+  final Color _secondaryColor = Color(0xFF3A0CA3);
+  final Color _accentColor = Color(0xFF7209B7);
   final Color _backgroundColor = Color(0xFFF8F9FA);
+  final Color _successColor = Color(0xFF4CC9F0);
+  final Color _warningColor = Color(0xFFF72585);
   final Color _cardColor = Colors.white;
-  final Color _textColor = Color(0xFF212121);
-  final Color _textSecondaryColor = Color(0xFF757575);
-  final Color _successColor = Color(0xFF2E7D32);
-  final Color _warningColor = Color(0xFFF57C00);
-  final Color _errorColor = Color(0xFFD32F2F);
-  final Color _borderColor = Color(0xFFE0E0E0);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('المحاسبة - إدارة فواتير الكهرباء'),
-        backgroundColor: _primaryColor,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list),
-            onPressed: () {
-              _showFilterDialog(context);
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              _showSearchDialog(context);
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // تبويبات التنقل
-          Container(
-            decoration: BoxDecoration(
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: AppBar(
+          title: Text(
+            'إدارة الفواتير',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
               color: Colors.white,
-              border: Border(bottom: BorderSide(color: _borderColor, width: 1)),
-            ),
-            child: Row(
-              children: [
-                _buildTabButton(0, 'الإحصائيات', Icons.bar_chart),
-                _buildTabButton(1, 'الفواتير', Icons.receipt),
-                _buildTabButton(2, 'العملاء', Icons.people),
-              ],
             ),
           ),
-          Expanded(
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: [
-                _buildStatisticsTab(),
-                _buildBillsTab(),
-                _buildCustomersTab(),
-              ],
+          backgroundColor: _primaryColor,
+          elevation: 0,
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.search, size: 22, color: Colors.white),
+              onPressed: () => _showSearchDialog(context),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showCreateBillDialog(context);
-        },
-        child: Icon(Icons.add),
-        backgroundColor: _primaryColor,
-      ),
-    );
-  }
-
-  Widget _buildTabButton(int index, String title, IconData icon) {
-    return Expanded(
-      child: TextButton(
-        onPressed: () {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: _selectedIndex == index
-              ? _primaryColor
-              : _textSecondaryColor,
-          padding: EdgeInsets.symmetric(vertical: 16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20),
-            SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 12)),
+            IconButton(
+              icon: Icon(Icons.filter_list, size: 22, color: Colors.white),
+              onPressed: () => _showFilterDialog(context),
+            ),
           ],
+          bottom: TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+            tabs: [
+              Tab(text: 'الإحصائيات'),
+              Tab(text: 'الفواتير'),
+              Tab(text: 'العملاء'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildStatisticsTab(),
+            _buildBillsTab(),
+            _buildCustomersTab(),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _showCreateBillDialog(context),
+          backgroundColor: _primaryColor,
+          child: Icon(Icons.add, size: 28, color: Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );
@@ -168,116 +137,273 @@ class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
 
   Widget _buildStatisticsTab() {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'نظرة عامة على الفواتير',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _textColor,
-            ),
-          ),
-          SizedBox(height: 16),
-          // إحصائيات مالية
-          Row(
-            children: [
-              _buildFinanceCard(
-                'إجمالي الإيرادات',
-                '3,842.25 دينار',
-                Colors.green,
-                Icons.attach_money,
-              ),
-              SizedBox(width: 12),
-              _buildFinanceCard(
-                'الفواتير المتأخرة',
-                '5',
-                Colors.red,
-                Icons.warning,
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Row(
-            children: [
-              _buildFinanceCard('المدفوعات', '87%', Colors.blue, Icons.payment),
-              SizedBox(width: 12),
-              _buildFinanceCard(
-                'الفواتير الجديدة',
-                '2',
-                Colors.purple,
-                Icons.new_releases,
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-
-          // موجز سريع
-          Text(
-            'إجراءات سريعة',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: _textColor,
-            ),
-          ),
-          SizedBox(height: 12),
-          Row(
-            children: [
-              _buildQuickAction(Icons.receipt, 'إنشاء فاتورة', _primaryColor),
-              SizedBox(width: 12),
-              _buildQuickAction(Icons.email, 'إرسال تنبيه', _warningColor),
-              SizedBox(width: 12),
-              _buildQuickAction(Icons.bar_chart, 'تقارير', _successColor),
-            ],
-          ),
-          SizedBox(height: 20),
-
-          // مخطط بياني بسيط (محاكاة)
-          Text(
-            'إحصائيات الشهر الحالي',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: _textColor,
-            ),
-          ),
-          SizedBox(height: 12),
+          // Header Stats
           Container(
-            height: 200,
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _cardColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _borderColor),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_primaryColor, _secondaryColor],
+              ),
+              borderRadius: BorderRadius.circular(20),
             ),
-            padding: EdgeInsets.all(16),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildChartBar(120, 'مدفوعة', _successColor),
-                    _buildChartBar(80, 'متأخرة', _warningColor),
-                    _buildChartBar(60, 'غير مدفوعة', _errorColor),
+                    _buildStatItem(
+                      '3,842.25',
+                      'إجمالي الإيرادات',
+                      Icons.account_balance_wallet,
+                    ),
+                    _buildStatItem('5', 'فواتير متأخرة', Icons.warning),
+                    _buildStatItem('87%', 'نسبة الدفع', Icons.bar_chart),
                   ],
                 ),
                 SizedBox(height: 16),
-                Divider(height: 1),
-                SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem('150', 'فاتورة مدفوعة'),
-                    _buildStatItem('25', 'فاتورة متأخرة'),
-                    _buildStatItem('18', 'فاتورة جديدة'),
-                  ],
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.white70, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        '${pendingBills.length} فاتورة تحتاج للمتابعة',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
+          SizedBox(height: 24),
+
+          // Quick Actions
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickAction(
+                  'إنشاء فاتورة',
+                  Icons.add,
+                  _onCreateBill,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickAction(
+                  'إرسال تنبيه',
+                  Icons.notifications,
+                  _onSendNotification,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickAction(
+                  'التقارير',
+                  Icons.analytics,
+                  _onShowReports,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+
+          // Monthly Chart
+          _buildMonthlyChart(),
+          SizedBox(height: 24),
+
+          // Recent Activity
+          _buildRecentActivity(),
         ],
+      ),
+    );
+  }
+
+  // الدوال الجديدة للتعامل مع النقر على الأزرار
+  void _onCreateBill() {
+    _showCreateBillDialog(context);
+  }
+
+  void _onSendNotification() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم إرسال التنبيه للعملاء المتأخرين'),
+        backgroundColor: _successColor,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onShowReports() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('التقارير'),
+        content: Text('سيتم عرض التقارير الشاملة للفواتير'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('موافق'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 24),
+        ),
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        Text(label, style: TextStyle(color: Colors.white70, fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildQuickAction(String label, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: _primaryColor, size: 24),
+            SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyChart() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'إحصائيات الشهر الحالي',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildChartBar(120, 'مدفوعة', _successColor),
+              _buildChartBar(80, 'متأخرة', _warningColor),
+              _buildChartBar(60, 'غير مدفوعة', _primaryColor),
+            ],
+          ),
+          SizedBox(height: 16),
+          Divider(),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem2('150', 'مدفوعة'),
+              _buildStatItem2('25', 'متأخرة'),
+              _buildStatItem2('18', 'جديدة'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'النشاط الحديث',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          SizedBox(height: 16),
+          ...paidBills.take(3).map((bill) => _buildActivityItem(bill)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem(Map<String, dynamic> bill) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: _successColor.withOpacity(0.2),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.receipt, color: _successColor, size: 20),
+      ),
+      title: Text(
+        bill['customer'],
+        style: TextStyle(fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        '${bill['amount']} دينار - ${DateFormat('MMM dd').format(bill['paidDate'])}',
+      ),
+      trailing: Text(
+        'مكتملة',
+        style: TextStyle(color: _successColor, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -288,14 +414,14 @@ class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
       child: Column(
         children: [
           Container(
-            color: Colors.white,
+            color: _cardColor,
             child: TabBar(
               indicatorColor: _primaryColor,
               labelColor: _primaryColor,
-              unselectedLabelColor: _textSecondaryColor,
+              unselectedLabelColor: Colors.grey[600],
               tabs: [
-                Tab(text: 'الفواتير المنتظرة (${pendingBills.length})'),
-                Tab(text: 'الفواتير المدفوعة (${paidBills.length})'),
+                Tab(text: 'المنتظرة (${pendingBills.length})'),
+                Tab(text: 'المدفوعة (${paidBills.length})'),
               ],
             ),
           ),
@@ -309,8 +435,124 @@ class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
     );
   }
 
+  Widget _buildPendingBillsList() {
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: pendingBills.length,
+      itemBuilder: (context, index) {
+        return _buildBillCard(pendingBills[index], true);
+      },
+    );
+  }
+
+  Widget _buildPaidBillsList() {
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: paidBills.length,
+      itemBuilder: (context, index) {
+        return _buildBillCard(paidBills[index], false);
+      },
+    );
+  }
+
+  Widget _buildBillCard(Map<String, dynamic> bill, bool isPending) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  bill['id'],
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isPending
+                        ? _warningColor.withOpacity(0.2)
+                        : _successColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isPending ? bill['status'] : 'مكتملة',
+                    style: TextStyle(
+                      color: isPending ? _warningColor : _successColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Text(
+              bill['customer'],
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.access_time, size: 16, color: Colors.grey),
+                SizedBox(width: 4),
+                Text(
+                  isPending
+                      ? 'استحقاق: ${DateFormat('MMM dd').format(bill['dueDate'])}'
+                      : 'دفعت: ${DateFormat('MMM dd').format(bill['paidDate'])}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${bill['amount']} دينار',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: _primaryColor,
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.visibility, size: 20),
+                      onPressed: () => _showBillDetails(context, bill),
+                    ),
+                    if (isPending)
+                      IconButton(
+                        icon: Icon(Icons.notifications, size: 20),
+                        onPressed: () => _onSendNotificationToCustomer(bill),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onSendNotificationToCustomer(Map<String, dynamic> bill) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم إرسال تنبيه إلى ${bill['customer']}'),
+        backgroundColor: _successColor,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   Widget _buildCustomersTab() {
-    // تجميع بيانات العملاء من الفواتير
     final allBills = [...pendingBills, ...paidBills];
     final customers = allBills
         .map(
@@ -326,271 +568,20 @@ class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
         )
         .toList();
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'قائمة العملاء',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _textColor,
-            ),
-          ),
-          SizedBox(height: 16),
-          ...customers.map((customer) => _buildCustomerCard(customer)).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFinanceCard(
-    String title,
-    String value,
-    Color color,
-    IconData icon,
-  ) {
-    return Expanded(
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              SizedBox(height: 8),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(fontSize: 12, color: _textSecondaryColor),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickAction(IconData icon, String label, Color color) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          // إجراء سريع
-        },
-        child: Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              children: [
-                Icon(icon, color: color),
-                SizedBox(height: 8),
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChartBar(double height, String label, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 40,
-          height: height,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(label, style: TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildStatItem(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: _textSecondaryColor)),
-      ],
-    );
-  }
-
-  Widget _buildPendingBillsList() {
     return ListView.builder(
       padding: EdgeInsets.all(16),
-      itemCount: pendingBills.length,
+      itemCount: customers.length,
       itemBuilder: (context, index) {
-        return _buildPendingBillCard(pendingBills[index]);
+        return _buildCustomerCard(customers[index]);
       },
-    );
-  }
-
-  Widget _buildPaidBillsList() {
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: paidBills.length,
-      itemBuilder: (context, index) {
-        return _buildPaidBillCard(paidBills[index]);
-      },
-    );
-  }
-
-  Widget _buildPendingBillCard(Map<String, dynamic> bill) {
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(
-        leading: Icon(Icons.receipt, color: Colors.orange),
-        title: Text(
-          bill['customer'],
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${bill['amount']} دينار'),
-            Text('رقم العداد: ${bill['customerId']}'),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Chip(
-              label: Text(
-                bill['status'],
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
-              backgroundColor: bill['status'] == 'متأخرة'
-                  ? Colors.red
-                  : Colors.orange,
-            ),
-            Text(DateFormat('yyyy-MM-dd').format(bill['dueDate'])),
-          ],
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('الاستهلاك: ${bill['consumption']}'),
-                    Text('القراءة السابقة: ${bill['previousReading']}'),
-                    Text('القراءة الحالية: ${bill['currentReading']}'),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text('العنوان: ${bill['address']}'),
-                Text('الهاتف: ${bill['phone']}'),
-                SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {},
-                      child: Text('إشعار دفع'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryColor,
-                      ),
-                    ),
-                    OutlinedButton(
-                      onPressed: () {
-                        _showBillDetails(context, bill);
-                      },
-                      child: Text('تفاصيل'),
-                    ),
-                    OutlinedButton(
-                      onPressed: () {},
-                      child: Text('تعديل'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _warningColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaidBillCard(Map<String, dynamic> bill) {
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: Icon(Icons.check_circle, color: Colors.green),
-        title: Text(
-          bill['customer'],
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${bill['amount']} دينار - ${bill['paymentMethod']}'),
-            Text('رقم العداد: ${bill['customerId']}'),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(DateFormat('yyyy-MM-dd').format(bill['paidDate'])),
-            SizedBox(height: 4),
-            Text('مكتملة', style: TextStyle(color: Colors.green)),
-          ],
-        ),
-        onTap: () {
-          _showBillDetails(context, bill);
-        },
-      ),
     );
   }
 
   Widget _buildCustomerCard(Map<String, dynamic> customer) {
     return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
-      margin: EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: _primaryColor.withOpacity(0.1),
@@ -604,181 +595,436 @@ class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('الهاتف: ${customer['phone']}'),
-            Text(
-              'آخر فاتورة: ${customer['lastBill']} - ${customer['amount']} دينار',
-            ),
             Text('الحالة: ${customer['status']}'),
           ],
         ),
-        trailing: Icon(Icons.chevron_left, color: _textSecondaryColor),
-        onTap: () {
-          _showCustomerDetails(context, customer);
-        },
+        trailing: Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () => _showCustomerDetails(context, customer),
       ),
     );
   }
 
-  void _showFilterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('تصفية الفواتير'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                ListTile(title: Text('الكل'), onTap: () {}),
-                ListTile(title: Text('غير مدفوعة'), onTap: () {}),
-                ListTile(title: Text('متأخرة'), onTap: () {}),
-                ListTile(title: Text('مدفوعة'), onTap: () {}),
-              ],
-            ),
+  Widget _buildChartBar(double height, String label, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 30,
+          height: height,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(6),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('إلغاء'),
+        ),
+        SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildStatItem2(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey)),
+      ],
+    );
+  }
+
+  void _showFilterDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'تصفية الفواتير',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('تطبيق'),
-            ),
+            SizedBox(height: 20),
+            ...['الكل', 'غير مدفوعة', 'متأخرة', 'مدفوعة']
+                .map(
+                  (filter) => ListTile(
+                    title: Text(filter),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('تم تطبيق عامل التصفية: $filter'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  ),
+                )
+                .toList(),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
   void _showSearchDialog(BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('بحث عن فاتورة'),
-          content: TextField(
-            decoration: InputDecoration(
-              hintText: 'ابحث برقم الفاتورة أو اسم العميل',
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'بحث عن فاتورة',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('إلغاء'),
+            SizedBox(height: 20),
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'ابحث برقم الفاتورة أو اسم العميل',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
-            TextButton(
+            SizedBox(height: 20),
+            ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('جاري البحث...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
               },
               child: Text('بحث'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryColor,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
   void _showCreateBillDialog(BuildContext context) {
-    showDialog(
+    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+    final TextEditingController _meterNumberController =
+        TextEditingController();
+    final TextEditingController _customerNameController =
+        TextEditingController();
+    final TextEditingController _previousReadingController =
+        TextEditingController();
+    final TextEditingController _currentReadingController =
+        TextEditingController();
+    final TextEditingController _amountController = TextEditingController();
+    final TextEditingController _addressController = TextEditingController();
+    final TextEditingController _phoneController = TextEditingController();
+
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('إنشاء فاتورة جديدة'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(decoration: InputDecoration(labelText: 'رقم العداد')),
-                TextField(
-                  decoration: InputDecoration(labelText: 'القراءة السابقة'),
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'إنشاء فاتورة جديدة',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              SizedBox(height: 20),
+
+              // رقم العداد
+              TextFormField(
+                controller: _meterNumberController,
+                decoration: InputDecoration(
+                  labelText: 'رقم العداد *',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'القراءة الحالية'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال رقم العداد';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+
+              // اسم العميل
+              TextFormField(
+                controller: _customerNameController,
+                decoration: InputDecoration(
+                  labelText: 'اسم العميل *',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                TextField(decoration: InputDecoration(labelText: 'المبلغ')),
-              ],
-            ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال اسم العميل';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+
+              // القراءة السابقة
+              TextFormField(
+                controller: _previousReadingController,
+                decoration: InputDecoration(
+                  labelText: 'القراءة السابقة *',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال القراءة السابقة';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'يرجى إدخال رقم صحيح';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+
+              // القراءة الحالية
+              TextFormField(
+                controller: _currentReadingController,
+                decoration: InputDecoration(
+                  labelText: 'القراءة الحالية *',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال القراءة الحالية';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'يرجى إدخال رقم صحيح';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+
+              // المبلغ
+              TextFormField(
+                controller: _amountController,
+                decoration: InputDecoration(
+                  labelText: 'المبلغ *',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال المبلغ';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'يرجى إدخال رقم صحيح';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+
+              // العنوان
+              TextFormField(
+                controller: _addressController,
+                decoration: InputDecoration(
+                  labelText: 'العنوان',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              // الهاتف
+              TextFormField(
+                controller: _phoneController,
+                decoration: InputDecoration(
+                  labelText: 'الهاتف',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              SizedBox(height: 20),
+
+              // زر الإنشاء
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    // إذا كانت جميع الحقول صحيحة
+                    Navigator.pop(context);
+
+                    // إضافة الفاتورة الجديدة
+                    _addNewBillToPending(
+                      _meterNumberController.text,
+                      _customerNameController.text,
+                      double.parse(_amountController.text),
+                      _previousReadingController.text,
+                      _currentReadingController.text,
+                      _addressController.text,
+                      _phoneController.text,
+                    );
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'تم إنشاء الفاتورة بنجاح للعميل ${_customerNameController.text}',
+                        ),
+                        backgroundColor: _successColor,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
+                child: Text('إنشاء الفاتورة'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryColor,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+
+              // زر الإلغاء
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('إلغاء', style: TextStyle(color: Colors.grey)),
+              ),
+
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('إلغاء'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('إنشاء'),
-            ),
-          ],
-        );
-      },
+        ),
+      ),
     );
+  }
+
+  // دالة جديدة لإضافة فاتورة جديدة إلى القائمة
+  void _addNewBillToPending(
+    String meterNumber,
+    String customerName,
+    double amount,
+    String previousReading,
+    String currentReading,
+    String address,
+    String phone,
+  ) {
+    // حساب الاستهلاك
+    double prev = double.tryParse(previousReading) ?? 0;
+    double curr = double.tryParse(currentReading) ?? 0;
+    double consumption = curr - prev;
+
+    setState(() {
+      pendingBills.insert(0, {
+        'id': 'INV-${DateTime.now().millisecondsSinceEpoch}',
+        'customer': customerName,
+        'customerId': meterNumber,
+        'amount': amount,
+        'dueDate': DateTime.now().add(Duration(days: 30)),
+        'status': 'غير مدفوعة',
+        'consumption': '${consumption.toInt()} ك.و.س',
+        'previousReading': previousReading,
+        'currentReading': currentReading,
+        'address': address.isNotEmpty ? address : 'لم يتم تحديد العنوان',
+        'phone': phone.isNotEmpty ? phone : 'لم يتم تحديد الهاتف',
+      });
+    });
   }
 
   void _showBillDetails(BuildContext context, Map<String, dynamic> bill) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'تفاصيل الفاتورة',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 16),
-                _buildDetailRow('رقم الفاتورة', bill['id']),
-                _buildDetailRow('العميل', bill['customer']),
-                _buildDetailRow('رقم العداد', bill['customerId']),
-                _buildDetailRow('المبلغ', '${bill['amount']} دينار'),
-                if (bill.containsKey('paymentMethod'))
-                  _buildDetailRow('طريقة الدفع', bill['paymentMethod']),
-                if (bill.containsKey('paidDate'))
-                  _buildDetailRow(
-                    'تاريخ الدفع',
-                    DateFormat('yyyy-MM-dd').format(bill['paidDate']),
-                  ),
-                if (bill.containsKey('dueDate'))
-                  _buildDetailRow(
-                    'تاريخ الاستحقاق',
-                    DateFormat('yyyy-MM-dd').format(bill['dueDate']),
-                  ),
-                _buildDetailRow('الاستهلاك', bill['consumption']),
-                _buildDetailRow('القراءة السابقة', bill['previousReading']),
-                _buildDetailRow('القراءة الحالية', bill['currentReading']),
-                _buildDetailRow('العنوان', bill['address']),
-                _buildDetailRow('الهاتف', bill['phone']),
-                SizedBox(height: 16),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('موافق'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryColor,
-                    ),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'تفاصيل الفاتورة',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              SizedBox(height: 16),
+              ..._buildBillDetails(bill),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('تم'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryColor,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildBillDetails(Map<String, dynamic> bill) {
+    return [
+      _buildDetailItem('رقم الفاتورة', bill['id']),
+      _buildDetailItem('العميل', bill['customer']),
+      _buildDetailItem('المبلغ', '${bill['amount']} دينار'),
+      _buildDetailItem('الاستهلاك', bill['consumption']),
+      _buildDetailItem('العنوان', bill['address']),
+      _buildDetailItem('الهاتف', bill['phone']),
+    ];
+  }
+
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text(value)),
+        ],
+      ),
     );
   }
 
@@ -788,55 +1034,38 @@ class _BillingAccountantScreenState extends State<BillingAccountantScreen> {
   ) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'تفاصيل العميل',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 16),
-                _buildDetailRow('اسم العميل', customer['name']),
-                _buildDetailRow('رقم العداد', customer['id']),
-                _buildDetailRow('الهاتف', customer['phone']),
-                _buildDetailRow('العنوان', customer['address']),
-                _buildDetailRow('حالة آخر فاتورة', customer['status']),
-                SizedBox(height: 16),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('موافق'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryColor,
-                    ),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'تفاصيل العميل',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              SizedBox(height: 16),
+              _buildDetailItem('الاسم', customer['name']),
+              _buildDetailItem('رقم العداد', customer['id']),
+              _buildDetailItem('الهاتف', customer['phone']),
+              _buildDetailItem('الحالة', customer['status']),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('تم'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryColor,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
-        ],
+        ),
       ),
     );
   }

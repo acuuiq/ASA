@@ -134,17 +134,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _subscribeToPointsChanges() {
-    _pointsSubscription = _pointsService.getUserPointsStream().listen((points) {
-      if (mounted) {
-        setState(() {
-          _userPoints = points;
-          _calculatePointsDiscount();
-          _updateFinalAmount();
-        });
-      }
-    }, onError: (error) {
-      print('Error in points stream: $error');
-    });
+    _pointsSubscription = _pointsService.getUserPointsStream().listen(
+      (points) {
+        if (mounted) {
+          setState(() {
+            _userPoints = points;
+            _calculatePointsDiscount();
+            _updateFinalAmount();
+          });
+        }
+      },
+      onError: (error) {
+        print('Error in points stream: $error');
+      },
+    );
   }
 
   Future<void> _loadUserPoints() async {
@@ -196,8 +199,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _showPaymentMethodsDialog() {
-    final selectedBills = _defaultBills.where((bill) => bill.isSelected).toList();
-    
+    final selectedBills = _defaultBills
+        .where((bill) => bill.isSelected)
+        .toList();
+
     if (selectedBills.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -576,7 +581,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(_getBillIcon(service.name), color: Colors.white),
+                      child: Icon(
+                        _getBillIcon(service.name),
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(width: 15),
                     Expanded(
@@ -848,7 +856,11 @@ class _PaymentMethodsDialogState extends State<PaymentMethodsDialog> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.check_circle, color: Colors.green, size: 16),
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 16,
+                            ),
                             const SizedBox(width: 8),
                             Text(service.name),
                             const Spacer(),

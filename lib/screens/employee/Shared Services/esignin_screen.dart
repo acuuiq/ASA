@@ -16,7 +16,8 @@ import 'package:mang_mu/screens/employee/employee_water/water_emergency_officer.
 import 'package:mang_mu/screens/employee/employee_water/water_maintenance_technician.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_premium_specialist.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_supervisor.dart';
-import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart';
+import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart'
+    hide BillingAccountantScreen;
 import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';
 import 'package:mang_mu/screens/employee/employee_wast/reporting_officer_wast.dart';
 import 'package:mang_mu/screens/employee/employee_wast/system_supervisor_waste.dart';
@@ -63,9 +64,9 @@ class _EsigninScreenState extends State<EsigninScreen>
       'محاسب الفواتير',
       'مراقب الاستهلاك',
       'فني الصيانة',
-      'خصائي العروض والهدايا',
       'خصائي الخدمات المميزة',
       'مدقق الجودة ',
+      'مسؤول الابلاغ ',
       'مشرف النظام',
     ],
     'ماء': [
@@ -79,8 +80,9 @@ class _EsigninScreenState extends State<EsigninScreen>
     ],
     'نفايات': [
       'مدير طلبات الحاويات',
-      'ضابط الاستجابة للطوارئ',
-      ' مشرف النظام',
+      'مسؤول الاستجابة للطوارئ',
+      'مسؤول الابلاغ  ',
+      'مشرف النظام',
       'موظف الفواتير ',
       'عامل النظافة',
       'أخصائي الخدمات المميزة',
@@ -152,15 +154,15 @@ class _EsigninScreenState extends State<EsigninScreen>
         }
         */
         if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'فاتورة محاسب كهرباء') {
+            _selectedSpecialization == 'محاسب الفواتير') {
           // التنقل إلى شاشة محاسب الفواتير (الكهرباء)
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => BillingAccountantScreen()),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'مراقبة استهلاك الكهرباء') {
-          // التنقل إلى شاشة مراقب استهلاك الكهرباء
+            _selectedSpecialization == 'مراقب الاستهلاك') {
+          // التنقل إلى شاشة مراقب الاستهلاك (الكهرباء)
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -168,8 +170,8 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'فني صيانه كهرباء') {
-          // التنقل إلى شاشة فني صيانه كهرباء
+            _selectedSpecialization == 'فني الصيانة') {
+          // التنقل إلى شاشة فني صيانة كهرباء
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -177,7 +179,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'خدمات متميزة متخصصة في الكهرباء') {
+            _selectedSpecialization == 'خصائي الخدمات المميزة') {
           // التنقل إلى شاشة خدمات متميزة متخصصة في الكهرباء
           Navigator.pushReplacement(
             context,
@@ -186,22 +188,22 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'مدقق جودة كهرباء') {
-          // التنقل إلى شاشة مدقق جودة كهرباء
+            _selectedSpecialization == 'مدقق الجودة ') {
+          // التنقل إلى شاشة مدقق جودة الكهرباء
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => QualityAuditorScreen()),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'مشرف النظام ') {
-          // التنقل إلى شاشة مشرف النظام
+            _selectedSpecialization == 'مشرف النظام') {
+          // التنقل إلى شاشة مشرف نظام الكهرباء
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => SystemSupervisorScreen()),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'مسؤول اعداد التقارير عن الكهربائية') {
-          // التنقل إلى شاشة مسؤول اعداد التقارير عن الكهربائية
+            _selectedSpecialization == 'مسؤول الابلاغ ') {
+          // التنقل إلى شاشة مسؤول إعداد تقارير الكهرباء
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -209,7 +211,16 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'محاسب فواتير المياه') {
+            _selectedSpecialization == 'مدقق الجودة ') {
+          // التنقل إلى شاشة مدقق جودة المياه
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QualityAuditorWaterScreen(),
+            ),
+          );
+        } else if (_selectedSection == 'ماء' &&
+            _selectedSpecialization == 'محاسب الفواتير ') {
           // التنقل إلى شاشة محاسب فواتير المياه
           Navigator.pushReplacement(
             context,
@@ -218,7 +229,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'مراقب استهلاك المياه') {
+            _selectedSpecialization == 'مراقب الاستهلاك ') {
           // التنقل إلى شاشة مراقب استهلاك المياه
           Navigator.pushReplacement(
             context,
@@ -227,8 +238,8 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'مسؤول الطوارئ المائية') {
-          // التنقل إلى شاشة مسؤول الطوارئ المائية
+            _selectedSpecialization == 'ضابط الطوارئ ') {
+          // التنقل إلى شاشة ضابط الطوارئ للمياه
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -236,7 +247,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'فني صيانة المياه') {
+            _selectedSpecialization == 'فني الصيانة') {
           // التنقل إلى شاشة فني صيانة المياه
           Navigator.pushReplacement(
             context,
@@ -245,7 +256,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'أخصائي الخدمات المميزة للمياه') {
+            _selectedSpecialization == 'أخصائي الخدمات المميزة') {
           // التنقل إلى شاشة أخصائي الخدمات المميزة للمياه
           Navigator.pushReplacement(
             context,
@@ -261,16 +272,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             MaterialPageRoute(builder: (context) => WaterSupervisorScreen()),
           );
         } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'مدقق جودة المياه') {
-          // التنقل إلى شاشة مدقق جودة المياه
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QualityAuditorWaterScreen(),
-            ),
-          );
-        } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'مسؤول إعداد تقارير المياه') {
+            _selectedSpecialization == 'مسؤول الابلاغ ') {
           // التنقل إلى شاشة مسؤول إعداد تقارير المياه
           Navigator.pushReplacement(
             context,
@@ -286,15 +288,17 @@ class _EsigninScreenState extends State<EsigninScreen>
             MaterialPageRoute(builder: (context) => ContainerRequestManager()),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مسؤول استجابة للطوارى') {
-          // التنقل إلى شاشة مسؤول استجابة للطوارى
-      Navigator.pushReplacement(
+            _selectedSpecialization == 'مسؤول الاستجابة للطوارئ') {
+          // التنقل إلى شاشة مسؤول استجابة للطوارئ
+          Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => EmergencyResponseOfficerScreen()),
+            MaterialPageRoute(
+              builder: (context) => EmergencyResponseOfficerScreen(),
+            ),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مسؤول استجابة للطوارى') {
-          // التنقل إلى شاشة مسؤول الابلاغ عن النفايات
+            _selectedSpecialization?.trim() == 'مسؤول الابلاغ') {
+          // التنقل إلى شاشة مسؤول الابلاغ
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -302,8 +306,8 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مسؤول نفايات النظام') {
-          // التنقل إلى شاشة مسؤول نفايات النظام
+            _selectedSpecialization?.trim() == 'مشرف النظام') {
+          // التنقل إلى شاشة مشرف النظام
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -311,8 +315,8 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مسؤول فواتير النفايات') {
-          // التنقل إلى شاشة مسؤول فواتير النفايات
+            _selectedSpecialization == 'موظف الفواتير ') {
+          // التنقل إلى شاشة موظف فواتير
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -320,8 +324,8 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'عامل تنظيف النفايات') {
-          // التنقل إلى شاشة عامل تنظيف النفايات
+            _selectedSpecialization == 'عامل النظافة') {
+          // التنقل إلى شاشة عامل النظافة
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -329,8 +333,8 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'متخصص قسط النفايات') {
-          // التنقل إلى شاشة متخصص قسط النفايات
+            _selectedSpecialization == 'أخصائي الخدمات المميزة') {
+          // التنقل إلى شاشة أخصائي الخدمات المميزة
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -338,8 +342,8 @@ class _EsigninScreenState extends State<EsigninScreen>
             ),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'جدول النفايات') {
-          // التنقل إلى شاشة جدول النفايات
+            _selectedSpecialization == 'جدولة النفايات') {
+          // التنقل إلى شاشة جدولة النفايات
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => WasteSchedulerScreen()),
