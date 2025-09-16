@@ -74,8 +74,8 @@ class _EsigninScreenState extends State<EsigninScreen>
       'مراقب الاستهلاك ',
       'ضابط الطوارئ ',
       'فني الصيانة',
-      'أخصائي الخدمات المميزة'
-          'مشرف المياه',
+      'أخصائي الخدمات المميزة',
+      'مشرف المياه',
     ],
     'نفايات': [
       'مدير طلبات الحاويات',
@@ -288,14 +288,12 @@ class _EsigninScreenState extends State<EsigninScreen>
         } else if (_selectedSection == 'نفايات' &&
             _selectedSpecialization == 'مسؤول استجابة للطوارى') {
           // التنقل إلى شاشة مسؤول استجابة للطوارى
-          Navigator.pushReplacement(
+      Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (context) => EmergencyResponseOfficerScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => EmergencyResponseOfficerScreen()),
           );
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مسؤول الابلاغ عن النفايات') {
+            _selectedSpecialization == 'مسؤول استجابة للطوارى') {
           // التنقل إلى شاشة مسؤول الابلاغ عن النفايات
           Navigator.pushReplacement(
             context,

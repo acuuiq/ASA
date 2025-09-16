@@ -1,14 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'payment_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'payment_screen.dart';
+import 'points_service.dart'; // استيراد خدمة النقاط
+import 'dart:async'; // أضف هذا في الأعلى
 
-class PointsAndGiftsScreen extends StatelessWidget {
+class PointsAndGiftsScreen extends StatefulWidget {
+  static const String screen = 'pointandgift_screen';
   final Color serviceColor;
 
   const PointsAndGiftsScreen({super.key, required this.serviceColor});
 
+  @override
+  State<PointsAndGiftsScreen> createState() => _PointsAndGiftsScreenState();
+}
+
+class _PointsAndGiftsScreenState extends State<PointsAndGiftsScreen> {
+  final PointsService _pointsService = PointsService();
+  int _userPoints = 0;
+  double _pointsValue = 0.2;
+  bool _isLoading = true;
+  StreamSubscription<int>? _pointsSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserPoints();
+    _subscribeToPointsChanges();
+  }
+
+  void _subscribeToPointsChanges() {
+    _pointsSubscription = _pointsService.getUserPointsStream().listen((points) {
+      if (mounted) {
+        setState(() {
+          _userPoints = points;
+          _pointsValue = points * 0.01;
+        });
+      }
+    }, onError: (error) {
+      print('Error in points stream: $error');
+    });
+  }
+
+  Future<void> _loadUserPoints() async {
+    try {
+      final points = await _pointsService.getUserPoints();
+      setState(() {
+        _userPoints = points;
+        _pointsValue = points * 0.01;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading points: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _pointsSubscription?.cancel();
+    super.dispose();
+  }
+
+
+
   void _navigateToPaymentScreen(BuildContext context, String serviceName) {
-    // تحديد بيانات الخدمة بناءً على الاسم
+    // ... الكود الحالي بدون تغيير
     Map<String, dynamic> serviceData;
     const double amount = 185.75;
 
@@ -40,7 +101,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
 
     final List<Color> serviceGradient =
         (serviceData['gradient'] as List<Color>?) ??
-            [serviceColor, serviceColor];
+            [widget.serviceColor, widget.serviceColor];
 
     Navigator.push(
       context,
@@ -51,12 +112,12 @@ class PointsAndGiftsScreen extends StatelessWidget {
               id: '1',
               name: serviceName,
               amount: 185.75,
-              color: serviceColor,
+              color: widget.serviceColor,
               gradient: serviceGradient,
               additionalInfo: "معلومات إضافية عن الخدمة",
             ),
           ],
-          primaryColor: serviceColor,
+          primaryColor: widget.serviceColor,
           primaryGradient: serviceGradient,
         ),
       ),
@@ -68,7 +129,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(' النقاط'),
-        backgroundColor: serviceColor,
+        backgroundColor: widget.serviceColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -91,7 +152,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [serviceColor.withOpacity(0.8), serviceColor],
+                    colors: [widget.serviceColor.withOpacity(0.8), widget.serviceColor],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -107,21 +168,25 @@ class PointsAndGiftsScreen extends StatelessWidget {
                           'نقاطك الحالية',
                           style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
-                        Text(
-                          '1500 نقطة',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          'تعادل 15.00 دينار',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
+                        _isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                '$_userPoints نقطة',
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                        _isLoading
+                            ? const SizedBox()
+                            : Text(
+                                'تعادل ${_pointsValue.toStringAsFixed(2)} دينار',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                              ),
                       ],
                     ),
                   ],
@@ -149,7 +214,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => PointsDetailsScreen(
                           pointsType: 'الدفع في الموعد',
-                          serviceColor: serviceColor,
+                          serviceColor: widget.serviceColor,
                         ),
                       ),
                     );
@@ -166,7 +231,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => PointsDetailsScreen(
                           pointsType: 'الدفع المبكر',
-                          serviceColor: serviceColor,
+                          serviceColor: widget.serviceColor,
                         ),
                       ),
                     );
@@ -183,7 +248,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => PointsDetailsScreen(
                           pointsType: 'فعاليات متجددة ',
-                          serviceColor: serviceColor,
+                          serviceColor: widget.serviceColor,
                         ),
                       ),
                     );
@@ -272,7 +337,7 @@ class PointsAndGiftsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 28, color: serviceColor),
+          Icon(icon, size: 28, color: widget.serviceColor),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -298,7 +363,6 @@ class PointsAndGiftsScreen extends StatelessWidget {
     );
   }
 }
-
 class PrizesRaffleScreen extends StatefulWidget {
   final Color serviceColor;
 
@@ -683,7 +747,9 @@ class PointsDetailsScreen extends StatelessWidget {
           ),
         ],
       ),
+      
     );
+    
   }
 
   Widget _buildHistoryItem(Map<String, dynamic> item, String pointsType) {

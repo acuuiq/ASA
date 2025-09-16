@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ContainerRequestScreen extends StatefulWidget {
+  
   final List<Map<String, dynamic>> containerTypes;
   final Color serviceColor;
   final bool isFirstContainerFree;
@@ -17,6 +18,9 @@ class ContainerRequestScreen extends StatefulWidget {
 }
 //
 class _ContainerRequestScreenState extends State<ContainerRequestScreen> {
+        static const String screen = 'containerrequest_screen';
+
+
   late String _selectedContainerType;
   int _quantity = 1;
   bool _needsInstallation = true;

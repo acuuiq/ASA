@@ -35,7 +35,6 @@ dependencies:
   glassmorphism: ^2.0.0
   simple_animations: ^5.0.0
   cupertino_icons: ^1.0.8
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

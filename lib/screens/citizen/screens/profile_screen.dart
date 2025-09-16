@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatelessWidget {
+      static const String screen = 'profile_screen';
+
   final Map<String, dynamic>? userProfile;
   final Future<void> Function() onSignOut;
   final Color primaryColor;

@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
 
 class MonthlyConsumptionScreen extends StatefulWidget {
+
   final Color serviceColor;
   final List<Color> serviceGradient;
   final String serviceTitle;

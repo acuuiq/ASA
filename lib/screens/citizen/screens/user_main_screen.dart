@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/service_details_screen.dart';
 import '../services/payment_screen.dart';
 import '../services/points_and_gifts_screen.dart';
 import '../services/waste_schedule_screen.dart';
@@ -9,7 +8,11 @@ import '../services/container_request_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
 import '../auth/signin_screen.dart';
-
+import '../services/monthly_consumption_screen.dart';
+import '../services/problem_report_screen.dart';
+import '../services/emergency_screen.dart';
+import '../services/paid_services_screen.dart';
+import '../services/daily_consumption_screen.dart';
 class UserMainScreen extends StatefulWidget {
   static const String screenRoot = 'user_main';
 
@@ -175,87 +178,380 @@ class _UserMainScreenState extends State<UserMainScreen>
     'emergency': Icons.emergency,
     'consumption': Icons.show_chart,
     'problem': Icons.report_problem,
-    'tax': Icons.receipt,
+    'tax': Icons.receipt_long,
     'offers': Icons.card_giftcard,
     'premium': Icons.star,
     'container': Icons.add_circle,
     'schedule': Icons.calendar_today,
     'profile': Icons.person,
   };
+  // استبدال خدمة 'ضريبة التأخير' بـ 'معلومات الفواتير' في جميع الخدمات
+  // في قائمة _services، قم بتعديل كل خدمة 'ضريبة التأخير' لتصبح 'معلومات الفواتير'
 
-  final List<Map<String, dynamic>> _services = [
-    {
-      'title': 'الكهرباء',
-      'icon': 'electricity',
-      'color': const Color(0xFF0D47A1),
-      'gradient': [const Color(0xFF0D47A1), const Color(0xFF1976D2)],
-      'services': [
-        {
-          'name': 'دفع الفاتورة',
-          'icon': 'payment',
-          'premium': false,
-          'hasEarlyPaymentDiscount': true,
-        },
-        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
-        {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
-        {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
-        {'name': 'ضريبة التأخير', 'icon': 'tax', 'premium': false},
-        {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
-        {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
-      ],
-    },
-    {
-      'title': 'الماء',
-      'icon': 'water',
-      'color': const Color(0xFF00B4D8), // تغيير إلى اللون السمائي
-      'gradient': [
-        const Color(0xFF00B4D8),
-        const Color(0xFF90E0EF),
-      ], // تغيير التدرج اللوني
-      'services': [
-        {
-          'name': 'دفع الفاتورة',
-          'icon': 'payment',
-          'premium': false,
-          'hasEarlyPaymentDiscount': true,
-        },
-        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
-        {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
-        {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
-        {'name': 'ضريبة التأخير', 'icon': 'tax', 'premium': false},
-        {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
-        {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
-      ],
-    },
-    {
-      'title': 'النفايات',
-      'icon': 'waste',
-      'color': const Color(0xFF4CAF50), // تغيير إلى اللون الأخضر المعروف
-      'gradient': [
-        const Color(0xFF4CAF50),
-        const Color(0xFF8BC34A),
-      ], // تغيير التدرج اللوني
-      'services': [
-        {
-          'name': 'دفع الرسوم',
-          'icon': 'payment',
-          'premium': false,
-          'hasEarlyPaymentDiscount': true,
-        },
-        {
-          'name': 'طلب حاوية جديدة',
-          'icon': 'container',
-          'premium': false,
-          'isFirstContainerFree': true,
-        },
-        {'name': 'جدول النظافة', 'icon': 'schedule', 'premium': false},
-        {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
-        {'name': 'ضريبة التأخير', 'icon': 'tax', 'premium': false},
-        {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
-        {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
-      ],
-    },
-  ];
+ // في قائمة _services، أضف خدمة 'أمر طارئ' إلى قسم النفايات
+final List<Map<String, dynamic>> _services = [
+  {
+    'title': 'الكهرباء',
+    'icon': 'electricity',
+    'color': const Color(0xFF0D47A1),
+    'gradient': [const Color(0xFF0D47A1), const Color(0xFF1976D2)],
+    'services': [
+      {
+        'name': 'دفع الفاتورة',
+        'icon': 'payment',
+        'premium': false,
+        'hasEarlyPaymentDiscount': true,
+      },
+      {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
+      {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
+      {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
+      {
+        'name': 'معلومات الفواتير',
+        'icon': 'tax',
+        'premium': false,
+      },
+      {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+      {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+    ],
+  },
+  {
+    'title': 'الماء',
+    'icon': 'water',
+    'color': const Color(0xFF00B4D8),
+    'gradient': [const Color(0xFF00B4D8), const Color(0xFF90E0EF)],
+    'services': [
+      {
+        'name': 'دفع الفاتورة',
+        'icon': 'payment',
+        'premium': false,
+        'hasEarlyPaymentDiscount': true,
+      },
+      {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
+      {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
+      {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
+      {
+        'name': 'معلومات الفواتير',
+        'icon': 'tax',
+        'premium': false,
+      },
+      {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+      {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+    ],
+  },
+  {
+    'title': 'النفايات',
+    'icon': 'waste',
+    'color': const Color(0xFF4CAF50),
+    'gradient': [const Color(0xFF4CAF50), const Color(0xFF8BC34A)],
+    'services': [
+      {
+        'name': 'دفع الرسوم',
+        'icon': 'payment',
+        'premium': false,
+        'hasEarlyPaymentDiscount': true,
+      },
+            {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
+
+      {
+        'name': 'طلب حاوية جديدة',
+        'icon': 'container',
+        'premium': false,
+        'isFirstContainerFree': true,
+      },
+      {'name': 'جدول النظافة', 'icon': 'schedule', 'premium': false},
+      {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
+      // إضافة خدمة 'أمر طارئ' للنفايات
+      {
+        'name': 'معلومات الفواتير',
+        'icon': 'tax',
+        'premium': false,
+      },
+      {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+      {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+    ],
+  },
+];
+
+  // دالة جديدة لعرض معلومات الفواتير
+  void _showBillingInformation(BuildContext context, Color serviceColor) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: serviceColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.receipt_long, color: Colors.white, size: 28),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'معلومات الفواتير',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildBillingInfoCard(
+                      context,
+                      title: 'الدفع المبكر',
+                      icon: Icons.trending_up,
+                      color: const Color(0xFF2E7D32),
+                      benefits: [
+                        'خصم 10% على قيمة الفاتورة',
+                        'نقاط مكافآت إضافية',
+                        'تأمين ضد رسوم التأخير',
+                        'مشاركة في السحب على الجوائز',
+                      ],
+                      description:
+                          'الدفع قبل تاريخ الاستحقاق ب 5 أيام على الأقل',
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    _buildBillingInfoCard(
+                      context,
+                      title: 'الدفع في الموعد',
+                      icon: Icons.event_available,
+                      color: const Color(0xFF1976D2),
+                      benefits: [
+                        'تجنب رسوم التأخير',
+                        'الحفاظ على سجل دفع جيد',
+                        'استمرارية الخدمة بدون انقطاع',
+                        'مشاركة في برنامج الولاء',
+                      ],
+                      description:
+                          'الدفع خلال الفترة من تاريخ الإصدار حتى تاريخ الاستحقاق',
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    _buildBillingInfoCard(
+                      context,
+                      title: 'ضريبة التأخير',
+                      icon: Icons.warning,
+                      color: const Color(0xFFD32F2F),
+                      benefits: [],
+                      penalties: [
+                        'رسوم تأخير 5% من قيمة الفاتورة',
+                        'تجميد بعض الخدمات الإضافية',
+                        'تأثير سلبي على التقييم الائتماني',
+                        'احتمال انقطاع الخدمة بعد 30 يوم',
+                      ],
+                      description: 'تطبق عند التأخر عن تاريخ الاستحقاق المحدد',
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // نصائح مهمة
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE0E0E0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '💡 نصائح مهمة',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF212121),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTipItem(
+                            'تفعيل التنبيهات لتلقي إشعارات الفواتير',
+                          ),
+                          _buildTipItem('استخدم الدفع الآلي لتجنب النسيان'),
+                          _buildTipItem(
+                            'احتفظ بسجل دفعك للرجوع إليه عند الحاجة',
+                          ),
+                          _buildTipItem('تواصل مع الدعم الفني لأي استفسارات'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBillingInfoCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color color,
+    required List<String> benefits,
+    List<String> penalties = const [],
+    required String description,
+  }) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // العنوان والآيكون
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // الوصف
+            Text(
+              description,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF757575)),
+            ),
+
+            const SizedBox(height: 16),
+
+            // المزايا أو العقوبات
+            if (benefits.isNotEmpty) ...[
+              const Text(
+                'المزايا:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...benefits
+                  .map(
+                    (benefit) =>
+                        _buildListItem('✓ $benefit', const Color(0xFF2E7D32)),
+                  )
+                  .toList(),
+            ],
+
+            if (penalties.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'العقوبات:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFD32F2F),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...penalties
+                  .map(
+                    (penalty) =>
+                        _buildListItem('✗ $penalty', const Color(0xFFD32F2F)),
+                  )
+                  .toList(),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListItem(String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: TextStyle(fontSize: 14, color: color)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTipItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.circle, size: 8, color: Color(0xFF1976D2)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF212121)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   final List<Map<String, dynamic>> _notifications = [
     {
@@ -291,11 +587,24 @@ class _UserMainScreenState extends State<UserMainScreen>
   }
 
   Widget _buildDailyConsumptionCard(
-    Color color,
-    List<Color> gradient,
-    String title,
-  ) {
-    return Card(
+  Color color,
+  List<Color> gradient,
+  String title,
+) {
+  return InkWell(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DailyConsumptionScreen(
+            serviceTitle: title,
+            serviceColor: color,
+            serviceGradient: gradient,
+          ),
+        ),
+      );
+    },
+    child: Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       shape: RoundedRectangleBorder(
@@ -368,39 +677,41 @@ class _UserMainScreenState extends State<UserMainScreen>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        CircularProgressIndicator(
-                          value: 0.65,
-                          backgroundColor: Colors.grey.shade300,
-                          valueColor: AlwaysStoppedAnimation<Color>(color),
-                          strokeWidth: 5,
-                        ),
-                        Text(
-                          '65%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: _textColor,
-                          ),
-                        ),
+                        
+                       
                       ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              LinearProgressIndicator(
-                value: 0.65,
-                backgroundColor: Colors.grey.shade300,
-                valueColor: AlwaysStoppedAnimation<Color>(color),
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(3),
+
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'انقر للمزيد من التفاصيل',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: color,
+                    size: 12,
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -750,60 +1061,91 @@ class _UserMainScreenState extends State<UserMainScreen>
     );
   }
 
-  void _handleServiceTap(String serviceName) {
-    final currentService = _services[_currentIndex];
-    final serviceColor = currentService['color'] as Color;
-    final serviceGradient = currentService['gradient'] as List<Color>;
-    final serviceTitle = currentService['title'];
+ void _handleServiceTap(String serviceName) {
+  final currentService = _services[_currentIndex];
+  final serviceColor = currentService['color'] as Color;
+  final serviceGradient = currentService['gradient'] as List<Color>;
+  final serviceTitle = currentService['title'];
 
-    if (serviceName.contains('دفع الفاتورة') ||
-        serviceName.contains('دفع الرسوم')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentScreen(
-            services: [
-              ServiceItem(
-                id: '1',
-                name: serviceName,
-                amount: 185.75,
-                color: serviceColor,
-                gradient: serviceGradient,
-                additionalInfo: null, // أو أي معلومات إضافية
-              ),
-            ],
-            primaryColor: serviceColor,
-            primaryGradient: serviceGradient,
-          ),
+  if (serviceName.contains('دفع الفاتورة') ||
+      serviceName.contains('دفع الرسوم')) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          services: [], // قائمة فارغة بدون خدمات
+          primaryColor: serviceColor,
+          primaryGradient: serviceGradient,
         ),
-      );
-    } else if (serviceName.contains('طلب حاوية جديدة')) {
-      _handleContainerRequest(context, currentService);
-    } else if (serviceName.contains('الهدايا والعروض')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              OffersAndPrizesScreen(serviceColor: serviceColor),
+      ),
+    );
+  } else if (serviceName.contains('طلب حاوية جديدة')) {
+    _handleContainerRequest(context, currentService);
+  } else if (serviceName.contains('الهدايا والعروض')) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            OffersAndPrizesScreen(serviceColor: serviceColor),
+      ),
+    );
+  } else if (serviceName.contains('جدول النظافة')) {
+    _showCleaningSchedule(context);
+  } else if (serviceName.contains('معلومات الفواتير')) {
+    _showBillingInformation(context, serviceColor);
+  } else if (serviceName.contains('الإبلاغ عن مشكلة')) {
+    // توجيه إلى شاشة الإبلاغ عن المشاكل الجديدة
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProblemReportScreen(
+          serviceName: serviceName,
+          serviceColor: serviceColor,
+          serviceGradient: serviceGradient,
+          serviceTitle: serviceTitle,
         ),
-      );
-    } else if (serviceName.contains('جدول النظافة')) {
-      _showCleaningSchedule(context);
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ServiceDetailsScreen(
-            serviceName: serviceName,
-            serviceColor: serviceColor,
-            serviceGradient: serviceGradient,
-            serviceTitle: serviceTitle,
-          ),
+      ),
+    );
+  } else if (serviceName.contains('أمر طارئ')) {
+    // توجيه إلى شاشة الطوارئ الجديدة
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EmergencyScreen(
+          serviceName: serviceName,
+          serviceColor: serviceColor,
+          serviceGradient: serviceGradient,
+          serviceTitle: serviceTitle,
         ),
-      );
-    }
+      ),
+    );
+  } else if (serviceName.contains('خدمات مميزة')) {
+    // توجيه إلى شاشة الخدمات المدفوعة الجديدة
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaidServicesScreen(
+          serviceName: serviceName,
+          serviceColor: serviceColor,
+          serviceGradient: serviceGradient,
+          serviceTitle: serviceTitle,
+        ),
+      ),
+    );
+  } else {
+    // للخدمات الأخرى، يمكنك إما إظهار رسالة أو توجيه إلى صفحة افتراضية
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MonthlyConsumptionScreen(
+          serviceColor: serviceColor,
+          serviceGradient: serviceGradient,
+          serviceTitle: serviceTitle,
+        ),
+      ),
+    );
   }
-
+}
   void _handleContainerRequest(
     BuildContext context,
     Map<String, dynamic> currentService,
@@ -999,7 +1341,7 @@ class OffersAndPrizesScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                                  PointsAndGiftsScreen(serviceColor: serviceColor),
+                          PointsAndGiftsScreen(serviceColor: serviceColor),
                     ),
                   );
                 },

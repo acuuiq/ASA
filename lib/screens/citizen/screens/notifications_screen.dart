@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatelessWidget {
+    static const String screen = 'notifications_screen';
+
   final List<Map<String, dynamic>> notifications;
   final Color serviceColor;
 
