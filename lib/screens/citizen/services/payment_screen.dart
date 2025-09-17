@@ -89,11 +89,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   // نظام النقاط - تم التحديث
   final PointsService _pointsService = PointsService();
-  int _userPoints = 0;
-  final double _pointsRate = 0.01;
-  bool _usePoints = false;
-  double _pointsDiscount = 0.0;
-  double _finalAmount = 0.0;
+int _userPoints = 0;
+final double _pointsRate = 0.01; // كل نقطة = 0.01 دينار
+bool _usePoints = false;
+double _pointsDiscount = 0.0;
+double _finalAmount = 0.0;
   final DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   StreamSubscription<int>? _pointsSubscription;
 
@@ -107,6 +107,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       gradient: [Colors.blue, Colors.lightBlue],
       additionalInfo: 'فاتورة استهلاك المياه للشهر الحالي',
     ),
+    //!colorrrrrrrrrrrrr
     ServiceItem(
       id: '2',
       name: 'فاتورة الكهرباء',
@@ -125,69 +126,71 @@ class _PaymentScreenState extends State<PaymentScreen> {
     ),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _finalAmount = _calculateTotalAmount();
-    _loadUserPoints();
-    _subscribeToPointsChanges();
-  }
+@override
+void initState() {
+  super.initState();
+  _finalAmount = _calculateTotalAmount();
+  _loadUserPoints();
+  _subscribeToPointsChanges();
+}
 
-  void _subscribeToPointsChanges() {
-    _pointsSubscription = _pointsService.getUserPointsStream().listen(
-      (points) {
-        if (mounted) {
-          setState(() {
-            _userPoints = points;
-            _calculatePointsDiscount();
-            _updateFinalAmount();
-          });
-        }
-      },
-      onError: (error) {
-        print('Error in points stream: $error');
-      },
-    );
-  }
+void _subscribeToPointsChanges() {
+  _pointsSubscription = _pointsService.getUserPointsStream().listen(
+    (points) {
+      if (mounted) {
+        setState(() {
+          _userPoints = points;
+          _calculatePointsDiscount();
+          _updateFinalAmount();
+        });
+      }
+    },
+    onError: (error) {
+      print('Error in points stream: $error');
+    },
+  );
+}
 
-  Future<void> _loadUserPoints() async {
-    try {
-      final points = await _pointsService.getUserPoints();
-      setState(() {
-        _userPoints = points;
-        _calculatePointsDiscount();
-        _updateFinalAmount();
-      });
-    } catch (e) {
-      print('Error loading points: $e');
-    }
-  }
-
-  double _calculateTotalAmount() {
-    return _defaultBills
-        .where((bill) => bill.isSelected)
-        .fold(0.0, (sum, service) => sum + service.amount);
-  }
-
-  void _calculatePointsDiscount() {
-    _pointsDiscount = _userPoints * _pointsRate;
-    if (_pointsDiscount > _calculateTotalAmount()) {
-      _pointsDiscount = _calculateTotalAmount();
-    }
-  }
-
-  void _updateFinalAmount() {
-    double amount = _calculateTotalAmount();
-
-    if (_usePoints) {
-      amount -= _pointsDiscount;
-      if (amount < 0) amount = 0;
-    }
-
+Future<void> _loadUserPoints() async {
+  try {
+    final points = await _pointsService.getUserPoints();
     setState(() {
-      _finalAmount = amount;
+      _userPoints = points;
+      _calculatePointsDiscount();
+      _updateFinalAmount();
     });
+  } catch (e) {
+    print('Error loading points: $e');
   }
+}
+
+double _calculateTotalAmount() {
+  return _defaultBills
+      .where((bill) => bill.isSelected)
+      .fold(0.0, (sum, service) => sum + service.amount);
+}
+
+void _calculatePointsDiscount() {
+  _pointsDiscount = _userPoints * _pointsRate;
+  if (_pointsDiscount > _calculateTotalAmount()) {
+    _pointsDiscount = _calculateTotalAmount();
+  }
+}
+
+void _updateFinalAmount() {
+  double amount = _calculateTotalAmount();
+
+  if (_usePoints) {
+    amount -= _pointsDiscount;
+    if (amount < 0) amount = 0;
+  }
+
+  setState(() {
+    _finalAmount = amount;
+  });
+}
+
+
 
   @override
   void dispose() {
@@ -468,41 +471,41 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
 
             // خيار استخدام النقاط
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(Icons.loyalty, color: widget.primaryColor),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'نقاط الولاء: $_userPoints نقطة',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            'يمكنك خصم ${_pointsDiscount.toStringAsFixed(2)} د.ع',
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: _usePoints,
-                      onChanged: (value) {
-                        setState(() {
-                          _usePoints = value;
-                          _updateFinalAmount();
-                        });
-                      },
-                      activeColor: widget.primaryColor,
-                    ),
-                  ],
-                ),
+          Card(
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Row(
+      children: [
+        Icon(Icons.loyalty, color: widget.primaryColor),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'نقاط الولاء: $_userPoints نقطة',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            ),
+              Text(
+                'يمكنك خصم ${_pointsDiscount.toStringAsFixed(2)} د.ع',
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: _usePoints,
+          onChanged: (value) {
+            setState(() {
+              _usePoints = value;
+              _updateFinalAmount();
+            });
+          },
+          activeColor: widget.primaryColor,
+        ),
+      ],
+    ),
+  ),
+),
 
             const SizedBox(height: 20),
 
@@ -1241,59 +1244,160 @@ class _PaymentDetailsFormState extends State<PaymentDetailsForm> {
   }
 
   // في payment_screen.dart
-
-  void _processPayment() async {
-    try {
-      // عند الدفع الناجح
-      if (widget.usePoints) {
-        // خصم النقاط المستخدمة
-        await _pointsService.usePoints(
-          points: (widget.pointsDiscount / _pointsRate)
-              .round(), // تحويل المبلغ إلى نقاط
-          reason: 'خصم من فاتورة',
-          referenceId: 'INV-${DateTime.now().millisecondsSinceEpoch}',
-        );
-      }
-
-      // منح نقاط للدفع في الموعد/مبكر
-      final now = DateTime.now();
-      final dueDate = _dueDate;
-      final daysEarly = dueDate.difference(now).inDays;
-
-      if (daysEarly >= 0) {
-        // الدفع في الموعد أو مبكرًا
-        final pointsToAdd = (widget.finalAmount * 0.02).round();
-        await _pointsService.addPoints(
-          points: pointsToAdd,
-          reason: 'دفع مبكر للفاتورة',
-          referenceId: 'INV-${DateTime.now().millisecondsSinceEpoch}',
-        );
-      }
-
-      // إظهار رسالة نجاح
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('تم الدفع بنجاح!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      // إغلاق النموذج
-      Navigator.of(context).pop();
-
-      // إغلاق شاشة الدفع
-      if (widget.onPaymentSuccess != null) {
-        widget.onPaymentSuccess!();
-      }
-    } catch (e) {
-      // إظهار رسالة خطأ
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('حدث خطأ أثناء عملية الدفع: $e'),
-          backgroundColor: Colors.red,
-        ),
+void _processPayment() async {
+  try {
+    // عند الدفع الناجح
+    if (widget.usePoints) {
+      // خصم النقاط المستخدمة
+      await _pointsService.usePoints(
+        points: (widget.pointsDiscount / _pointsRate).round(),
+        reason: 'خصم من فاتورة',
+        referenceId: 'INV-${DateTime.now().millisecondsSinceEpoch}',
       );
     }
+
+    // منح نقاط للدفع في الموعد/مبكر
+    final now = DateTime.now();
+    final dueDate = _dueDate;
+    final daysEarly = dueDate.difference(now).inDays;
+
+    if (daysEarly >= 0) {
+      // الدفع في الموعد أو مبكرًا
+      final pointsToAdd = (widget.finalAmount * 0.02).round();
+      await _pointsService.addPoints(
+        points: pointsToAdd,
+        reason: 'دفع مبكر للفاتورة',
+        referenceId: 'INV-${DateTime.now().millisecondsSinceEpoch}',
+      );
+    }
+
+    // إظهار تفاصيل الفاتورة بعد الدفع الناجح
+    _showPaymentSuccessDialog();
+  } catch (e) {
+    // إظهار رسالة خطأ
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('حدث خطأ أثناء عملية الدفع: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+  void _showPaymentSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 10),
+              Text('تم الدفع بنجاح', style: TextStyle(color: Colors.green)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'تفاصيل الفاتورة:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 15),
+                ...widget.services
+                    .map(
+                      (service) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(service.name),
+                            Text('${service.amount.toStringAsFixed(2)} د.ع'),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+
+                Divider(),
+
+                if (widget.usePoints)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('الخصم من النقاط:'),
+                        Text(
+                          '-${widget.pointsDiscount.toStringAsFixed(2)} د.ع',
+                          style: TextStyle(color: Colors.green),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'المبلغ الإجمالي:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '${widget.finalAmount.toStringAsFixed(2)} د.ع',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: widget.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 10),
+                Text(
+                  'رقم المرجع: INV-${DateTime.now().millisecondsSinceEpoch}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  'تاريخ الدفع: ${DateFormat('yyyy/MM/dd - HH:mm').format(DateTime.now())}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // إغلاق جميع النوافذ والعودة للشاشة الرئيسية
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: Text(
+                'العودة للرئيسية',
+                style: TextStyle(color: widget.primaryColor),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: widget.primaryColor,
+              ),
+              onPressed: () {
+                // إغلاق النوافذ
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+                if (widget.onPaymentSuccess != null) {
+                  widget.onPaymentSuccess!();
+                }
+              },
+              child: Text('موافق', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'payment_screen.dart';
 import 'points_service.dart'; // استيراد خدمة النقاط
 import 'dart:async'; // أضف هذا في الأعلى
-
 class PointsAndGiftsScreen extends StatefulWidget {
   static const String screen = 'pointandgift_screen';
   final Color serviceColor;
@@ -19,52 +18,33 @@ class PointsAndGiftsScreen extends StatefulWidget {
 
 class _PointsAndGiftsScreenState extends State<PointsAndGiftsScreen> {
   final PointsService _pointsService = PointsService();
-  int _userPoints = 0;
-  double _pointsValue = 0.2;
-  bool _isLoading = true;
-  StreamSubscription<int>? _pointsSubscription;
+int _userPoints = 0;
+double _pointsValue = 0.0;
+bool _isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserPoints();
-    _subscribeToPointsChanges();
-  }
+@override
+void initState() {
+  super.initState();
+  _loadUserPoints();
+}
 
-  void _subscribeToPointsChanges() {
-    _pointsSubscription = _pointsService.getUserPointsStream().listen((points) {
-      if (mounted) {
-        setState(() {
-          _userPoints = points;
-          _pointsValue = points * 0.01;
-        });
-      }
-    }, onError: (error) {
-      print('Error in points stream: $error');
+Future<void> _loadUserPoints() async {
+  try {
+    final points = await _pointsService.getUserPoints();
+    setState(() {
+      _userPoints = points;
+      _pointsValue = points * 0.01; // تحويل النقاط إلى قيمة مالية
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('Error loading points: $e');
+    setState(() {
+      _isLoading = false;
     });
   }
+}
 
-  Future<void> _loadUserPoints() async {
-    try {
-      final points = await _pointsService.getUserPoints();
-      setState(() {
-        _userPoints = points;
-        _pointsValue = points * 0.01;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading points: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _pointsSubscription?.cancel();
-    super.dispose();
-  }
+ 
 
 
 
@@ -168,25 +148,26 @@ class _PointsAndGiftsScreenState extends State<PointsAndGiftsScreen> {
                           'نقاطك الحالية',
                           style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
-                        _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                '$_userPoints نقطة',
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                        _isLoading
-                            ? const SizedBox()
-                            : Text(
-                                'تعادل ${_pointsValue.toStringAsFixed(2)} دينار',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white.withOpacity(0.9),
-                                ),
-                              ),
+                       _isLoading
+    ? const CircularProgressIndicator(color: Colors.white)
+    : Text(
+        '$_userPoints نقطة',
+        style: const TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+_isLoading
+    ? const SizedBox()
+    : Text(
+        'تعادل ${_pointsValue.toStringAsFixed(2)} دينار',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.white.withOpacity(0.9),
+        ),
+      ),
+
                       ],
                     ),
                   ],

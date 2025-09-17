@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/payment_screen.dart';
 import '../services/points_and_gifts_screen.dart';
 import '../services/waste_schedule_screen.dart';
-import '../services/container_request_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
 import '../auth/signin_screen.dart';
@@ -13,6 +12,8 @@ import '../services/problem_report_screen.dart';
 import '../services/emergency_screen.dart';
 import '../services/paid_services_screen.dart';
 import '../services/daily_consumption_screen.dart';
+import '../screens/events_screen.dart';
+
 class UserMainScreen extends StatefulWidget {
   static const String screenRoot = 'user_main';
 
@@ -188,90 +189,149 @@ class _UserMainScreenState extends State<UserMainScreen>
   // استبدال خدمة 'ضريبة التأخير' بـ 'معلومات الفواتير' في جميع الخدمات
   // في قائمة _services، قم بتعديل كل خدمة 'ضريبة التأخير' لتصبح 'معلومات الفواتير'
 
- // في قائمة _services، أضف خدمة 'أمر طارئ' إلى قسم النفايات
-final List<Map<String, dynamic>> _services = [
-  {
-    'title': 'الكهرباء',
-    'icon': 'electricity',
-    'color': const Color(0xFF0D47A1),
-    'gradient': [const Color(0xFF0D47A1), const Color(0xFF1976D2)],
-    'services': [
-      {
-        'name': 'دفع الفاتورة',
-        'icon': 'payment',
-        'premium': false,
-        'hasEarlyPaymentDiscount': true,
-      },
-      {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
-      {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
-      {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
-      {
-        'name': 'معلومات الفواتير',
-        'icon': 'tax',
-        'premium': false,
-      },
-      {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
-      {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
-    ],
-  },
-  {
-    'title': 'الماء',
-    'icon': 'water',
-    'color': const Color(0xFF00B4D8),
-    'gradient': [const Color(0xFF00B4D8), const Color(0xFF90E0EF)],
-    'services': [
-      {
-        'name': 'دفع الفاتورة',
-        'icon': 'payment',
-        'premium': false,
-        'hasEarlyPaymentDiscount': true,
-      },
-      {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
-      {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
-      {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
-      {
-        'name': 'معلومات الفواتير',
-        'icon': 'tax',
-        'premium': false,
-      },
-      {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
-      {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
-    ],
-  },
-  {
-    'title': 'النفايات',
-    'icon': 'waste',
-    'color': const Color(0xFF4CAF50),
-    'gradient': [const Color(0xFF4CAF50), const Color(0xFF8BC34A)],
-    'services': [
-      {
-        'name': 'دفع الرسوم',
-        'icon': 'payment',
-        'premium': false,
-        'hasEarlyPaymentDiscount': true,
-      },
-            {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
+  // في قائمة _services، أضف خدمة 'أمر طارئ' إلى قسم النفايات
+  final List<Map<String, dynamic>> _services = [
+    {
+      'title': 'الكهرباء',
+      'icon': 'electricity',
+      'color': const Color(0xFF0D47A1),
+      'gradient': [const Color(0xFF0D47A1), const Color(0xFF1976D2)],
+      'services': [
+        {
+          'name': 'دفع الفاتورة',
+          'icon': 'payment',
+          'premium': false,
+          'hasEarlyPaymentDiscount': true,
+        },
+        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
+        {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
+        {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
+        {'name': 'معلومات الفواتير', 'icon': 'tax', 'premium': false},
+        {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+        {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+      ],
+    },
+    {
+      'title': 'الماء',
+      'icon': 'water',
+      'color': const Color(0xFF00B4D8),
+      'gradient': [const Color(0xFF00B4D8), const Color(0xFF90E0EF)],
+      'services': [
+        {
+          'name': 'دفع الفاتورة',
+          'icon': 'payment',
+          'premium': false,
+          'hasEarlyPaymentDiscount': true,
+        },
+        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
+        {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
+        {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
+        {'name': 'معلومات الفواتير', 'icon': 'tax', 'premium': false},
+        {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+        {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+      ],
+    },
+    {
+      'title': 'النفايات',
+      'icon': 'waste',
+      'color': const Color(0xFF4CAF50),
+      'gradient': [const Color(0xFF4CAF50), const Color(0xFF8BC34A)],
+      'services': [
+        {
+          'name': 'دفع الرسوم',
+          'icon': 'payment',
+          'premium': false,
+          'hasEarlyPaymentDiscount': true,
+        },
+        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
 
-      {
-        'name': 'طلب حاوية جديدة',
-        'icon': 'container',
-        'premium': false,
-        'isFirstContainerFree': true,
-      },
-      {'name': 'جدول النظافة', 'icon': 'schedule', 'premium': false},
-      {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
-      // إضافة خدمة 'أمر طارئ' للنفايات
-      {
-        'name': 'معلومات الفواتير',
-        'icon': 'tax',
-        'premium': false,
-      },
-      {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
-      {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
-    ],
+        {'name': 'جدول النظافة', 'icon': 'schedule', 'premium': false},
+        {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
+        // إضافة خدمة 'أمر طارئ' للنفايات
+        {'name': 'معلومات الفواتير', 'icon': 'tax', 'premium': false},
+        {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+        {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+      ],
+    },
+  ];
+final List<Map<String, dynamic>> _events = [
+  {
+    'title': 'صيانة مخططة',
+    'description': 'سيتم إيقاف خدمة الكهرباء للصيانة الدورية يوم السبت القادم من الساعة 10 صباحاً حتى 2 ظهراً',
+    'color': const Color(0xFF0D47A1),
+    'icon': Icons.engineering,
+    'date': DateTime.now().add(const Duration(days: 3)),
+    'location': 'جميع الأحياء',
+  },
+  {
+    'title': 'توعية بيئية',
+    'description': 'ورشة عمل حول ترشيد استهلاك المياه والطاقة يوم الأحد القادم في المركز الثقافي',
+    'color': const Color(0xFF00B4D8),
+    'icon': Icons.eco,
+    'date': DateTime.now().add(const Duration(days: 4)),
+    'location': 'المركز الثقافي - وسط المدينة',
+  },
+  {
+    'title': 'تحديث النظام',
+    'description': 'سيتم تحديث نظام الفواتير الإلكترونية يوم الاثنين القادم، قد تؤثر على بعض الخدمات مؤقتاً',
+    'color': const Color(0xFF4CAF50),
+    'icon': Icons.system_update,
+    'date': DateTime.now().add(const Duration(days: 5)),
+    'location': 'جميع المناطق',
   },
 ];
-
+Widget _buildEventsButton() {
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 8),
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: const Icon(
+            Icons.event,
+            size: 24,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EventsScreen(
+                  events: _events,
+                  serviceColor: _services[_currentIndex]['color'] as Color,
+                ),
+              ),
+            );
+          },
+          tooltip: 'الأحداث',
+        ),
+        if (_events.isNotEmpty)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF9800),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              child: Text(
+                _events.length.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
   // دالة جديدة لعرض معلومات الفواتير
   void _showBillingInformation(BuildContext context, Color serviceColor) {
     showModalBottomSheet(
@@ -587,131 +647,125 @@ final List<Map<String, dynamic>> _services = [
   }
 
   Widget _buildDailyConsumptionCard(
-  Color color,
-  List<Color> gradient,
-  String title,
-) {
-  return InkWell(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DailyConsumptionScreen(
-            serviceTitle: title,
-            serviceColor: color,
-            serviceGradient: gradient,
+    Color color,
+    List<Color> gradient,
+    String title,
+  ) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DailyConsumptionScreen(
+              serviceTitle: title,
+              serviceColor: color,
+              serviceGradient: gradient,
+            ),
           ),
-        ),
-      );
-    },
-    child: Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: _borderColor, width: 1),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
+        );
+      },
+      child: Card(
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          color: _cardColor,
+          side: BorderSide(color: _borderColor, width: 1),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(
-                      _customIcons['consumption']!,
-                      color: color,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'الاستهلاك اليومي',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: _textColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title == 'الماء' ? '250 لتر' : '25 كيلوواط/ساعة',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: _textColor,
-                        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: _cardColor,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'اليوم: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _textSecondaryColor,
-                        ),
+                      child: Icon(
+                        _customIcons['consumption']!,
+                        color: color,
+                        size: 20,
                       ),
-                    ],
-                  ),
-                  SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: Stack(
-                      alignment: Alignment.center,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'الاستهلاك اليومي',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: _textColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          title == 'الماء' ? '250 لتر' : '25 كيلوواط/ساعة',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: _textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'اليوم: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _textSecondaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: Stack(alignment: Alignment.center, children: [
                         
                        
                       ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    'انقر للمزيد من التفاصيل',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: color,
-                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: color,
-                    size: 12,
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'انقر للمزيد من التفاصيل',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: color, size: 12),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -761,7 +815,9 @@ final List<Map<String, dynamic>> _services = [
             ],
           ),
           leading: _buildProfileButton(serviceColor),
-          actions: [_buildNotificationButton()],
+          actions: [_buildNotificationButton(),
+              _buildEventsButton(), // أضف زر الأحداث هنا
+],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(50),
             child: Container(
@@ -879,19 +935,6 @@ final List<Map<String, dynamic>> _services = [
                 ),
               ),
           ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: _primaryColor,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onPressed: _showEmergencyDialog,
-          child: Icon(
-            _customIcons['emergency']!,
-            size: 24,
-            color: Colors.white,
-          ),
         ),
       ),
     );
@@ -1061,207 +1104,101 @@ final List<Map<String, dynamic>> _services = [
     );
   }
 
- void _handleServiceTap(String serviceName) {
-  final currentService = _services[_currentIndex];
-  final serviceColor = currentService['color'] as Color;
-  final serviceGradient = currentService['gradient'] as List<Color>;
-  final serviceTitle = currentService['title'];
-
-  if (serviceName.contains('دفع الفاتورة') ||
-      serviceName.contains('دفع الرسوم')) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(
-          services: [], // قائمة فارغة بدون خدمات
-          primaryColor: serviceColor,
-          primaryGradient: serviceGradient,
-        ),
-      ),
-    );
-  } else if (serviceName.contains('طلب حاوية جديدة')) {
-    _handleContainerRequest(context, currentService);
-  } else if (serviceName.contains('الهدايا والعروض')) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            OffersAndPrizesScreen(serviceColor: serviceColor),
-      ),
-    );
-  } else if (serviceName.contains('جدول النظافة')) {
-    _showCleaningSchedule(context);
-  } else if (serviceName.contains('معلومات الفواتير')) {
-    _showBillingInformation(context, serviceColor);
-  } else if (serviceName.contains('الإبلاغ عن مشكلة')) {
-    // توجيه إلى شاشة الإبلاغ عن المشاكل الجديدة
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProblemReportScreen(
-          serviceName: serviceName,
-          serviceColor: serviceColor,
-          serviceGradient: serviceGradient,
-          serviceTitle: serviceTitle,
-        ),
-      ),
-    );
-  } else if (serviceName.contains('أمر طارئ')) {
-    // توجيه إلى شاشة الطوارئ الجديدة
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EmergencyScreen(
-          serviceName: serviceName,
-          serviceColor: serviceColor,
-          serviceGradient: serviceGradient,
-          serviceTitle: serviceTitle,
-        ),
-      ),
-    );
-  } else if (serviceName.contains('خدمات مميزة')) {
-    // توجيه إلى شاشة الخدمات المدفوعة الجديدة
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaidServicesScreen(
-          serviceName: serviceName,
-          serviceColor: serviceColor,
-          serviceGradient: serviceGradient,
-          serviceTitle: serviceTitle,
-        ),
-      ),
-    );
-  } else {
-    // للخدمات الأخرى، يمكنك إما إظهار رسالة أو توجيه إلى صفحة افتراضية
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MonthlyConsumptionScreen(
-          serviceColor: serviceColor,
-          serviceGradient: serviceGradient,
-          serviceTitle: serviceTitle,
-        ),
-      ),
-    );
-  }
-}
-  void _handleContainerRequest(
-    BuildContext context,
-    Map<String, dynamic> currentService,
-  ) {
+  void _handleServiceTap(String serviceName) {
+    final currentService = _services[_currentIndex];
     final serviceColor = currentService['color'] as Color;
-    final isFirstContainerFree =
-        (currentService['services'].firstWhere(
-                  (s) => s['name'] == 'طلب حاوية جديدة',
-                )['isFirstContainerFree'] ??
-                false)
-            as bool;
+    final serviceGradient = currentService['gradient'] as List<Color>;
+    final serviceTitle = currentService['title'];
 
-    final containerTypes = [
-      {
-        'type': 'صغيرة (120 لتر)',
-        'price': isFirstContainerFree ? 0 : 5000,
-        'icon': Icons.delete,
-        'color': _successColor,
-        'dimensions': '60x60x80 سم',
-        'weight': '8 كغ',
-        'description': 'مناسبة للاستخدام المنزلي اليومي',
-      },
-      {
-        'type': 'متوسطة (240 لتر)',
-        'price': 7500,
-        'icon': Icons.delete_outline,
-        'color': _primaryColor,
-        'dimensions': '70x70x100 سم',
-        'weight': '12 كغ',
-        'description': 'مناسبة للعائلات الكبيرة',
-      },
-      {
-        'type': 'كبيرة (360 لتر)',
-        'price': 10000,
-        'icon': Icons.delete_forever,
-        'color': _secondaryColor,
-        'dimensions': '80x80x120 سم',
-        'weight': '15 كغ',
-        'description': 'مناسبة للمطاعم والمحلات التجارية',
-      },
-    ];
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ContainerRequestScreen(
-          containerTypes: containerTypes,
-          serviceColor: serviceColor,
-          isFirstContainerFree: isFirstContainerFree,
-        ),
-      ),
-    );
-  }
-
-  void _showCleaningSchedule(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WasteScheduleScreen(
-          serviceColor: _services[_currentIndex]['color'] as Color,
-        ),
-      ),
-    );
-  }
-
-  void _showEmergencyDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Row(
-          children: [
-            Icon(Icons.emergency, color: _errorColor),
-            const SizedBox(width: 8),
-            Text('طلب طارئ'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('هل تريد إرسال طلب طارئ لخدمة الإسعافات الأولية؟'),
-            const SizedBox(height: 16),
-            Icon(Icons.emergency, size: 60, color: _errorColor),
-            const SizedBox(height: 16),
-            Text(
-              'سيتم إرسال موقعك الحالي تلقائياً',
-              style: TextStyle(color: _errorColor),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+    if (serviceName.contains('دفع الفاتورة') ||
+        serviceName.contains('دفع الرسوم')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentScreen(
+            services: [], // قائمة فارغة بدون خدمات
+            primaryColor: serviceColor,
+            primaryGradient: serviceGradient,
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('تم إرسال الطلب الطارئ'),
-                  backgroundColor: _successColor,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _errorColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            child: const Text('تأكيد الإرسال'),
-          ),
-        ],
+        ),
+      );
+    } else if (serviceName.contains('الهدايا والعروض')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              OffersAndPrizesScreen(serviceColor: serviceColor),
+        ),
+      );
+    } else if (serviceName.contains('جدول النظافة')) {
+  
+
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => WasteScheduleScreen(
+        serviceColor: serviceColor,
       ),
-    );
+    ),
+  );
+
+
+
+    } else if (serviceName.contains('معلومات الفواتير')) {
+      _showBillingInformation(context, serviceColor);
+    } else if (serviceName.contains('الإبلاغ عن مشكلة')) {
+      // توجيه إلى شاشة الإبلاغ عن المشاكل الجديدة
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProblemReportScreen(
+            serviceName: serviceName,
+            serviceColor: serviceColor,
+            serviceGradient: serviceGradient,
+            serviceTitle: serviceTitle,
+          ),
+        ),
+      );
+    } else if (serviceName.contains('أمر طارئ')) {
+      // توجيه إلى شاشة الطوارئ الجديدة
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EmergencyScreen(
+            serviceName: serviceName,
+            serviceColor: serviceColor,
+            serviceGradient: serviceGradient,
+            serviceTitle: serviceTitle,
+          ),
+        ),
+      );
+    } else if (serviceName.contains('خدمات مميزة')) {
+      // توجيه إلى شاشة الخدمات المدفوعة الجديدة
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaidServicesScreen(
+            serviceName: serviceName,
+            serviceColor: serviceColor,
+            serviceGradient: serviceGradient,
+            serviceTitle: serviceTitle,
+          ),
+        ),
+      );
+    } else {
+      // للخدمات الأخرى، يمكنك إما إظهار رسالة أو توجيه إلى صفحة افتراضية
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MonthlyConsumptionScreen(
+            serviceColor: serviceColor,
+            serviceGradient: serviceGradient,
+            serviceTitle: serviceTitle,
+          ),
+        ),
+      );
+    }
   }
 }
 

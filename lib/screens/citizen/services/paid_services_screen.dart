@@ -407,36 +407,36 @@ class _PaidServicesScreenState extends State<PaidServicesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.purple.withOpacity(0.3)),
-                  ),
-                  child: const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.purple,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    'طلب خدمة مخصصة (دفع نقدي)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.purple,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                ),
-              ],
-            ),
+          Row(
+  children: [
+    Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Color(0xFFF2F2F7).withOpacity(0.8), // رمادي فاتح جدًا
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF8E8E93).withOpacity(0.3)), // رمادي متوسط
+      ),
+      child: Icon(
+        Icons.add_circle_outline,
+        color: Color.fromARGB(255, 104, 104, 107), // رمادي متوسط
+        size: 28,
+      ),
+    ),
+    const SizedBox(width: 16),
+    Expanded(
+      child: Text(
+        'طلب خدمة مخصصة (دفع نقدي)',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          color: Color.fromARGB(255, 110, 105, 105), // رمادي متوسط
+        ),
+        textAlign: TextAlign.right,
+      ),
+    ),
+  ],
+),
             const SizedBox(height: 12),
             const Text(
               'إذا لم تجد الخدمة التي تبحث عنها، يمكنك طلب خدمة مخصصة وإرفاق صور للعمل المطلوب والاستفسار عن السعر',
@@ -446,7 +446,7 @@ class _PaidServicesScreenState extends State<PaidServicesScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
+                backgroundColor: const Color.fromARGB(255, 126, 126, 126),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
