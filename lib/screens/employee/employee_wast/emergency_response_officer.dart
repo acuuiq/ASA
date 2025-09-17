@@ -158,11 +158,13 @@ class _EmergencyResponseOfficerScreenState
     _animationController.reset();
     _animationController.forward().then((_) {
       final random = DateTime.now().millisecond % 8;
-      setState(() {
-        _selectedWheelItem = random;
-        _isWheelSpinning = false;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        setState(() {
+          _selectedWheelItem = random;
+          _isWheelSpinning = false;
+        });
+        _showWheelResult(random);
       });
-      _showWheelResult(random);
     });
   }
 
@@ -254,7 +256,7 @@ class _EmergencyResponseOfficerScreenState
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
-        title: const Text('مركز طوارئ النظافة', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('مركز طوارئ النظافة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: _primaryColor,
         elevation: 4,
         flexibleSpace: Container(
@@ -268,12 +270,12 @@ class _EmergencyResponseOfficerScreenState
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_active, size: 24),
+            icon: const Icon(Icons.notifications_active, size: 24, color: Colors.white),
             onPressed: _showNotifications,
             tooltip: 'الإشعارات',
           ),
           IconButton(
-            icon: const Icon(Icons.logout, size: 24),
+            icon: const Icon(Icons.logout, size: 24, color: Colors.white),
             onPressed: _signOut,
             tooltip: 'تسجيل الخروج',
           ),
@@ -318,7 +320,7 @@ class _EmergencyResponseOfficerScreenState
       floatingActionButton: FloatingActionButton(
         backgroundColor: _wasteColor,
         onPressed: _reportNewEmergency,
-        child: const Icon(Icons.add_alert, size: 28),
+        child: const Icon(Icons.add_alert, size: 28, color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
@@ -446,7 +448,7 @@ class _EmergencyResponseOfficerScreenState
         const SizedBox(width: 16),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: _textColor,
@@ -461,6 +463,7 @@ class _EmergencyResponseOfficerScreenState
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: _cardColor,
       child: InkWell(
         onTap: () => _handleRequest(request),
         borderRadius: BorderRadius.circular(16),
@@ -469,28 +472,29 @@ class _EmergencyResponseOfficerScreenState
           children: [
             // رأس البطاقة
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.05),
+                color: _primaryColor.withOpacity(0.1),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.1),
+                      color: _primaryColor.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(request['icon'], color: _primaryColor, size: 24),
+                    child: Icon(request['icon'], color: _primaryColor, size: 20),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       request['type'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 16,
+                        color: _textColor,
                       ),
                     ),
                   ),
@@ -501,7 +505,7 @@ class _EmergencyResponseOfficerScreenState
             
             // محتوى البطاقة
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -531,7 +535,7 @@ class _EmergencyResponseOfficerScreenState
             
             // أزرار البطاقة
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Row(
                 children: [
                   Expanded(
@@ -540,7 +544,7 @@ class _EmergencyResponseOfficerScreenState
                       style: FilledButton.styleFrom(
                         backgroundColor: _primaryColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -548,7 +552,7 @@ class _EmergencyResponseOfficerScreenState
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.settings, size: 20),
+                          Icon(Icons.settings, size: 18),
                           SizedBox(width: 8),
                           Text('إدارة الطلب'),
                         ],
@@ -557,11 +561,11 @@ class _EmergencyResponseOfficerScreenState
                   ),
                   const SizedBox(width: 12),
                   IconButton(
-                    icon: Icon(Icons.map, size: 24, color: _primaryColor),
+                    icon: Icon(Icons.map, size: 22, color: _primaryColor),
                     onPressed: () => _viewOnMap(request),
                     style: IconButton.styleFrom(
                       backgroundColor: _primaryColor.withOpacity(0.1),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                     ),
                   ),
                 ],
@@ -585,9 +589,10 @@ class _EmergencyResponseOfficerScreenState
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: _textSecondaryColor,
+                fontSize: 14,
               ),
             ),
-            Text('$progress%', style: TextStyle(color: _primaryColor)),
+            Text('$progress%', style: TextStyle(color: _primaryColor, fontSize: 14)),
           ],
         ),
         const SizedBox(height: 8),
@@ -646,27 +651,21 @@ class _EmergencyResponseOfficerScreenState
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: _cardColor,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Row(
               children: [
                 // مؤشر حالة الفريق
                 Container(
-                  width: 16,
-                  height: 16,
-                  margin: const EdgeInsets.only(right: 16),
+                  width: 12,
+                  height: 12,
+                  margin: const EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
                     color: team['status'] == 'متاح' ? _successColor : _accentColor,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
                 ),
                 
@@ -677,15 +676,16 @@ class _EmergencyResponseOfficerScreenState
                     children: [
                       Text(
                         team['name'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: 16,
+                          color: _textColor,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         team['location'],
-                        style: TextStyle(color: _textSecondaryColor, fontSize: 14),
+                        style: TextStyle(color: _textSecondaryColor, fontSize: 12),
                       ),
                     ],
                   ),
@@ -694,12 +694,12 @@ class _EmergencyResponseOfficerScreenState
                 // تقييم الفريق
                 Row(
                   children: [
-                    Icon(Icons.star, color: _warningColor, size: 18),
+                    Icon(Icons.star, color: _warningColor, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       team['rating'].toString(),
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: _textColor,
                       ),
@@ -717,30 +717,30 @@ class _EmergencyResponseOfficerScreenState
                     children: [
                       Text(
                         'المهمة الحالية: ${team['currentTask']}',
-                        style: TextStyle(color: _textSecondaryColor, fontSize: 12),
+                        style: TextStyle(color: _textSecondaryColor, fontSize: 11),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'المركبة: ${team['vehicle']}',
-                        style: TextStyle(color: _textSecondaryColor, fontSize: 12),
+                        style: TextStyle(color: _textSecondaryColor, fontSize: 11),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: _primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.people, size: 16, color: _primaryColor),
-                      const SizedBox(width: 6),
+                      Icon(Icons.people, size: 14, color: _primaryColor),
+                      const SizedBox(width: 4),
                       Text(
                         '${team['members']}',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: _primaryColor,
                         ),
@@ -759,12 +759,13 @@ class _EmergencyResponseOfficerScreenState
                   foregroundColor: _primaryColor,
                   side: BorderSide(color: _primaryColor),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.map, size: 18),
-                    SizedBox(width: 8),
+                    Icon(Icons.map, size: 16),
+                    SizedBox(width: 6),
                     Text('عرض الموقع'),
                   ],
                 ),
@@ -780,22 +781,24 @@ class _EmergencyResponseOfficerScreenState
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: _cardColor,
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Text(
+            Text(
               'عجلة قرارات الطوارئ',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: _textColor,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'استخدم العجلة لاتخاذ قرارات سريعة في حالات الطوارئ',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              style: TextStyle(fontSize: 14, color: _textSecondaryColor),
             ),
             const SizedBox(height: 24),
             
@@ -816,8 +819,8 @@ class _EmergencyResponseOfficerScreenState
                     children: [
                       // العجلة الأساسية
                       Container(
-                        width: 280,
-                        height: 280,
+                        width: 250,
+                        height: 250,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: SweepGradient(
@@ -848,16 +851,16 @@ class _EmergencyResponseOfficerScreenState
                         Transform.rotate(
                           angle: i * (3.1415926535 / 4),
                           child: Container(
-                            width: 280,
-                            height: 3,
+                            width: 250,
+                            height: 2,
                             color: Colors.white54,
                           ),
                         ),
 
                       // مركز العجلة
                       Container(
-                        width: 80,
-                        height: 80,
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
@@ -869,15 +872,15 @@ class _EmergencyResponseOfficerScreenState
                             ),
                           ],
                         ),
-                        child: Icon(Icons.emergency, color: _primaryColor, size: 40),
+                        child: Icon(Icons.emergency, color: _primaryColor, size: 30),
                       ),
 
                       // المؤشر
                       const Positioned(
-                        top: -15,
+                        top: -12,
                         child: Icon(
                           Icons.arrow_drop_up,
-                          size: 60,
+                          size: 50,
                           color: Colors.red,
                         ),
                       ),
@@ -888,9 +891,9 @@ class _EmergencyResponseOfficerScreenState
                           angle: i * (3.1415926535 / 4) + (3.1415926535 / 8),
                           child: Container(
                             alignment: Alignment.center,
-                            width: 280,
+                            width: 250,
                             child: Transform.translate(
-                              offset: const Offset(0, -100),
+                              offset: const Offset(0, -90),
                               child: Transform.rotate(
                                 angle: -i * (3.1415926535 / 4) - (3.1415926535 / 8),
                                 child: Text(
@@ -898,7 +901,7 @@ class _EmergencyResponseOfficerScreenState
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ),
@@ -920,7 +923,7 @@ class _EmergencyResponseOfficerScreenState
                 style: FilledButton.styleFrom(
                   backgroundColor: _primaryColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -930,12 +933,12 @@ class _EmergencyResponseOfficerScreenState
                   children: [
                     Icon(
                       _isWheelSpinning ? Icons.autorenew : Icons.explore,
-                      size: 24,
+                      size: 20,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Text(
                       _isWheelSpinning ? 'جاري التدوير...' : 'تدوير العجلة',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -968,34 +971,35 @@ class _EmergencyResponseOfficerScreenState
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: _cardColor,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 70,
-              height: 70,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 36),
+              child: Icon(icon, color: color, size: 30),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               value,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               title,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: _textSecondaryColor,
                 fontWeight: FontWeight.w500,
               ),
@@ -1010,16 +1014,18 @@ class _EmergencyResponseOfficerScreenState
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: _cardColor,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'أداء الفرق هذا الأسبوع',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: _textColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -1029,10 +1035,10 @@ class _EmergencyResponseOfficerScreenState
                 color: _primaryColor.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
                   'رسم بياني لأداء الفرق',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: _textSecondaryColor),
                 ),
               ),
             ),
@@ -1045,16 +1051,16 @@ class _EmergencyResponseOfficerScreenState
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: _textSecondaryColor),
-        const SizedBox(width: 12),
+        Icon(icon, size: 18, color: _textSecondaryColor),
+        const SizedBox(width: 10),
         Text(
           '$label: ',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: _textColor, fontSize: 14),
         ),
         Expanded(
           child: Text(
             value,
-            style: TextStyle(color: _textSecondaryColor),
+            style: TextStyle(color: _textSecondaryColor, fontSize: 14),
           ),
         ),
       ],
@@ -1073,16 +1079,16 @@ class _EmergencyResponseOfficerScreenState
     }
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: statusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         status,
         style: TextStyle(
           color: statusColor,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -1093,6 +1099,10 @@ class _EmergencyResponseOfficerScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: _cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1105,16 +1115,17 @@ class _EmergencyResponseOfficerScreenState
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: _textSecondaryColor.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             Text(
               'إدارة الطلب: ${request['type']}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: _textColor,
               ),
             ),
             const SizedBox(height: 20),
@@ -1124,9 +1135,9 @@ class _EmergencyResponseOfficerScreenState
             const SizedBox(height: 12),
             
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'اختر فريقًا لتعيينه:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _textColor),
             ),
             const SizedBox(height: 12),
             ..._availableTeams
@@ -1134,17 +1145,17 @@ class _EmergencyResponseOfficerScreenState
                 .map(
                   (team) => ListTile(
                     leading: Container(
-                      width: 48,
-                      height: 48,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: _primaryColor.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.group_work, color: _primaryColor, size: 24),
+                      child: Icon(Icons.group_work, color: _primaryColor, size: 20),
                     ),
-                    title: Text(team['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(team['location']),
-                    trailing: Text('${team['members']} أعضاء'),
+                    title: Text(team['name'], style: TextStyle(fontWeight: FontWeight.bold, color: _textColor)),
+                    subtitle: Text(team['location'], style: TextStyle(color: _textSecondaryColor)),
+                    trailing: Text('${team['members']} أعضاء', style: TextStyle(color: _textSecondaryColor)),
                     onTap: () {
                       Navigator.pop(context);
                       _assignTeamToRequest(request, team);
@@ -1158,6 +1169,11 @@ class _EmergencyResponseOfficerScreenState
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _primaryColor,
+                  side: BorderSide(color: _primaryColor),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
                 child: const Text('إلغاء'),
               ),
             ),
@@ -1187,12 +1203,12 @@ class _EmergencyResponseOfficerScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('موقع الطلب: ${request['type']}'),
-        content: const Text('سيتم فتح موقع الطلب على الخريطة في التطبيق الكامل'),
+        title: Text('موقع الطلب: ${request['type']}', style: TextStyle(color: _textColor)),
+        content: Text('سيتم فتح موقع الطلب على الخريطة في التطبيق الكامل', style: TextStyle(color: _textSecondaryColor)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('حسناً'),
+            child: Text('حسناً', style: TextStyle(color: _primaryColor)),
           ),
         ],
       ),
@@ -1203,12 +1219,12 @@ class _EmergencyResponseOfficerScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('موقع الفريق: ${team['name']}'),
-        content: const Text('سيتم فتح موقع الفريق على الخريطة في التطبيق الكامل'),
+        title: Text('موقع الفريق: ${team['name']}', style: TextStyle(color: _textColor)),
+        content: Text('سيتم فتح موقع الفريق على الخريطة في التطبيق الكامل', style: TextStyle(color: _textSecondaryColor)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('حسناً'),
+            child: Text('حسناً', style: TextStyle(color: _primaryColor)),
           ),
         ],
       ),
@@ -1219,12 +1235,12 @@ class _EmergencyResponseOfficerScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('الإشعارات'),
-        content: const Text('لا توجد إشعارات جديدة'),
+        title: Text('الإشعارات', style: TextStyle(color: _textColor)),
+        content: Text('لا توجد إشعارات جديدة', style: TextStyle(color: _textSecondaryColor)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('حسناً'),
+            child: Text('حسناً', style: TextStyle(color: _primaryColor)),
           ),
         ],
       ),
@@ -1244,6 +1260,10 @@ class _EmergencyResponseOfficerScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: _cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => SingleChildScrollView(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
@@ -1258,37 +1278,49 @@ class _EmergencyResponseOfficerScreenState
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: _textSecondaryColor.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const Text(
+              Text(
                 'الإبلاغ عن حالة طارئة جديدة',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor),
               ),
               const SizedBox(height: 20),
               TextFormField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'نوع الحالة',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.category),
+                  labelStyle: TextStyle(color: _textSecondaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _textSecondaryColor.withOpacity(0.3)),
+                  ),
+                  prefixIcon: Icon(Icons.category, color: _primaryColor),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'الموقع',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.location_on),
+                  labelStyle: TextStyle(color: _textSecondaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _textSecondaryColor.withOpacity(0.3)),
+                  ),
+                  prefixIcon: Icon(Icons.location_on, color: _primaryColor),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'التفاصيل',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.description),
+                  labelStyle: TextStyle(color: _textSecondaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _textSecondaryColor.withOpacity(0.3)),
+                  ),
+                  prefixIcon: Icon(Icons.description, color: _primaryColor),
                 ),
                 maxLines: 3,
               ),
@@ -1298,6 +1330,11 @@ class _EmergencyResponseOfficerScreenState
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _primaryColor,
+                        side: BorderSide(color: _primaryColor),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                       child: const Text('إلغاء'),
                     ),
                   ),
@@ -1307,16 +1344,21 @@ class _EmergencyResponseOfficerScreenState
                       onPressed: () {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم الإبلاغ عن الحالة الطارئة بنجاح'),
+                          SnackBar(
+                            content: Text('تم الإبلاغ عن الحالة الطارئة بنجاح', style: TextStyle(color: Colors.white)),
                             backgroundColor: _successColor,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         );
                       },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                       child: const Text('إرسال'),
                     ),
                   ),
