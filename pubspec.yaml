@@ -38,6 +38,7 @@ dependencies:
   iconsax: ^0.0.8
   syncfusion_flutter_charts: ^31.1.19
 
+ 
 dev_dependencies:
   flutter_test:
     sdk: flutter
