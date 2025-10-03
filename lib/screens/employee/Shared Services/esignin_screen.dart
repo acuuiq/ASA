@@ -346,7 +346,7 @@ class _EsigninScreenState extends State<EsigninScreen>
           // التنقل إلى شاشة جدولة النفايات
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => WasteSchedulerScreen()),
+            MaterialPageRoute(builder: (context) => WasteSchedulerApp()),
           );
         }
       });

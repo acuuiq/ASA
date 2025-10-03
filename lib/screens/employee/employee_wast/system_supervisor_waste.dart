@@ -1,187 +1,374 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SystemSupervisorWasteScreen extends StatefulWidget {
-  static const String screenRoute = 'system_supervisor_waste_screen';
-
   const SystemSupervisorWasteScreen({super.key});
 
   @override
   State<SystemSupervisorWasteScreen> createState() => _SystemSupervisorWasteScreenState();
 }
 
-class _SystemSupervisorWasteScreenState extends State<SystemSupervisorWasteScreen> with SingleTickerProviderStateMixin {
-  // نظام ألوان متكامل ومتناسق
-  final Color _primaryColor = const Color(0xFF2C6975);
-  final Color _secondaryColor = const Color(0xFF68B2A0);
-  final Color _accentColor = const Color(0xFFCDE0C9);
-  final Color _successColor = const Color(0xFF4CAF50);
-  final Color _warningColor = const Color(0xFFFF9800);
-  final Color _errorColor = const Color(0xFFF44336);
-  final Color _cardColor = Colors.white;
-  final Color _textColor = const Color(0xFF37474F);
-  final Color _textSecondaryColor = const Color(0xFF78909C);
-  final Color _backgroundColor = const Color(0xFFF5F7F9);
-  final Color _dividerColor = const Color(0xFFE0E0E0);
+class _SystemSupervisorWasteScreenState extends State<SystemSupervisorWasteScreen> {
+  int _currentIndex = 0;
+  final List<Map<String, dynamic>> _systemMetrics = [
+    {'title': 'الحاويات النشطة', 'value': '147', 'icon': Icons.delete, 'color': Colors.green},
+    {'title': 'الحاويات الكاملة', 'value': '23', 'icon': Icons.warning, 'color': Colors.orange},
+    {'title': 'الحاويات المعطلة', 'value': '5', 'icon': Icons.error, 'color': Colors.red},
+    {'title': 'معدل التجميع', 'value': '92%', 'icon': Icons.trending_up, 'color': Colors.blue},
+  ];
 
-  // بيانات التطبيق
-  int _totalReports = 187;
-  int _pendingReports = 32;
-  int _resolvedReports = 155;
-  int _activeTeams = 12;
-  int _totalContainers = 420;
-  
-  late TabController _tabController;
+  final List<Map<String, dynamic>> _recentAlerts = [
+    {'time': '10:30 ص', 'message': 'الحاوية #45 وصلت إلى السعة القصوى', 'type': 'warning'},
+    {'time': '09:15 ص', 'message': 'خلل في نظام التتبع للحاوية #12', 'type': 'error'},
+    {'time': '08:45 ص', 'message': 'انتهت الصيانة الدورية للحاوية #78', 'type': 'info'},
+    {'time': '07:30 ص', 'message': 'بدء عملية التجميع في المنطقة الشمالية', 'type': 'info'},
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 5, vsync: this);
-  }
+  // البيانات الخاصة بشاشة التقارير
+  final List<Map<String, dynamic>> _reports = [
+    {'title': 'تقرير الأداء اليومي', 'date': '2024-01-15', 'type': 'daily'},
+    {'title': 'تقرير الأسبوعي للحاويات', 'date': '2024-01-14', 'type': 'weekly'},
+    {'title': 'تقرير الصيانة الشهري', 'date': '2024-01-10', 'type': 'monthly'},
+    {'title': 'تقرير الطوارئ', 'date': '2024-01-08', 'type': 'emergency'},
+  ];
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  // الإعدادات
+  bool _notificationsEnabled = true;
+  bool _autoBackupEnabled = false;
+  bool _systemMonitoringEnabled = true;
+  String _selectedLanguage = 'العربية';
+  String _selectedTheme = 'تلقائي';
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: isDarkMode ? const Color(0xFF0A0E21) : const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('نظام إدارة النفايات الذكي',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
-        backgroundColor: _primaryColor,
-        elevation: 0,
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: _accentColor,
-          indicatorWeight: 3,
-          indicatorSize: TabBarIndicatorSize.label,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelColor: Colors.white.withOpacity(0.7),
-          labelColor: Colors.white,
-          tabs: const [
-            Tab(icon: Icon(Icons.dashboard), text: 'لوحة التحكم'),
-            Tab(icon: Icon(Icons.report_problem), text: 'إدارة البلاغات'),
-            Tab(icon: Icon(Icons.group_work), text: 'فرق العمل'),
-            Tab(icon: Icon(Icons.delete), text: 'إدارة الحاويات'),
-            Tab(icon: Icon(Icons.analytics), text: 'التقارير'),
-          ],
+        title: Text(
+          _getAppBarTitle(),
+          style: const TextStyle(
+            fontFamily: 'Tajawal',
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        backgroundColor: const Color.fromARGB(255, 17, 126, 117),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 0,
+        actions: _currentIndex == 0 ? [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: _showNotifications,
+          ),
+        ] : null,
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildDashboard(),
-          _buildReportsManagement(),
-          _buildTeamsManagement(),
-          _buildContainersManagement(),
-          _buildReportsAnalytics(),
+      body: _buildCurrentScreen(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        selectedLabelStyle: const TextStyle(fontFamily: 'Tajawal'),
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Tajawal'),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'الرئيسية',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.analytics),
+            label: 'التقارير',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'الإعدادات',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDashboard() {
+  String _getAppBarTitle() {
+    switch (_currentIndex) {
+      case 0:
+        return 'لوحة تحكم مشرف النظام - النفايات';
+      case 1:
+        return 'التقارير والإحصائيات';
+      case 2:
+        return 'إعدادات النظام';
+      default:
+        return 'لوحة التحكم';
+    }
+  }
+
+  Widget _buildCurrentScreen() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildDashboardScreen();
+      case 1:
+        return _buildReportsScreen();
+      case 2:
+        return _buildSettingsScreen();
+      default:
+        return _buildDashboardScreen();
+    }
+  }
+
+  // شاشة الرئيسية
+  Widget _buildDashboardScreen() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // بطاقات الإحصائيات
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.2,
-            children: [
-              _buildStatCard('إجمالي البلاغات', _totalReports, Icons.report_problem, _primaryColor),
-              _buildStatCard('البلاغات المعلقة', _pendingReports, Icons.pending_actions, _warningColor),
-              _buildStatCard('البلاغات المنجزة', _resolvedReports, Icons.check_circle, _successColor),
-              _buildStatCard('فرق العمل النشطة', _activeTeams, Icons.group_work, _secondaryColor),
-              _buildStatCard('إجمالي الحاويات', _totalContainers, Icons.delete, _accentColor),
-              _buildStatCard('معدل الاستجابة', '92%', Icons.timer, Color(0xFF7E57C2)),
-            ],
+          _buildWelcomeCard(),
+          const SizedBox(height: 20),
+          const Text(
+            'مؤشرات النظام',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Tajawal',
+            ),
           ),
-          
-          const SizedBox(height: 24),
-          
-          // مخططات الأداء
-          Text('أداء النظام', style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: _textColor,
-          )),
-          
-          const SizedBox(height: 16),
-          
-          _buildPerformanceCharts(),
-          
-          const SizedBox(height: 24),
-          
-          // الإشعارات الحديثة
-          Text('آخر التحديثات', style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: _textColor,
-          )),
-          
-          const SizedBox(height: 16),
-          
-          _buildRecentNotifications(),
+          const SizedBox(height: 10),
+          _buildMetricsGrid(),
+          const SizedBox(height: 20),
+          _buildAlertsSection(),
+          const SizedBox(height: 20),
+          _buildQuickActions(),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String title, dynamic value, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+  // شاشة التقارير
+  Widget _buildReportsScreen() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // إحصائيات سريعة
+          _buildReportsStats(),
+          const SizedBox(height: 20),
+          
+          // أنواع التقارير
+          const Text(
+            'أنواع التقارير',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Tajawal',
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildReportTypes(),
+          const SizedBox(height: 20),
+          
+          // التقارير الحديثة
+          const Text(
+            'التقارير الحديثة',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Tajawal',
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildRecentReports(),
+        ],
       ),
+    );
+  }
+
+  // شاشة الإعدادات
+  Widget _buildSettingsScreen() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // إعدادات النظام
+          _buildSystemSettings(),
+          const SizedBox(height: 20),
+          
+          // إعدادات المظهر
+          _buildAppearanceSettings(),
+          const SizedBox(height: 20),
+          
+          // إعدادات الخصوصية
+          _buildPrivacySettings(),
+          const SizedBox(height: 20),
+          
+          // إجراءات النظام
+          _buildSystemActions(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportsStats() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.fromARGB(255, 74, 20, 140),
+            Color.fromARGB(255, 142, 45, 226),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem('24', 'تقرير هذا الشهر', Icons.description),
+          _buildStatItem('8', 'تقارير الطوارئ', Icons.warning),
+          _buildStatItem('95%', 'معدل الإنجاز', Icons.trending_up),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white, size: 30),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Tajawal',
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontFamily: 'Tajawal',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReportTypes() {
+    final List<Map<String, dynamic>> reportTypes = [
+      {'type': 'daily', 'title': 'التقارير اليومية', 'icon': Icons.today, 'color': Colors.blue},
+      {'type': 'weekly', 'title': 'التقارير الأسبوعية', 'icon': Icons.date_range, 'color': Colors.green},
+      {'type': 'monthly', 'title': 'التقارير الشهرية', 'icon': Icons.calendar_month, 'color': Colors.orange},
+      {'type': 'emergency', 'title': 'تقارير الطوارئ', 'icon': Icons.emergency, 'color': Colors.red},
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.5,
+      ),
+      itemCount: reportTypes.length,
+      itemBuilder: (context, index) {
+        final type = reportTypes[index];
+        return Card(
+          elevation: 3,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => _generateReport(type['type']),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(type['icon'], color: type['color'], size: 35),
+                const SizedBox(height: 8),
+                Text(
+                  type['title'],
+                  style: const TextStyle(
+                    fontFamily: 'Tajawal',
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecentReports() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _reports.length,
+      itemBuilder: (context, index) {
+        final report = _reports[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: ListTile(
+            leading: _getReportIcon(report['type']),
+            title: Text(
+              report['title'],
+              style: const TextStyle(fontFamily: 'Tajawal'),
+            ),
+            subtitle: Text(
+              report['date'],
+              style: const TextStyle(fontFamily: 'Tajawal'),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () => _downloadReport(report),
+            ),
+            onTap: () => _viewReport(report),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSystemSettings() {
+    return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, size: 24, color: color),
-                ),
-              ],
+            const Text(
+              'إعدادات النظام',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Tajawal',
+              ),
             ),
-            
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$value', style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _textColor,
-                )),
-                
-                const SizedBox(height: 4),
-                
-                Text(title, style: TextStyle(
-                  color: _textSecondaryColor,
-                  fontSize: 14,
-                )),
-              ],
+            const SizedBox(height: 15),
+            _buildSettingSwitch(
+              'التنبيهات والإشعارات',
+              _notificationsEnabled,
+              (value) => setState(() => _notificationsEnabled = value),
+              Icons.notifications,
+            ),
+            _buildSettingSwitch(
+              'النسخ الاحتياطي التلقائي',
+              _autoBackupEnabled,
+              (value) => setState(() => _autoBackupEnabled = value),
+              Icons.backup,
+            ),
+            _buildSettingSwitch(
+              'مراقبة النظام التلقائية',
+              _systemMonitoringEnabled,
+              (value) => setState(() => _systemMonitoringEnabled = value),
+              Icons.monitor_heart,
             ),
           ],
         ),
@@ -189,88 +376,35 @@ class _SystemSupervisorWasteScreenState extends State<SystemSupervisorWasteScree
     );
   }
 
-  Widget _buildPerformanceCharts() {
+  Widget _buildAppearanceSettings() {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('معدل الإنجاز', style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: _textColor,
-                      )),
-                      
-                      const SizedBox(height: 8),
-                      
-                      LinearProgressIndicator(
-                        value: 0.75,
-                        backgroundColor: _backgroundColor,
-                        valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
-                        borderRadius: BorderRadius.circular(4),
-                        minHeight: 8,
-                      ),
-                      
-                      const SizedBox(height: 4),
-                      
-                      Text('75% من المخطط اليومي', style: TextStyle(
-                        fontSize: 12,
-                        color: _textSecondaryColor,
-                      )),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(width: 16),
-                
-                // مخطط دائري مبسط
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CircularProgressIndicator(
-                        value: 0.92,
-                        strokeWidth: 8,
-                        backgroundColor: _backgroundColor,
-                        valueColor: AlwaysStoppedAnimation<Color>(_secondaryColor),
-                      ),
-                    ),
-                    Text('92%', style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: _primaryColor,
-                    )),
-                  ],
-                ),
-              ],
+            const Text(
+              'إعدادات المظهر',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Tajawal',
+              ),
             ),
-            
-            const SizedBox(height: 16),
-            
-            Divider(color: _dividerColor, height: 1),
-            
-            const SizedBox(height: 16),
-            
-            // وسوم الأداء
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildPerformanceTag('مكتمل', '82%', _successColor),
-                _buildPerformanceTag('قيد المعالجة', '10%', _warningColor),
-                _buildPerformanceTag('متأخر', '8%', _errorColor),
-              ],
+            const SizedBox(height: 15),
+            _buildSettingDropdown(
+              'اللغة',
+              _selectedLanguage,
+              ['العربية', 'English', 'Français'],
+              Icons.language,
+              (value) => setState(() => _selectedLanguage = value!),
+            ),
+            _buildSettingDropdown(
+              'المظهر',
+              _selectedTheme,
+              ['تلقائي', 'مضيء', 'مظلم'],
+              Icons.palette,
+              (value) => setState(() => _selectedTheme = value!),
             ),
           ],
         ),
@@ -278,463 +412,624 @@ class _SystemSupervisorWasteScreenState extends State<SystemSupervisorWasteScree
     );
   }
 
-  Widget _buildPerformanceTag(String label, String value, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        
-        const SizedBox(height: 4),
-        
-        Text(label, style: TextStyle(
-          fontSize: 12,
-          color: _textColor,
-        )),
-        
-        Text(value, style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: _textSecondaryColor,
-        )),
-      ],
-    );
-  }
-
-  Widget _buildRecentNotifications() {
-    final notifications = [
-      {'text': 'تم معالجة بلاغ حي الرياض بنجاح', 'icon': Icons.check_circle, 'color': _successColor, 'time': '5 د'},
-      {'text': 'بلاغ جديد في حي النخيل يحتاج معالجة', 'icon': Icons.warning, 'color': _warningColor, 'time': '12 د'},
-      {'text': 'تقرير الأداء الشهري جاهز', 'icon': Icons.analytics, 'color': _primaryColor, 'time': '1 س'},
-      {'text': 'حاوية في حي الصناعية تحتاج صيانة', 'icon': Icons.build, 'color': _errorColor, 'time': '2 س'},
-    ];
-
+  Widget _buildPrivacySettings() {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: notifications.length,
-        separatorBuilder: (context, index) => Divider(color: _dividerColor, height: 1),
-        itemBuilder: (context, index) {
-          final notification = notifications[index];
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: (notification['color'] as Color).withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(notification['icon'] as IconData, size: 20, color: notification['color'] as Color),
-            ),
-            title: Text(notification['text'] as String, style: TextStyle(
-              color: _textColor,
-              fontSize: 14,
-            )),
-            trailing: Text(notification['time'] as String, style: TextStyle(
-              color: _textSecondaryColor,
-              fontSize: 12,
-            )),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildReportsManagement() {
-    final reports = [
-      {'title': 'حاوية ممتلئة - حي الرياض', 'status': 'قيد المعالجة', 'icon': Icons.delete, 'color': _warningColor},
-      {'title': 'حاوية تالفة - حي النخيل', 'status': 'جديد', 'icon': Icons.broken_image, 'color': _secondaryColor},
-      {'title': 'نفايات مبعثرة - حي العليا', 'status': 'تم الحل', 'icon': Icons.clean_hands, 'color': _successColor},
-      {'title': 'روائح كريهة - حي الورود', 'status': 'قيد المعالجة', 'icon': Icons.air, 'color': _warningColor},
-      {'title': 'حاوية مسروقة - حي الصناعية', 'status': 'جديد', 'icon': Icons.warning, 'color': _secondaryColor},
-    ];
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'ابحث في البلاغات...',
-              prefixIcon: Icon(Icons.search, color: _textSecondaryColor),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-            ),
-          ),
-        ),
-        
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: reports.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final report = reports[index];
-              return _buildReportItem(
-                report['title'] as String, 
-                report['status'] as String, 
-                report['icon'] as IconData, 
-                report['color'] as Color
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTeamsManagement() {
-    final teams = [
-      {'name': 'الفريق الشمالي', 'tasks': 5, 'status': 'نشط', 'icon': Icons.directions_car, 'color': _successColor},
-      {'name': 'الفريق الجنوبي', 'tasks': 3, 'status': 'نشط', 'icon': Icons.local_shipping, 'color': _successColor},
-      {'name': 'الفريق الشرقي', 'tasks': 2, 'status': 'في الاستراحة', 'icon': Icons.coffee, 'color': _warningColor},
-      {'name': 'الفريق الغربي', 'tasks': 4, 'status': 'نشط', 'icon': Icons.electric_car, 'color': _successColor},
-      {'name': 'فريق الطوارئ', 'tasks': 1, 'status': 'جاهز', 'icon': Icons.emergency, 'color': _accentColor},
-    ];
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'ابحث في الفرق...',
-                    prefixIcon: Icon(Icons.search, color: _textSecondaryColor),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(width: 12),
-              
-              Container(
-                decoration: BoxDecoration(
-                  color: _primaryColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.filter_list, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ),
-            ],
-          ),
-        ),
-        
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: teams.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final team = teams[index];
-              return _buildTeamCard(
-                team['name'] as String, 
-                team['tasks'] as int, 
-                team['status'] as String, 
-                team['icon'] as IconData, 
-                team['color'] as Color
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContainersManagement() {
-    final containers = [
-      {'type': 'حاوية 120 لتر', 'location': 'حي الرياض', 'condition': 'جيدة', 'icon': Icons.check_circle, 'color': _successColor},
-      {'type': 'حاوية 240 لتر', 'location': 'حي النخيل', 'condition': 'تحتاج صيانة', 'icon': Icons.build, 'color': _warningColor},
-      {'type': 'حاوية 360 لتر', 'location': 'حي العليا', 'condition': 'جيدة', 'icon': Icons.check_circle, 'color': _successColor},
-      {'type': 'حاوية 120 لتر', 'location': 'حي الصناعية', 'condition': 'تالفة', 'icon': Icons.error, 'color': _errorColor},
-      {'type': 'حاوية 240 لتر', 'location': 'حي الورود', 'condition': 'جيدة', 'icon': Icons.check_circle, 'color': _successColor},
-    ];
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'ابحث في الحاويات...',
-                    prefixIcon: Icon(Icons.search, color: _textSecondaryColor),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: containers.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final container = containers[index];
-              return _buildContainerInfo(
-                container['type'] as String, 
-                container['location'] as String, 
-                container['condition'] as String, 
-                container['icon'] as IconData, 
-                container['color'] as Color
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReportsAnalytics() {
-    final reports = [
-      {'title': 'تقرير الأداء اليومي', 'icon': Icons.today, 'subtitle': 'تم إنشاؤه اليوم 08:00 ص'},
-      {'title': 'تقرير كميات النفايات', 'icon': Icons.bar_chart, 'subtitle': 'آخر تحديث أمس'},
-      {'title': 'تقرير رضا العملاء', 'icon': Icons.sentiment_satisfied, 'subtitle': 'شهري - جاهز للتحميل'},
-      {'title': 'تقرير التكاليف', 'icon': Icons.attach_money, 'subtitle': 'ربع سنوي - قيد الإعداد'},
-      {'title': 'تقرير البيئة', 'icon': Icons.eco, 'subtitle': 'سنوي - متوفر للتحميل'},
-    ];
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('التقارير المتاحة', style: TextStyle(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'الخصوصية والأمان',
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: _textColor,
-              )),
-              
-              Container(
-                decoration: BoxDecoration(
-                  color: _primaryColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  onPressed: () {},
-                ),
+                fontFamily: 'Tajawal',
+              ),
+            ),
+            const SizedBox(height: 15),
+            // تم حذف تغيير كلمة المرور من هنا
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('سجل النشاطات', style: TextStyle(fontFamily: 'Tajawal')),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: _showActivityLog,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSystemActions() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'إجراءات النظام',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Tajawal',
+              ),
+            ),
+            const SizedBox(height: 15),
+            _buildActionButton('نسخ احتياطي للنظام', Icons.backup, Colors.blue, _backupSystem),
+            _buildActionButton('استعادة النظام', Icons.restore, Colors.orange, _restoreSystem),
+            _buildActionButton('مسح ذاكرة التخزين', Icons.cleaning_services, Colors.red, _clearCache),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingSwitch(String title, bool value, Function(bool) onChanged, IconData icon) {
+    return SwitchListTile(
+      title: Text(title, style: const TextStyle(fontFamily: 'Tajawal')),
+      value: value,
+      onChanged: onChanged,
+      secondary: Icon(icon),
+    );
+  }
+
+  Widget _buildSettingDropdown(String title, String value, List<String> items, IconData icon, Function(String?) onChanged) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title, style: const TextStyle(fontFamily: 'Tajawal')),
+      trailing: DropdownButton<String>(
+        value: value,
+        onChanged: onChanged,
+        items: items.map((String item) {
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Text(item, style: const TextStyle(fontFamily: 'Tajawal')),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(String text, IconData icon, Color color, Function onPressed) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(text, style: const TextStyle(fontFamily: 'Tajawal')),
+      trailing: IconButton(
+        icon: const Icon(Icons.arrow_forward_ios),
+        onPressed: () => onPressed(),
+      ),
+      onTap: () => onPressed(),
+    );
+  }
+
+  Icon _getReportIcon(String type) {
+    switch (type) {
+      case 'daily':
+        return const Icon(Icons.today, color: Colors.blue);
+      case 'weekly':
+        return const Icon(Icons.date_range, color: Colors.green);
+      case 'monthly':
+        return const Icon(Icons.calendar_month, color: Colors.orange);
+      case 'emergency':
+        return const Icon(Icons.emergency, color: Colors.red);
+      default:
+        return const Icon(Icons.description);
+    }
+  }
+
+  void _generateReport(String type) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('جاري إنشاء تقرير ${_getReportTypeName(type)}...', style: const TextStyle(fontFamily: 'Tajawal')),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _downloadReport(Map<String, dynamic> report) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('جاري تحميل ${report['title']}...', style: const TextStyle(fontFamily: 'Tajawal')),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _viewReport(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(report['title'], style: const TextStyle(fontFamily: 'Tajawal')),
+        content: Text('عرض تفاصيل ${report['title']}...', style: const TextStyle(fontFamily: 'Tajawal')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق', style: TextStyle(fontFamily: 'Tajawal')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getReportTypeName(String type) {
+    switch (type) {
+      case 'daily':
+        return 'يومي';
+      case 'weekly':
+        return 'أسبوعي';
+      case 'monthly':
+        return 'شهري';
+      case 'emergency':
+        return 'طوارئ';
+      default:
+        return '';
+    }
+  }
+
+  void _showActivityLog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('سجل النشاطات', style: TextStyle(fontFamily: 'Tajawal')),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: const [
+              ListTile(
+                title: Text('تسجيل دخول - 10:30 ص', style: TextStyle(fontFamily: 'Tajawal')),
+                subtitle: Text('تم تسجيل الدخول بنجاح', style: TextStyle(fontFamily: 'Tajawal')),
+              ),
+              ListTile(
+                title: Text('إنشاء تقرير - 09:15 ص', style: TextStyle(fontFamily: 'Tajawal')),
+                subtitle: Text('تم إنشاء تقرير الأداء اليومي', style: TextStyle(fontFamily: 'Tajawal')),
+              ),
+              ListTile(
+                title: Text('تعديل إعدادات - 08:45 ص', style: TextStyle(fontFamily: 'Tajawal')),
+                subtitle: Text('تم تحديث إعدادات النظام', style: TextStyle(fontFamily: 'Tajawal')),
               ),
             ],
           ),
         ),
-        
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: reports.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final report = reports[index];
-              return _buildAnalyticsCard(
-                report['title'] as String, 
-                report['icon'] as IconData, 
-                report['subtitle'] as String
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق', style: TextStyle(fontFamily: 'Tajawal')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _backupSystem() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('جاري إنشاء نسخة احتياطية للنظام...', style: TextStyle(fontFamily: 'Tajawal')),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _restoreSystem() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('جاري استعادة النظام من النسخة الاحتياطية...', style: TextStyle(fontFamily: 'Tajawal')),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _clearCache() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('مسح ذاكرة التخزين', style: TextStyle(fontFamily: 'Tajawal')),
+        content: const Text('هل أنت متأكد من رغبتك في مسح ذاكرة التخزين المؤقت؟', style: TextStyle(fontFamily: 'Tajawal')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Tajawal')),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('تم مسح ذاكرة التخزين بنجاح', style: TextStyle(fontFamily: 'Tajawal')),
+                ),
               );
             },
+            child: const Text('تأكيد', style: TextStyle(fontFamily: 'Tajawal')),
           ),
+        ],
+      ),
+    );
+  }
+
+  // الدوال الموجودة سابقاً (للشاشة الرئيسية)
+  Widget _buildWelcomeCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.fromARGB(255, 17, 126, 117),
+            Color.fromARGB(255, 16, 78, 88),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.white,
+            child: Icon(
+              Icons.supervisor_account,
+              color: Color.fromARGB(255, 17, 126, 117),
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'مرحباً بك، مشرف النظام',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'النظام يعمل بشكل طبيعي - آخر تحديث: ${_getCurrentTime()}',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricsGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: _systemMetrics.length,
+      itemBuilder: (context, index) {
+        final metric = _systemMetrics[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                metric['icon'],
+                size: 40,
+                color: metric['color'],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                metric['value'],
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: metric['color'],
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                metric['title'],
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontFamily: 'Tajawal',
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAlertsSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.warning, color: Colors.orange),
+              SizedBox(width: 8),
+              Text(
+                'التنبيهات الحديثة',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ..._recentAlerts.map((alert) => _buildAlertItem(alert)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlertItem(Map<String, dynamic> alert) {
+    Color alertColor = Colors.blue;
+    if (alert['type'] == 'warning') alertColor = Colors.orange;
+    if (alert['type'] == 'error') alertColor = Colors.red;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: alertColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: alertColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            alert['type'] == 'error' ? Icons.error : 
+            alert['type'] == 'warning' ? Icons.warning : Icons.info,
+            color: alertColor,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  alert['message'],
+                  style: TextStyle(
+                    fontFamily: 'Tajawal',
+                    color: alertColor,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  alert['time'],
+                  style: TextStyle(
+                    fontFamily: 'Tajawal',
+                    color: alertColor.withOpacity(0.7),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    final List<Map<String, dynamic>> actions = [
+      {'icon': Icons.analytics, 'title': 'تقارير الأداء', 'color': Colors.purple},
+      {'icon': Icons.settings, 'title': 'إعدادات النظام', 'color': Colors.blue},
+      {'icon': Icons.backup, 'title': 'نسخ احتياطي', 'color': Colors.orange},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'الإجراءات السريعة',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Tajawal',
+          ),
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.5,
+          ),
+          itemCount: actions.length,
+          itemBuilder: (context, index) {
+            final action = actions[index];
+            return Card(
+              elevation: 2,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => _handleQuickAction(index),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(action['icon'], color: action['color'], size: 30),
+                    const SizedBox(height: 8),
+                    Text(
+                      action['title'],
+                      style: const TextStyle(
+                        fontFamily: 'Tajawal',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildReportItem(String title, String status, IconData icon, Color statusColor) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            shape: BoxShape.circle,
+  String _getCurrentTime() {
+    final now = DateTime.now();
+    return '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showNotifications() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('التنبيهات', style: TextStyle(fontFamily: 'Tajawal')),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _recentAlerts.length,
+            itemBuilder: (context, index) {
+              final alert = _recentAlerts[index];
+              return ListTile(
+                leading: Icon(
+                  alert['type'] == 'error' ? Icons.error : 
+                  alert['type'] == 'warning' ? Icons.warning : Icons.info,
+                  color: alert['type'] == 'error' ? Colors.red : 
+                         alert['type'] == 'warning' ? Colors.orange : Colors.blue,
+                ),
+                title: Text(alert['message'], style: const TextStyle(fontFamily: 'Tajawal')),
+                subtitle: Text(alert['time'], style: const TextStyle(fontFamily: 'Tajawal')),
+              );
+            },
           ),
-          child: Icon(icon, size: 20, color: statusColor),
         ),
-        title: Text(title, style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: _textColor,
-          fontSize: 14,
-        )),
-        subtitle: Text('تم الإبلاغ: ${DateFormat('dd MMM yyyy').format(DateTime.now())}', style: TextStyle(
-          color: _textSecondaryColor,
-          fontSize: 12,
-        )),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: statusColor.withOpacity(0.3)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق', style: TextStyle(fontFamily: 'Tajawal')),
           ),
-          child: Text(status, style: TextStyle(
-            color: statusColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
-          )),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildTeamCard(String teamName, int activeTasks, String status, IconData icon, Color statusColor) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: _secondaryColor.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 20, color: _secondaryColor),
+  void _handleQuickAction(int index) {
+    switch (index) {
+      case 0: // تقارير الأداء
+        setState(() {
+          _currentIndex = 1;
+        });
+        break;
+      case 1: // إعدادات النظام
+        setState(() {
+          _currentIndex = 2;
+        });
+        break;
+      case 2: // نسخ احتياطي
+        _showBackupDialog();
+        break;
+    }
+  }
+
+  void _showBackupDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('نسخ احتياطي للنظام', style: TextStyle(fontFamily: 'Tajawal')),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.backup, size: 50, color: Colors.blue),
+            SizedBox(height: 10),
+            Text(
+              'هل تريد إنشاء نسخة احتياطية كاملة للنظام؟',
+              style: TextStyle(fontFamily: 'Tajawal'),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-        title: Text(teamName, style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: _textColor,
-          fontSize: 14,
-        )),
-        subtitle: Text('$activeTasks مهام نشطة', style: TextStyle(
-          color: _textSecondaryColor,
-          fontSize: 12,
-        )),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: statusColor.withOpacity(0.3)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Tajawal')),
           ),
-          child: Text(status, style: TextStyle(
-            color: statusColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
-          )),
-        ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _performBackup();
+            },
+            child: const Text('تأكيد', style: TextStyle(fontFamily: 'Tajawal')),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildContainerInfo(String type, String location, String condition, IconData icon, Color conditionColor) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: _accentColor.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 20, color: _accentColor),
-        ),
-        title: Text(type, style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: _textColor,
-          fontSize: 14,
-        )),
-        subtitle: Text(location, style: TextStyle(
-          color: _textSecondaryColor,
-          fontSize: 12,
-        )),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: conditionColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: conditionColor.withOpacity(0.3)),
-          ),
-          child: Text(condition, style: TextStyle(
-            color: conditionColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
-          )),
-        ),
+  void _performBackup() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('جاري إنشاء نسخة احتياطية...', style: TextStyle(fontFamily: 'Tajawal')),
+        duration: Duration(seconds: 2),
       ),
     );
-  }
-
-  Widget _buildAnalyticsCard(String title, IconData icon, String subtitle) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: _primaryColor.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 20, color: _primaryColor),
+    
+    // محاكاة عملية النسخ الاحتياطي
+    Future.delayed(const Duration(seconds: 2), () {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم إنشاء النسخة الاحتياطية بنجاح', style: TextStyle(fontFamily: 'Tajawal')),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
         ),
-        title: Text(title, style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: _textColor,
-          fontSize: 14,
-        )),
-        subtitle: Text(subtitle, style: TextStyle(
-          color: _textSecondaryColor,
-          fontSize: 12,
-        )),
-        trailing: IconButton(
-          icon: Icon(Icons.download, size: 20, color: _primaryColor),
-          onPressed: () {
-            // تحميل التقرير
-          },
-        ),
-      ),
-    );
+      );
+    });
   }
 }
