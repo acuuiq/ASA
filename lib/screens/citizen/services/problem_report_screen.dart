@@ -23,8 +23,7 @@ class ProblemReportScreen extends StatefulWidget {
 }
 
 class _ProblemReportScreenState extends State<ProblemReportScreen> {
-  
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -68,47 +67,9 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: buildContent(),
+        child: _buildProblemReportContent(),
       ),
     );
-  }
-
-  Widget buildContent() {
-    if (widget.serviceName.contains('الإبلاغ عن مشكلة')) {
-      return _buildProblemReportContent();
-    } else {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        margin: const EdgeInsets.only(top: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 3,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.info_outline_rounded,
-              color: widget.serviceColor,
-              size: 50,
-            ),
-            const SizedBox(height: 15),
-            const Text(
-              'تفاصيل الخدمة ستظهر هنا مع إمكانية تنفيذ الإجراء المطلوب مباشرة',
-              style: TextStyle(fontSize: 16, height: 1.5),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
   }
 
   Widget _buildReportTypeCard({
@@ -167,35 +128,42 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
     );
   }
 
+  // التصحيح في دالة _buildProblemReportContent
   Widget _buildProblemReportContent() {
-    // تحديد الأيقونة حسب نوع الخدمة
+    // تحديد الأيقونة واللون حسب نوع الخدمة
     IconData serviceIcon;
     Color iconColor;
+    Color cardColor;
 
     if (widget.serviceTitle.contains('الماء')) {
       serviceIcon = Icons.water_drop;
       iconColor = Colors.blue;
+      cardColor = Colors.blue;
     } else if (widget.serviceTitle.contains('الكهرباء')) {
       serviceIcon = Icons.bolt;
       iconColor = Colors.amber;
+      cardColor = Colors.amber;
     } else if (widget.serviceTitle.contains('النفايات')) {
       serviceIcon = Icons.delete_outline;
       iconColor = Colors.green;
+      cardColor = Colors.green;
     } else {
       serviceIcon = Icons.help_outline;
       iconColor = Colors.grey;
+      cardColor = Colors.grey;
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 10),
-        _buildSectionTitle('اختر نوع البلاغ'),
+        _buildSectionTitle('اختر نوع البلاغ'), // تم التصحيح
         const SizedBox(height: 10),
         _buildReportTypeCard(
+          // تم التصحيح
           title: "الإبلاغ عن مشكلة في خدمة ${widget.serviceTitle}",
-          icon: serviceIcon, // استخدام الأيقونة المحددة
-          color: iconColor, // استخدام اللون المحدد
+          icon: serviceIcon,
+          color: cardColor,
           onTap: () => _showServiceProblemReport(),
         ),
         _buildReportTypeCard(
@@ -235,7 +203,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
     String? selectedProblemType;
     List<XFile> attachedImages = [];
 
-    // تحديد أنواع المشاكل حسب الخدمة
+    // تحديد أنواع المشاكل واللون حسب الخدمة
     List<String> problemTypes;
     IconData serviceIcon;
     Color serviceColor;
@@ -352,10 +320,10 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
                         Center(
                           child: Text(
                             'الإبلاغ عن مشكلة في خدمة ${widget.serviceTitle}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.purple,
+                              color: serviceColor, // استخدام لون الخدمة
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -376,7 +344,8 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
                             }
                             return null;
                           },
-                          icon: Icons.help_outline,
+                          icon: serviceIcon, // استخدام أيقونة الخدمة
+                          iconColor: serviceColor, // تمرير لون الخدمة
                         ),
                         const SizedBox(height: 16),
                         _buildTextFormField(
@@ -390,6 +359,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
                             return null;
                           },
                           icon: Icons.description,
+                          iconColor: serviceColor, // تمرير لون الخدمة
                         ),
                         const SizedBox(height: 16),
                         _buildImageAttachmentSection(
@@ -404,7 +374,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
                         ),
                         const SizedBox(height: 24),
                         _buildSubmitButton(
-                          color: Colors.purple,
+                          color: serviceColor, // استخدام لون الخدمة
                           text: 'إرسال البلاغ',
                           onPressed: () {
                             if (formKey.currentState!.validate()) {
@@ -419,6 +389,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
                               _submitProblemReport(
                                 'مشكلة في ${widget.serviceTitle}',
                                 reportDetails,
+                                serviceColor, // تمرير لون الخدمة
                               );
                             }
                           },
@@ -442,6 +413,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
     required Function(String?) onChanged,
     required String? Function(String?) validator,
     required IconData icon,
+    Color iconColor = Colors.grey, // إضافة معامل جديد للون الأيقونة
   }) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
@@ -460,7 +432,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
           horizontal: 16,
           vertical: 12,
         ),
-        prefixIcon: Icon(icon, color: Colors.grey[600]),
+        prefixIcon: Icon(icon, color: iconColor), // استخدام اللون المحدد
       ),
       value: value,
       items: items.map((type) {
@@ -484,6 +456,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
     int maxLines = 1,
     required String? Function(String?) validator,
     required IconData icon,
+    Color iconColor = Colors.grey, // إضافة معامل جديد للون الأيقونة
   }) {
     return TextFormField(
       controller: controller,
@@ -503,7 +476,7 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
           horizontal: 16,
           vertical: 16,
         ),
-        prefixIcon: Icon(icon, color: Colors.grey[600]),
+        prefixIcon: Icon(icon, color: iconColor), // استخدام اللون المحدد
       ),
       maxLines: maxLines,
       validator: validator,
@@ -633,179 +606,616 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
         elevation: 3,
       ),
       onPressed: onPressed,
-      child: const Text(
-        'إرسال البلاغ',
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
     );
   }
 
   void _showEmployeeProblemReport() {
+    final formKey = GlobalKey<FormState>();
+    final problemController = TextEditingController();
+    final employeeNameController = TextEditingController();
+    final dateController = TextEditingController();
+    final timeController = TextEditingController();
+    String? selectedEmployeeType;
+    List<XFile> attachedImages = [];
+
+    final List<String> employeeTypes = [
+      'موظف الصيانة',
+      'موظف الفواتير',
+      'موظف استقبال البلاغات',
+      'آخر',
+    ];
+
+    Future<void> takePhoto() async {
+      try {
+        final ImagePicker picker = ImagePicker();
+        final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+        if (photo != null) {
+          setState(() {
+            attachedImages.add(photo);
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('حدث خطأ أثناء التقاط الصورة: $e')),
+        );
+      }
+    }
+
+    Future<void> pickImage() async {
+      try {
+        final ImagePicker picker = ImagePicker();
+        final List<XFile> images = await picker.pickMultiImage();
+        if (images.isNotEmpty) {
+          setState(() {
+            attachedImages.addAll(images);
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('حدث خطأ أثناء اختيار الصور: $e')),
+        );
+      }
+    }
+
+    Future<void> selectDate() async {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now().subtract(const Duration(days: 30)),
+        lastDate: DateTime.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: widget.serviceColor,
+                onPrimary: Colors.white,
+                onSurface: Colors.black,
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  foregroundColor: widget.serviceColor,
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+      if (picked != null) {
+        dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+      }
+    }
+
+    Future<void> selectTime() async {
+      final TimeOfDay? picked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: widget.serviceColor,
+                onPrimary: Colors.white,
+                onSurface: Colors.black,
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  foregroundColor: widget.serviceColor,
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+      if (picked != null) {
+        timeController.text = picked.format(context);
+      }
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(25),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 60,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const Center(
-                    child: Text(
-                      'الإبلاغ عن تقصير الموظفين',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'سيتم تطوير هذه الواجهة لاحقاً لتشمل نموذج الإبلاغ عن تقصير الموظفين',
-                    style: TextStyle(fontSize: 16, height: 1.5),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
-                  _buildSubmitButton(
-                    color: Colors.blue,
-                    text: 'متابعة',
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('سيتم تطوير هذه الخدمة قريباً'),
-                        ),
-                      );
-                    },
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(25),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: 5,
                   ),
                 ],
               ),
-            ),
-          ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 60,
+                            height: 5,
+                            margin: const EdgeInsets.only(bottom: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                        const Center(
+                          child: Text(
+                            'الإبلاغ عن تقصير الموظفين',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextFormField(
+                          controller: employeeNameController,
+                          label: 'اسم الموظف (إن عرفته)',
+                          maxLines: 1,
+                          validator: (value) => null,
+                          icon: Icons.person_outline,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdownFormField(
+                          label: 'نوع الموظف',
+                          value: selectedEmployeeType,
+                          items: employeeTypes,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedEmployeeType = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى اختيار نوع الموظف';
+                            }
+                            return null;
+                          },
+                          icon: Icons.work_outline,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextFormField(
+                          controller: problemController,
+                          label: 'وصف المشكلة بالتفصيل',
+                          maxLines: 5,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى إدخال وصف للمشكلة';
+                            }
+                            return null;
+                          },
+                          icon: Icons.description,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'تاريخ ووقت الحادثة',
+                          style: TextStyle(fontSize: 16),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: dateController,
+                                decoration: InputDecoration(
+                                  labelText: 'التاريخ',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[50],
+                                  prefixIcon: IconButton(
+                                    icon: const Icon(Icons.calendar_today),
+                                    onPressed: selectDate,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 16,
+                                  ),
+                                ),
+                                readOnly: true,
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextFormField(
+                                controller: timeController,
+                                decoration: InputDecoration(
+                                  labelText: 'الوقت',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[50],
+                                  prefixIcon: IconButton(
+                                    icon: const Icon(Icons.access_time),
+                                    onPressed: selectTime,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 16,
+                                  ),
+                                ),
+                                readOnly: true,
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildImageAttachmentSection(
+                          attachedImages: attachedImages,
+                          onTakePhoto: takePhoto,
+                          onPickImage: pickImage,
+                          onRemoveImage: (index) {
+                            setState(() {
+                              attachedImages.removeAt(index);
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        _buildSubmitButton(
+                          color: Colors.blue,
+                          text: 'إرسال البلاغ',
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              String reportDetails =
+                                  '${employeeNameController.text} - '
+                                  '$selectedEmployeeType: ${problemController.text}';
+
+                              if (attachedImages.isNotEmpty) {
+                                reportDetails +=
+                                    '\n\nالصور المرفقة: ${attachedImages.length} صورة';
+                              }
+
+                              _submitProblemReport(
+                                'تقصير موظفين',
+                                reportDetails,
+                                Colors.red, // لون الخدمة
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   void _showAppProblemReport() {
+    final formKey = GlobalKey<FormState>();
+    final problemController = TextEditingController();
+    final phoneController = TextEditingController();
+    String? selectedProblemType;
+    XFile? screenshot;
+
+    final List<String> problemTypes = [
+      'تعطل في التطبيق',
+      'مشكلة في الدفع',
+      'واجهة المستخدم',
+      'أخرى',
+    ];
+
+    Future<void> pickScreenshot() async {
+      try {
+        final ImagePicker picker = ImagePicker();
+        final XFile? image = await picker.pickImage(
+          source: ImageSource.gallery,
+        );
+        if (image != null) {
+          setState(() {
+            screenshot = image;
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('حدث خطأ أثناء اختيار الصورة: $e')),
+        );
+      }
+    }
+
+    void removeScreenshot() {
+      setState(() {
+        screenshot = null;
+      });
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(25),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 60,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const Center(
-                    child: Text(
-                      'الإبلاغ عن مشكلة في التطبيق',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'سيتم تطوير هذه الواجهة لاحقاً لتشمل نموذج الإبلاغ عن مشاكل التطبيق',
-                    style: TextStyle(fontSize: 16, height: 1.5),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
-                  _buildSubmitButton(
-                    color: Colors.red,
-                    text: 'متابعة',
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('سيتم تطوير هذه الخدمة قريباً'),
-                        ),
-                      );
-                    },
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(25),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: 5,
                   ),
                 ],
               ),
-            ),
-          ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 60,
+                            height: 5,
+                            margin: const EdgeInsets.only(bottom: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                        const Center(
+                          child: Text(
+                            'الإبلاغ عن مشكلة في التطبيق',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildDropdownFormField(
+                          label: 'نوع المشكلة',
+                          value: selectedProblemType,
+                          items: problemTypes,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedProblemType = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى اختيار نوع المشكلة';
+                            }
+                            return null;
+                          },
+                          icon: Icons.bug_report_outlined,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextFormField(
+                          controller: problemController,
+                          label: 'وصف المشكلة بالتفصيل',
+                          maxLines: 5,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى إدخال وصف للمشكلة';
+                            }
+                            return null;
+                          },
+                          icon: Icons.description,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'إرفاق لقطة شاشة (اختياري)',
+                          style: TextStyle(fontSize: 16),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 8),
+                        if (screenshot == null)
+                          _buildAttachmentButton(
+                            icon: Icons.screenshot,
+                            label: 'اختيار لقطة شاشة',
+                            onPressed: pickScreenshot,
+                          ),
+                        if (screenshot != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 150,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: FileImage(File(screenshot!.path)),
+                                fit: BoxFit.contain,
+                              ),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: removeScreenshot,
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            label: const Text(
+                              'إزالة لقطة الشاشة',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        _buildTextFormField(
+                          controller: phoneController,
+                          label: 'رقم الهاتف للتواصل (اختياري)',
+                          maxLines: 1,
+                          validator: (value) => null,
+                          icon: Icons.phone,
+                        ),
+                        const SizedBox(height: 24),
+                        _buildSubmitButton(
+                          color: Colors.red,
+                          text: 'إرسال البلاغ',
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              String reportDetails =
+                                  '$selectedProblemType: ${problemController.text}';
+
+                              if (screenshot != null) {
+                                reportDetails += '\n\nتم إرفاق لقطة شاشة';
+                              }
+
+                              if (phoneController.text.isNotEmpty) {
+                                reportDetails +=
+                                    '\nرقم التواصل: ${phoneController.text}';
+                              }
+
+                              _submitProblemReport(
+                                'مشكلة في التطبيق',
+                                reportDetails,
+                                Colors.red, // لون الخدمة
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  void _submitProblemReport(String title, String details) {
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم إرسال البلاغ: $title'),
-        backgroundColor: Colors.green,
+  void _submitProblemReport(
+    String reportType,
+    String description,
+    Color serviceColor,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: serviceColor,
+                size: 60,
+              ), // استخدام لون الخدمة
+              const SizedBox(height: 16),
+              Text(
+                'تم إرسال البلاغ بنجاح',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: serviceColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'شكراً لك، تم استلام بلاغك وسيتم معالجته في أقرب وقت ممكن.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('نوع البلاغ: $reportType', textAlign: TextAlign.right),
+                    const SizedBox(height: 8),
+                    Text(
+                      'رقم المرجع: #${DateTime.now().millisecondsSinceEpoch}',
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: serviceColor, // استخدام لون الخدمة
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('حسناً', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
