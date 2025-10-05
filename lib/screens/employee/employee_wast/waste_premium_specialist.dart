@@ -13,13 +13,13 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
   int _currentTabIndex = 0;
   
   // الألوان المخصصة لموظف النفايات المميزة (تم التعديل)
-  final Color _primaryColor = const Color(0xFF00695C); // أخضر نيلي داكن
-  final Color _secondaryColor = const Color(0xFF00897B); // أخضر نيلي
+  final Color _primaryColor = const Color.fromARGB(255, 28, 195, 167); // أخضر نيلي داكن
+  final Color _secondaryColor = const Color.fromARGB(255, 0, 137, 89); // أخضر نيلي
   final Color _accentColor = const Color(0xFF4DB6AC); // أخضر نيلي فاتح
   final Color _backgroundColor = const Color(0xFFE0F2F1); // أخضر فاتح جداً
   final Color _cardColor = Colors.white;
-  final Color _textColor = const Color(0xFF263238);
-  final Color _textSecondaryColor = const Color(0xFF78909C);
+  final Color _textColor = const Color.fromARGB(255, 38, 53, 56);
+  final Color _textSecondaryColor = const Color.fromARGB(255, 120, 156, 140);
   
   // البيانات الوهمية
   final List<Map<String, dynamic>> _premiumRequests = [
@@ -226,14 +226,15 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
           ),
           const SizedBox(height: 16),
           
+          // استخدام GridView بمقاسات محسنة
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.1,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.2, // نسبة محسنة
             ),
             itemCount: _services.length,
             itemBuilder: (context, index) {
@@ -286,48 +287,63 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          // الانتقال إلى الشاشة المناسبة
-        },
-        onHover: (hovering) {
-          // تأثير عند التمرير
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            color: _cardColor,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min, // الحل الأساسي للمشكلة
             children: [
+              // الأيقونة - بحجم مناسب
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: service['color'].withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(service['icon'], color: service['color'], size: 28),
+                child: Icon(service['icon'], color: service['color'], size: 22),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              // العنوان - بحجم مناسب
               Text(
                 service['title'],
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: _textColor,
+                  height: 1.2,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 6),
-              Text(
-                '${service['count']}',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
+              // العدد - بحجم بارز
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${service['count']}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
                 ),
               ),
             ],
@@ -473,45 +489,58 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
             ),
           ],
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(statusIcon, color: statusColor, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    request['status'],
-                    style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: priorityColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                request['priority'],
-                style: TextStyle(
-                  color: priorityColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+        trailing: SizedBox(
+          width: 80,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: 12),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        request['status'],
+                        style: TextStyle(
+                          color: statusColor, 
+                          fontSize: 10, 
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: priorityColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  request['priority'],
+                  style: TextStyle(
+                    color: priorityColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
         onTap: () {
           _showRequestDetails(request);
@@ -577,16 +606,19 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
           _buildReportItem('تقرير التكاليف', Icons.attach_money, 'تحليل للتكاليف والإيرادات'),
           
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: Icon(Icons.add_chart, color: Colors.white),
+              label: const Text('إنشاء تقرير جديد', style: TextStyle(color: Colors.white)),
             ),
-            icon: Icon(Icons.add_chart, color: Colors.white),
-            label: const Text('إنشاء تقرير جديد', style: TextStyle(color: Colors.white)),
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -733,7 +765,7 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,

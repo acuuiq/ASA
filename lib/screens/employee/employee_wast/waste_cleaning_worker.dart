@@ -8,10 +8,9 @@ class WasteCleaningWorkerScreen extends StatefulWidget {
   State<WasteCleaningWorkerScreen> createState() => _WasteCleaningWorkerScreenState();
 }
 
-class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
-    with SingleTickerProviderStateMixin {  // إضافة Mixin
+class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen> {
   // الألوان المستخدمة في التصميم
-  final Color _primaryColor = const Color(0xFF2E7D32);
+  final Color _primaryColor = const Color.fromARGB(255, 48, 145, 169);
   final Color _secondaryColor = const Color(0xFF4CAF50);
   final Color _accentColor = const Color(0xFF8BC34A);
   final Color _backgroundColor = const Color(0xFFF5F5F5);
@@ -19,8 +18,7 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
   final Color _textColor = const Color(0xFF212121);
   final Color _textSecondaryColor = const Color(0xFF757575);
 
-  late TabController _tabController;  // إضافة TabController
-  int _currentTabIndex = 0;
+  String? _selectedTab;
   final List<String> _tabs = ['مهام اليوم', 'طلبات التسليم', 'بلاغات المعالجة', 'سجل الأداء'];
 
   // مهام اليوم
@@ -94,18 +92,7 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);  // تهيئة TabController
-    _tabController.addListener(() {
-      setState(() {
-        _currentTabIndex = _tabController.index;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();  // التخلص من الـ controller عند إغلاق الصفحة
-    super.dispose();
+    _selectedTab = _tabs.first;
   }
 
   @override
@@ -116,47 +103,14 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
         title: const Text('لوحة تحكم عامل النظافة'),
         backgroundColor: _primaryColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.menu), // أيقونة القائمة الثلاثية الخطوط
+          onPressed: () {
+            _showTabMenu(context);
+          },
+        ),
       ),
-      body: Column(
-        children: [
-          // شريط التبويبات
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,  // إضافة الـ controller
-              onTap: (index) {
-                setState(() {
-                  _currentTabIndex = index;
-                });
-              },
-              indicatorColor: _primaryColor,
-              labelColor: _primaryColor,
-              unselectedLabelColor: Colors.grey,
-              tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-            ),
-          ),
-          
-          // محتوى التبويبات
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,  // إضافة الـ controller لـ TabBarView
-              children: [
-                // تبويب مهام اليوم
-                _buildTodayTasksTab(),
-                
-                // تبويب طلبات التسليم
-                _buildDeliveryRequestsTab(),
-                
-                // تبويب بلاغات المعالجة
-                _buildReportsTab(),
-                
-                // تبويب سجل الأداء
-                _buildPerformanceTab(),
-              ],
-            ),
-          ),
-        ],
-      ),
+      body: _buildCurrentTab(),
       
       // زر الإجراء السريع
       floatingActionButton: FloatingActionButton(
@@ -169,6 +123,72 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
     );
   }
 
+  // عرض قائمة التبويبات
+  void _showTabMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _tabs.map((tab) {
+              return ListTile(
+                leading: _getTabIcon(tab),
+                title: Text(
+                  tab,
+                  style: TextStyle(
+                    fontWeight: _selectedTab == tab ? FontWeight.bold : FontWeight.normal,
+                    color: _selectedTab == tab ? _primaryColor : _textColor,
+                  ),
+                ),
+                trailing: _selectedTab == tab ? const Icon(Icons.check, color: Colors.green) : null,
+                onTap: () {
+                  setState(() {
+                    _selectedTab = tab;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  // بناء محتوى التبويب الحالي
+  Widget _buildCurrentTab() {
+    switch (_selectedTab) {
+      case 'مهام اليوم':
+        return _buildTodayTasksTab();
+      case 'طلبات التسليم':
+        return _buildDeliveryRequestsTab();
+      case 'بلاغات المعالجة':
+        return _buildReportsTab();
+      case 'سجل الأداء':
+        return _buildPerformanceTab();
+      default:
+        return _buildTodayTasksTab();
+    }
+  }
+
+  // الحصول على أيقونة التبويب
+  Icon _getTabIcon(String tabName) {
+    switch (tabName) {
+      case 'مهام اليوم':
+        return const Icon(Icons.task, color: Colors.black);
+      case 'طلبات التسليم':
+        return const Icon(Icons.local_shipping, color: Colors.black);
+      case 'بلاغات المعالجة':
+        return const Icon(Icons.warning, color: Colors.black);
+      case 'سجل الأداء':
+        return const Icon(Icons.assessment, color: Colors.black);
+      default:
+        return const Icon(Icons.task, color: Colors.black);
+    }
+  }
+
   // بناء واجهة مهام اليوم
   Widget _buildTodayTasksTab() {
     return ListView.builder(
@@ -179,9 +199,10 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: Icon(
+            leading: _buildCircularIcon(
               _getTaskIcon(task['type']),
-              color: _primaryColor,
+              _primaryColor,
+              Colors.white,
             ),
             title: Text(
               task['type'],
@@ -208,12 +229,12 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
               ],
             ),
             trailing: task['completed']
-                ? const Icon(Icons.check_circle, color: Colors.green)
-                : IconButton(
-                    icon: const Icon(Icons.done),
-                    onPressed: () {
-                      _completeTask(index);
-                    },
+                ? _buildCircularIcon(Icons.check_circle, Colors.green, Colors.white, size: 24)
+                : _buildCircularIconButton(
+                    Icons.done,
+                    _primaryColor,
+                    Colors.white,
+                    onPressed: () => _completeTask(index),
                   ),
           ),
         );
@@ -231,7 +252,7 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: const Icon(Icons.local_shipping, color: Colors.blue),
+            leading: _buildCircularIcon(Icons.local_shipping, Colors.blue, Colors.white),
             title: Text(
               'تسليم حاوية ${request['containerType']}',
               style: TextStyle(
@@ -253,13 +274,13 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
               ],
             ),
             trailing: request['status'] != 'مكتمل'
-                ? IconButton(
-                    icon: const Icon(Icons.check),
-                    onPressed: () {
-                      _completeDelivery(index);
-                    },
+                ? _buildCircularIconButton(
+                    Icons.check,
+                    _primaryColor,
+                    Colors.white,
+                    onPressed: () => _completeDelivery(index),
                   )
-                : null,
+                : _buildCircularIcon(Icons.check_circle, Colors.green, Colors.white, size: 24),
           ),
         );
       },
@@ -276,9 +297,10 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: Icon(
+            leading: _buildCircularIcon(
               Icons.warning,
-              color: report['priority'] == 'عاجل' ? Colors.red : Colors.orange,
+              report['priority'] == 'عاجل' ? Colors.red : Colors.orange,
+              Colors.white,
             ),
             title: Text(
               report['type'],
@@ -303,11 +325,11 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
                 ),
               ],
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.check_circle),
-              onPressed: () {
-                _resolveReport(index);
-              },
+            trailing: _buildCircularIconButton(
+              Icons.check_circle,
+              _primaryColor,
+              Colors.white,
+              onPressed: () => _resolveReport(index),
             ),
           ),
         );
@@ -348,15 +370,15 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const ListTile(
-            leading: Icon(Icons.location_on, color: Colors.green),
-            title: Text('المنطقة الشمالية'),
-            subtitle: Text('أعلى تقييم: 4.9/5'),
+          ListTile(
+            leading: _buildCircularIcon(Icons.location_on, Colors.green, Colors.white),
+            title: const Text('المنطقة الشمالية'),
+            subtitle: const Text('أعلى تقييم: 4.9/5'),
           ),
-          const ListTile(
-            leading: Icon(Icons.location_on, color: Colors.blue),
-            title: Text('المنطقة التجارية'),
-            subtitle: Text('أعلى تقييم: 4.7/5'),
+          ListTile(
+            leading: _buildCircularIcon(Icons.location_on, Colors.blue, Colors.white),
+            title: const Text('المنطقة التجارية'),
+            subtitle: const Text('أعلى تقييم: 4.7/5'),
           ),
         ],
       ),
@@ -367,15 +389,16 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
   Widget _buildStatCard(String title, String value, IconData icon) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Icon(icon, color: _primaryColor),
-            const SizedBox(height: 8),
+            _buildCircularIcon(icon, _primaryColor, Colors.white, size: 32),
+            const SizedBox(height: 12),
             Text(
               value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 4),
             Text(
               title,
               style: const TextStyle(fontSize: 12),
@@ -383,6 +406,56 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // بناء أيقونة دائرية
+  Widget _buildCircularIcon(IconData icon, Color backgroundColor, Color iconColor, {double size = 40}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Icon(
+        icon,
+        color: iconColor,
+        size: size * 0.6,
+      ),
+    );
+  }
+
+  // بناء زر أيقونة دائرية
+  Widget _buildCircularIconButton(IconData icon, Color backgroundColor, Color iconColor, 
+      {double size = 40, required VoidCallback onPressed}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: iconColor, size: size * 0.5),
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+        iconSize: size * 0.5,
       ),
     );
   }
@@ -446,7 +519,7 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.add_task, color: Colors.green),
+                leading: _buildCircularIcon(Icons.add_task, Colors.green, Colors.white),
                 title: const Text('تسجيل مهمة جديدة'),
                 onTap: () {
                   Navigator.pop(context);
@@ -454,7 +527,7 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.report, color: Colors.orange),
+                leading: _buildCircularIcon(Icons.report, Colors.orange, Colors.white),
                 title: const Text('تسجيل بلاغ جديد'),
                 onTap: () {
                   Navigator.pop(context);
@@ -462,7 +535,7 @@ class _WasteCleaningWorkerScreenState extends State<WasteCleaningWorkerScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.local_shipping, color: Colors.blue),
+                leading: _buildCircularIcon(Icons.local_shipping, Colors.blue, Colors.white),
                 title: const Text('تسليم حاوية جديدة'),
                 onTap: () {
                   Navigator.pop(context);
