@@ -113,8 +113,8 @@ class _EmergencyResponseOfficerScreenState
       floatingActionButton: FloatingActionButton(
         backgroundColor: _wasteColor,
         onPressed: _reportNewEmergency,
-        child: const Icon(Icons.add_alert, size: 28, color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add_alert, size: 28, color: Colors.white),
       ),
     );
   }
@@ -168,7 +168,7 @@ class _EmergencyResponseOfficerScreenState
           children: [
             _buildSectionHeader('الطلبات العاجلة', Icons.emergency),
             const SizedBox(height: 20),
-            ..._emergencyRequests.map((request) => _buildRequestItem(request)).toList(),
+            ..._emergencyRequests.map((request) => _buildRequestItem(request)),
           ],
         ),
       ),
@@ -185,7 +185,7 @@ class _EmergencyResponseOfficerScreenState
           children: [
             _buildSectionHeader('الفرق المتاحة', Icons.group_work),
             const SizedBox(height: 20),
-            ..._availableTeams.map((team) => _buildTeamItem(team)).toList(),
+            ..._availableTeams.map((team) => _buildTeamItem(team)),
           ],
         ),
       ),
@@ -522,7 +522,7 @@ class _EmergencyResponseOfficerScreenState
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 )
-                .toList(),
+                ,
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,

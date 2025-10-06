@@ -3933,9 +3933,12 @@ class _CustomServiceDialogState extends State<CustomServiceDialog> {
   final TextEditingController _contactInfoController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   final TextEditingController _budgetController = TextEditingController();
   List<XFile> _selectedImages = [];
 =======
+=======
+>>>>>>> Stashed changes
   final List<XFile> _selectedImages = [];
 
 >>>>>>> Stashed changes
