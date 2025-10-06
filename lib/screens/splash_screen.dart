@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
                 // الشعار باستخدام الصورة المخصصة
                 ScaleTransition(
                   scale: _scaleAnimation,
-                  child: Container(
+                  child: SizedBox(
                     width: 180,
                     height: 180,
                     child: Image.asset(

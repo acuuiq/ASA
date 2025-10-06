@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'payment_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'payment_screen.dart';
 import 'points_service.dart'; // استيراد خدمة النقاط
 import 'dart:async'; // أضف هذا في الأعلى
 class PointsAndGiftsScreen extends StatefulWidget {

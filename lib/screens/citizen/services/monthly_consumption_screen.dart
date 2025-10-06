@@ -348,7 +348,7 @@ class _MonthlyConsumptionScreenState extends State<MonthlyConsumptionScreen> {
                           margin: const EdgeInsets.only(bottom: 12),
                           child: Row(
                             children: [
-                              Container(
+                              SizedBox(
                                 width: 80,
                                 child: Text(
                                   'الأسبوع ${weekIndex + 1}',
@@ -570,8 +570,7 @@ class _GlassCard extends StatelessWidget {
   final double blurStrength;
 
   const _GlassCard({
-    required this.child,
-    this.blurStrength = 10,
+    required this.child, required this.blurStrength,
   });
 
   @override

@@ -110,6 +110,12 @@ class _EmergencyResponseOfficerScreenState
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: _wasteColor,
+        onPressed: _reportNewEmergency,
+        child: const Icon(Icons.add_alert, size: 28, color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
     );
   }
 
@@ -152,17 +158,51 @@ class _EmergencyResponseOfficerScreenState
     );
   }
 
-  Widget _buildCurrentView() {
-    switch (_currentPageIndex) {
-      case 0:
-        return _buildEmergencyRequestsView();
-      case 1:
-        return _buildTeamsView();
-      case 2:
-        return _buildStatisticsView();
-      default:
-        return _buildEmergencyRequestsView();
-    }
+  Widget _buildEmergencyRequestsView() {
+    return RefreshIndicator(
+      onRefresh: () async => await Future.delayed(const Duration(seconds: 1)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader('الطلبات العاجلة', Icons.emergency),
+            const SizedBox(height: 20),
+            ..._emergencyRequests.map((request) => _buildRequestItem(request)).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTeamsView() {
+    return RefreshIndicator(
+      onRefresh: () async => await Future.delayed(const Duration(seconds: 1)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader('الفرق المتاحة', Icons.group_work),
+            const SizedBox(height: 20),
+            ..._availableTeams.map((team) => _buildTeamItem(team)).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDecisionWheelView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          _buildSectionHeader('عجلة القرار', Icons.explore),
+          const SizedBox(height: 20),
+          _buildDecisionWheelCard(),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmergencyRequestsView() {
@@ -455,12 +495,46 @@ class _EmergencyResponseOfficerScreenState
               ),
             ),
             Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: _textColor,
+              'اختر فريقًا لتعيينه:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _textColor),
+            ),
+            const SizedBox(height: 12),
+            ..._availableTeams
+                .where((team) => team['status'] == 'متاح')
+                .map(
+                  (team) => ListTile(
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _primaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.group_work, color: _primaryColor, size: 20),
+                    ),
+                    title: Text(team['name'], style: TextStyle(fontWeight: FontWeight.bold, color: _textColor)),
+                    subtitle: Text(team['location'], style: TextStyle(color: _textSecondaryColor)),
+                    trailing: Text('${team['members']} أعضاء', style: TextStyle(color: _textSecondaryColor)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _assignTeamToRequest(request, team);
+                    },
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                )
+                .toList(),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _primaryColor,
+                  side: BorderSide(color: _primaryColor),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('إلغاء'),
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),

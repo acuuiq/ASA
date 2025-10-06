@@ -17,12 +17,23 @@ class _SystemSupervisorWasteScreenState extends State<SystemSupervisorWasteScree
     {'title': 'معدل التجميع', 'value': '92%', 'icon': Icons.trending_up, 'color': Colors.blue},
   ];
 
+<<<<<<< Updated upstream
   final List<Map<String, dynamic>> _recentAlerts = [
     {'time': '10:30 ص', 'message': 'الحاوية #45 وصلت إلى السعة القصوى', 'type': 'warning'},
     {'time': '09:15 ص', 'message': 'خلل في نظام التتبع للحاوية #12', 'type': 'error'},
     {'time': '08:45 ص', 'message': 'انتهت الصيانة الدورية للحاوية #78', 'type': 'info'},
     {'time': '07:30 ص', 'message': 'بدء عملية التجميع في المنطقة الشمالية', 'type': 'info'},
   ];
+=======
+  // بيانات التطبيق
+  final int _totalReports = 187;
+  final int _pendingReports = 32;
+  final int _resolvedReports = 155;
+  final int _activeTeams = 12;
+  final int _totalContainers = 420;
+  
+  late TabController _tabController;
+>>>>>>> Stashed changes
 
   // البيانات الخاصة بشاشة التقارير
   final List<Map<String, dynamic>> _reports = [
