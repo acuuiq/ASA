@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class SystemSupervisorScreen extends StatefulWidget {
+  const SystemSupervisorScreen({super.key});
+
   @override
   _SystemSupervisorScreenState createState() => _SystemSupervisorScreenState();
 }
@@ -152,10 +154,8 @@ class _SystemSupervisorScreenState extends State<SystemSupervisorScreen> {
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
-        title: Text(
-          'لوحة تحكم المشرف - الكهرباء',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
+        title: Text('لوحة تحكم المشرف - الكهرباء',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
         backgroundColor: _primaryColor,
         elevation: 0,
         centerTitle: true,
@@ -243,9 +243,9 @@ class _SystemSupervisorScreenState extends State<SystemSupervisorScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        child: Icon(Icons.settings, size: 26),
         backgroundColor: _primaryColor,
         elevation: 4,
+        child: Icon(Icons.settings, size: 26),
       ),
     );
   }
@@ -262,22 +262,20 @@ class _SystemSupervisorScreenState extends State<SystemSupervisorScreen> {
             color: _textColor,
           ),
         ),
-        SizedBox(
-          height: 320,
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: systemStats.length,
-            itemBuilder: (context, index) {
-              return _buildUsageStatCard(systemStats[index]);
-            },
+        SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.2,
           ),
+          itemCount: systemStats.length,
+          itemBuilder: (context, index) {
+            return _buildSystemStatCard(systemStats[index]);
+          },
         ),
         SizedBox(height: 24),
         Row(
@@ -480,13 +478,12 @@ class _SystemSupervisorScreenState extends State<SystemSupervisorScreen> {
         side: BorderSide(color: _borderColor, width: 1),
       ),
       child: Container(
-        height: 110, // تحديد ارتفاع ثابت للبطاقة
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: _cardColor,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,39 +492,35 @@ class _SystemSupervisorScreenState extends State<SystemSupervisorScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(4),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: stat['color'].withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(stat['icon'], color: stat['color'], size: 14),
+                    child: Icon(stat['icon'], color: stat['color'], size: 20),
                   ),
-                  Icon(stat['trend'], color: stat['trendColor'], size: 12),
+                  Icon(stat['trend'], color: stat['trendColor'], size: 18),
                 ],
               ),
-              SizedBox(height: 4),
-              FittedBox(
-                child: Text(
-                  stat['value'],
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: _textColor,
-                  ),
+              SizedBox(height: 12),
+              Text(
+                stat['value'],
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: _textColor,
                 ),
               ),
-              SizedBox(height: 2),
+              SizedBox(height: 4),
               Text(
                 stat['metric'],
-                style: TextStyle(fontSize: 9, color: _textSecondaryColor),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 14, color: _textSecondaryColor),
               ),
-              SizedBox(height: 2),
+              SizedBox(height: 8),
               Text(
                 stat['change'],
                 style: TextStyle(
-                  fontSize: 8,
+                  fontSize: 12,
                   color: stat['trendColor'],
                   fontWeight: FontWeight.bold,
                 ),
@@ -547,50 +540,38 @@ class _SystemSupervisorScreenState extends State<SystemSupervisorScreen> {
         side: BorderSide(color: _borderColor, width: 1),
       ),
       child: Container(
-        constraints: BoxConstraints(minHeight: 140, maxHeight: 150),
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // مؤشر التقدم
-            Container(
-              width: 32,
-              height: 32,
-              child: CircularProgressIndicator(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: _cardColor,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
                 value: 0.7,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: Colors.grey.shade300,
                 valueColor: AlwaysStoppedAnimation<Color>(stat['color']),
-                strokeWidth: 3,
+                strokeWidth: 6,
               ),
-            ),
-            SizedBox(height: 6),
-            // القيمة
-            Text(
-              stat['value'],
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: _textColor,
+              SizedBox(height: 12),
+              Text(
+                stat['value'],
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _textColor,
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: 2),
-            // المقياس
-            Text(
-              stat['metric'],
-              style: TextStyle(
-                fontSize: 8,
-                color: _textSecondaryColor,
-                height: 1.2,
+              SizedBox(height: 4),
+              Text(
+                stat['metric'],
+                style: TextStyle(fontSize: 14, color: _textSecondaryColor),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

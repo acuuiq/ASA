@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class MaintenanceTechnicianScreen extends StatefulWidget {
+  const MaintenanceTechnicianScreen({super.key});
+
   @override
   _MaintenanceTechnicianScreenState createState() =>
       _MaintenanceTechnicianScreenState();
@@ -201,9 +203,9 @@ class _MaintenanceTechnicianScreenState
         onPressed: () {
           _showTaskUpdateDialog(context);
         },
-        child: Icon(Icons.add_task, size: 28),
         backgroundColor: _primaryColor,
         elevation: 4,
+        child: Icon(Icons.add_task, size: 28),
       ),
       drawer: _buildDrawer(context),
     );
@@ -228,7 +230,7 @@ class _MaintenanceTechnicianScreenState
             ),
           ),
           SizedBox(height: 12),
-          ...activeTasks.map((task) => _buildActiveTaskCard(task)).toList(),
+          ...activeTasks.map((task) => _buildActiveTaskCard(task)),
         ],
       ),
     );
@@ -253,7 +255,7 @@ class _MaintenanceTechnicianScreenState
           SizedBox(height: 12),
           ...completedTasks
               .map((task) => _buildCompletedTaskCard(task))
-              .toList(),
+              ,
         ],
       ),
     );
@@ -276,7 +278,7 @@ class _MaintenanceTechnicianScreenState
             ),
           ),
           SizedBox(height: 12),
-          ...delayedTasks.map((task) => _buildDelayedTaskCard(task)).toList(),
+          ...delayedTasks.map((task) => _buildDelayedTaskCard(task)),
         ],
       ),
     );

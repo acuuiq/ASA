@@ -1,6 +1,5 @@
 import 'package:mang_mu/screens/citizen/auth/signin_screen.dart';
 import 'package:mang_mu/screens/citizen/auth/regesyer_screen.dart';
-import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter/material.dart';
 import 'package:mang_mu/screens/mainscren.dart';
 import 'package:flutter_svg/flutter_svg.dart';

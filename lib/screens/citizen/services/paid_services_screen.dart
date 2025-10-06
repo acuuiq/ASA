@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
@@ -2440,7 +2441,170 @@ class _PaidServicesScreenState extends State<PaidServicesScreen> {
       },
     );
   }
+<<<<<<< Updated upstream
 
+=======
+void _showPaymentOptions(String serviceName, String price) {
+  // تحويل السعر من نص إلى رقم
+  double getServicePrice(String serviceName) {
+    final Map<String, double> servicePrices = {
+      'تركيب عدادات ذكية': 150.0,
+      'فحص وصيانة لوحة الكهرباء': 200.0,
+      'تمديدات كهربائية إضافية': 80.0,
+      'تركيب أنظمة الطاقة الشمسية': 5000.0,
+      'تركيب عداد مياه إضافي': 250.0,
+      'كشف تسربات المياه': 150.0,
+      'تنظيف خزانات المياه': 300.0,
+      'تركيب أنظمة الري الذكية': 1000.0,
+      'إزالة نفايات البناء': 500.0,
+      'تركيب حاويات نفايات كبيرة': 200.0,
+      'تدوير النفايات المنزلية': 100.0,
+      'تنظيف مواقع الأحداث': 800.0,
+    };
+
+    return servicePrices[serviceName] ?? 100.0;
+  }
+  
+  // الحصول على سعر الخدمة
+  double amount = getServicePrice(serviceName);
+  
+  // إنشاء ServiceItem للخدمة المختارة
+  ServiceItem serviceItem = ServiceItem(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    name: serviceName,
+    amount: amount,
+    color: widget.serviceColor,
+    gradient: widget.serviceGradient,
+    additionalInfo: 'خدمة مدفوعة - ${widget.serviceTitle}',
+  );
+
+  // عرض صفحة اختيار طريقة الدفع
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: widget.serviceColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.payment, color: Colors.white, size: 28),
+                const SizedBox(width: 12),
+                const Text(
+                  'اختر طريقة الدفع',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+
+          // Content
+          Expanded(
+            child: PaymentMethodsDialog(
+              services: [],
+              primaryColor: widget.serviceColor,
+              primaryGradient: widget.serviceGradient,
+              finalAmount: amount,
+              usePoints: false,
+              pointsDiscount: 0.0,
+              onPaymentSuccess: () {
+                Navigator.pop(context);
+                _showPaymentSuccessDialog(serviceName, price);
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+void _showPaymentSuccessDialog(String serviceName, String price) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 60),
+              const SizedBox(height: 20),
+              const Text(
+                'تم الدفع بنجاح!',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'تم دفع $price لخدمة $serviceName',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.serviceColor,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    'حسناً',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+>>>>>>> Stashed changes
   void _showCashPaymentConfirmation(String serviceName, String price) {
     showDialog(
       context: context,
@@ -3768,8 +3932,13 @@ class _CustomServiceDialogState extends State<CustomServiceDialog> {
       TextEditingController();
   final TextEditingController _contactInfoController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+<<<<<<< Updated upstream
   final TextEditingController _budgetController = TextEditingController();
   List<XFile> _selectedImages = [];
+=======
+  final List<XFile> _selectedImages = [];
+
+>>>>>>> Stashed changes
   final ImagePicker _picker = ImagePicker();
 
   List<Employee> _selectedEmployees = [];

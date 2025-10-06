@@ -263,7 +263,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
           .select()
           .eq('id', userId);
       
-      if (data != null && data.isNotEmpty) {
+      if (data.isNotEmpty) {
         print('بيانات المستخدم في الجدول: $data');
       } else {
         print('المستخدم غير موجود في جدول profiles');

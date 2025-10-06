@@ -16,8 +16,7 @@ import 'package:mang_mu/screens/employee/employee_water/water_emergency_officer.
 import 'package:mang_mu/screens/employee/employee_water/water_maintenance_technician.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_premium_specialist.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_supervisor.dart';
-import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart'
-    hide BillingAccountantScreen;
+import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart';
 import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';
 import 'package:mang_mu/screens/employee/employee_wast/reporting_officer_wast.dart';
 import 'package:mang_mu/screens/employee/employee_wast/system_supervisor_waste.dart';
@@ -71,12 +70,14 @@ class _EsigninScreenState extends State<EsigninScreen>
     ],
     'ماء': [
       'مدقق الجودة ',
+      'مسؤول الإبلاغ عن المياه',
       'محاسب الفواتير ',
       'مراقب الاستهلاك ',
       'ضابط الطوارئ ',
       'فني الصيانة',
       'أخصائي الخدمات المميزة',
       'مشرف المياه',
+
     ],
     'نفايات': [
       'مدير طلبات الحاويات',
@@ -272,7 +273,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             MaterialPageRoute(builder: (context) => WaterSupervisorScreen()),
           );
         } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'مسؤول الابلاغ ') {
+            _selectedSpecialization == 'مسؤول الإبلاغ عن المياه') {
           // التنقل إلى شاشة مسؤول إعداد تقارير المياه
           Navigator.pushReplacement(
             context,

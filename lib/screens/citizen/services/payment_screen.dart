@@ -591,7 +591,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                       ),
                     )
-                    .toList(),
+                    ,
                 const SizedBox(height: 20),
               ],
             ),
@@ -619,6 +619,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             ),
                           ],
                         ),
+<<<<<<< Updated upstream
                       ),
                       Switch(
                         value: _usePoints,
@@ -634,6 +635,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ],
                   ),
                 ),
+=======
+                      )
+                      ,
+                  const SizedBox(height: 20),
+                ],
+>>>>>>> Stashed changes
               ),
             const SizedBox(height: 20),
 
@@ -1037,7 +1044,7 @@ class _PaymentMethodsDialogState extends State<PaymentMethodsDialog> {
                         ),
                       ),
                     )
-                    .toList(),
+                    ,
                 const SizedBox(height: 15),
               ],
             ),
@@ -1127,7 +1134,7 @@ class _PaymentMethodsDialogState extends State<PaymentMethodsDialog> {
                 },
               ),
             );
-          }).toList(),
+          }),
 
           const SizedBox(height: 20),
         ],
@@ -1552,7 +1559,7 @@ class _PaymentDetailsFormState extends State<PaymentDetailsForm> {
                         ),
                       ),
                     )
-                    .toList(),
+                    ,
 
                 Divider(),
 

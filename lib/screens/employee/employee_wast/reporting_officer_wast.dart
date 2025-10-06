@@ -332,6 +332,37 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
             _buildTeamsTab(),
           ],
         ),
+<<<<<<< Updated upstream
+=======
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              onPressed: _showAppIssueReportForm,
+              backgroundColor: _errorColor,
+              mini: true,
+              tooltip: 'عرض مشكلة في التطبيق',
+              child: const Icon(Icons.bug_report, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            FloatingActionButton(
+              onPressed: _showEmployeeNegligenceForm,
+              backgroundColor: _warningColor,
+              mini: true,
+              tooltip: 'عرض تقصير موظف',
+              child: const Icon(Icons.person_off, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            FloatingActionButton(
+              onPressed: _showNewReportDialog,
+              backgroundColor: _primaryColor,
+              tooltip: 'إضافة بلاغ جديد',
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
+          ],
+        ),
+>>>>>>> Stashed changes
       ),
     );
   }
@@ -659,6 +690,191 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
     }
   }
 
+<<<<<<< Updated upstream
+=======
+  void _showReportDetails(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(report['title'] ?? 'تفاصيل البلاغ'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow('النوع:', _getReportTypeText(report['type'])),
+              _buildDetailRow('الموقع:', report['location'] ?? 'غير محدد'),
+              if (report['latitude'] != null && report['longitude'] != null)
+                _buildDetailRow('الإحداثيات:', 
+                    '${report['latitude']}, ${report['longitude']}'),
+              _buildDetailRow('الحالة:', _getStatusText(report['status'])),
+              if (report['description'] != null)
+                _buildDetailRow('الوصف:', report['description']),
+              if (report['created_at'] != null)
+                _buildDetailRow(
+                  'وقت الإنشاء:',
+                  DateFormat('yyyy-MM-dd HH:mm').format(report['created_at']),
+                ),
+              
+              if (report['images'] != null && (report['images'] as List).isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    Text(
+                      'الصور المرفقة:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _textColor,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 150,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: (report['images'] as List).length,
+                        itemBuilder: (context, index) {
+                          final imageUrl = (report['images'] as List)[index];
+                          return GestureDetector(
+                            onTap: () => _showFullScreenImage(imageUrl),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              width: 150,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.grey[200],
+                                image: DecorationImage(
+                                  image: NetworkImage(imageUrl),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    bottom: 4,
+                                    right: 4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Icon(Icons.zoom_in, color: Colors.white, size: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'انقر على الصورة لعرضها بالحجم الكامل',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _textSecondaryColor,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق'),
+          ),
+          ElevatedButton(
+            onPressed: () => _updateReportStatus(report),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryColor,
+            ),
+            child: const Text('تحديث الحالة'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFullScreenImage(String imageUrl) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('الصورة المرفقة'),
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          backgroundColor: Colors.black,
+          body: Center(
+            child: InteractiveViewer(
+              panEnabled: true,
+              scaleEnabled: true,
+              minScale: 0.5,
+              maxScale: 3.0,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, color: Colors.red, size: 50),
+                        SizedBox(height: 16),
+                        Text('فشل في تحميل الصورة', style: TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _textColor,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: _textSecondaryColor),
+            ),
+          ),
+        ],
+      ));
+  }
+
+>>>>>>> Stashed changes
   String _getReportTypeText(String type) {
     switch (type) {
       case 'full_container': return 'حاوية ممتلئة';

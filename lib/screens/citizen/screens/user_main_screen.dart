@@ -552,7 +552,7 @@ Widget _buildEventsButton() {
                     (benefit) =>
                         _buildListItem('✓ $benefit', const Color(0xFF2E7D32)),
                   )
-                  .toList(),
+                  ,
             ],
 
             if (penalties.isNotEmpty) ...[
@@ -571,7 +571,7 @@ Widget _buildEventsButton() {
                     (penalty) =>
                         _buildListItem('✗ $penalty', const Color(0xFFD32F2F)),
                   )
-                  .toList(),
+                  ,
             ],
           ],
         ),

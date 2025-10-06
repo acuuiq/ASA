@@ -29,7 +29,9 @@ class _PremiumServicesSpecialistScreenState
   final Color _borderColor = const Color(0xFFE0E0E0);
 
   late TabController _tabController;
+  late TabController _requestsTabController;
   int _currentTabIndex = 0;
+  int _currentRequestsTabIndex = 0;
 
   final List<Map<String, dynamic>> availableServices = [
     {
@@ -67,13 +69,13 @@ class _PremiumServicesSpecialistScreenState
     },
   ];
 
-  final List<Map<String, dynamic>> serviceRequests = [
+  List<Map<String, dynamic>> serviceRequests = [
     {
       'id': 'SR-001',
       'service': 'تركيب ألواح شمسية',
       'customer': 'محمد أحمد',
       'requestDate': DateTime.now().subtract(const Duration(days: 2)),
-      'status': 'قيد المراجعة',
+      'status': 'قيد المعالجة',
       'priority': 'عالي',
       'address': 'حي الرياض، شارع الملك فهد',
     },
@@ -94,6 +96,15 @@ class _PremiumServicesSpecialistScreenState
       'status': 'مكتمل',
       'priority': 'منخفض',
       'address': 'حي السلام، شارع الخليج',
+    },
+    {
+      'id': 'SR-004',
+      'service': 'تركيب ألواح شمسية',
+      'customer': 'فاطمة خالد',
+      'requestDate': DateTime.now().subtract(const Duration(days: 3)),
+      'status': 'ملغي',
+      'priority': 'متوسط',
+      'address': 'حي الورود، شارع الجامعة',
     },
   ];
 
@@ -128,9 +139,17 @@ class _PremiumServicesSpecialistScreenState
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _requestsTabController = TabController(length: 4, vsync: this);
+    
     _tabController.addListener(() {
       setState(() {
         _currentTabIndex = _tabController.index;
+      });
+    });
+    
+    _requestsTabController.addListener(() {
+      setState(() {
+        _currentRequestsTabIndex = _requestsTabController.index;
       });
     });
   }
@@ -138,6 +157,7 @@ class _PremiumServicesSpecialistScreenState
   @override
   void dispose() {
     _tabController.dispose();
+    _requestsTabController.dispose();
     super.dispose();
   }
 
@@ -286,11 +306,81 @@ class _PremiumServicesSpecialistScreenState
   }
 
   Widget _buildServiceRequestsTab() {
+    return Column(
+      children: [
+        // تبويبات الطلبات الداخلية
+        Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _requestsTabController,
+            isScrollable: true,
+            indicator: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(width: 2, color: _primaryColor),
+              ),
+            ),
+            labelColor: _primaryColor,
+            unselectedLabelColor: _textSecondaryColor,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+            tabs: const [
+              Tab(text: 'قيد المعالجة'),
+              Tab(text: 'مقبول'),
+              Tab(text: 'مكتمل'),
+              Tab(text: 'ملغي'),
+            ],
+          ),
+        ),
+        
+        // محتوى تبويبات الطلبات
+        Expanded(
+          child: TabBarView(
+            controller: _requestsTabController,
+            children: [
+              _buildRequestsByStatus('قيد المعالجة'),
+              _buildRequestsByStatus('مقبول'),
+              _buildRequestsByStatus('مكتمل'),
+              _buildRequestsByStatus('ملغي'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRequestsByStatus(String status) {
+    final filteredRequests = serviceRequests.where((request) => request['status'] == status).toList();
+    
+    if (filteredRequests.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.inbox,
+              size: 64,
+              color: _textSecondaryColor.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'لا توجد طلبات $status',
+              style: TextStyle(
+                fontSize: 16,
+                color: _textSecondaryColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: serviceRequests.length,
+      itemCount: filteredRequests.length,
       itemBuilder: (context, index) {
-        final request = serviceRequests[index];
+        final request = filteredRequests[index];
         return _buildServiceRequestCard(request);
       },
     );
@@ -422,11 +512,14 @@ class _PremiumServicesSpecialistScreenState
       case 'مقبول':
         statusColor = _successColor;
         break;
-      case 'قيد المراجعة':
+      case 'قيد المعالجة':
         statusColor = _warningColor;
         break;
       case 'مكتمل':
         statusColor = _primaryColor;
+        break;
+      case 'ملغي':
+        statusColor = _errorColor;
         break;
       default:
         statusColor = _textSecondaryColor;
@@ -730,43 +823,63 @@ class _PremiumServicesSpecialistScreenState
   }
 
   void _updateRequestStatus(Map<String, dynamic> request) {
+    String? newStatus;
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('تحديث حالة الطلب: ${request['id']}'),
-        content: DropdownButtonFormField(
-          value: request['status'],
-          items: ['قيد المراجعة', 'مقبول', 'مكتمل', 'ملغي']
-              .map(
-                (status) =>
-                    DropdownMenuItem(value: status, child: Text(status)),
-              )
-              .toList(),
-          onChanged: (value) {},
-          decoration: const InputDecoration(
-            labelText: 'الحالة الجديدة',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // تحديث حالة الطلب
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('تم تحديث حالة الطلب بنجاح'),
-                  backgroundColor: _successColor,
-                ),
-              );
-            },
-            child: const Text('تحديث'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text('تحديث حالة الطلب: ${request['id']}'),
+            content: DropdownButtonFormField(
+              value: newStatus ?? request['status'],
+              items: ['قيد المعالجة', 'مقبول', 'مكتمل', 'ملغي']
+                  .map(
+                    (status) => DropdownMenuItem(value: status, child: Text(status)),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  newStatus = value as String?;
+                });
+              },
+              decoration: const InputDecoration(
+                labelText: 'الحالة الجديدة',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (newStatus != null) {
+                    setState(() {
+                      request['status'] = newStatus;
+                    });
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('تم تحديث حالة الطلب بنجاح'),
+                        backgroundColor: _successColor,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('يرجى اختيار حالة جديدة'),
+                        backgroundColor: _errorColor,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('تحديث'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

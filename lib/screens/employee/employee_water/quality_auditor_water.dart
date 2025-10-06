@@ -180,11 +180,79 @@ class _QualityAuditorWaterScreenState extends State<QualityAuditorWaterScreen> {
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
+<<<<<<< Updated upstream
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
+=======
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [_buildSamplesTab(), _buildReportsTab(), _buildAreasTab()],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: _primaryColor,
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onPressed: _addNewSample,
+        child: Icon(Icons.add, size: 28, color: Colors.white),
+      ),
+    );
+  }
+
+  // باقي الكود بدون تغيير...
+  Widget _buildSamplesTab() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildStatsCard(),
+          SizedBox(height: 20),
+          ..._samples.map((sample) => _buildSampleCard(sample)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportsTab() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildQuickActions(),
+          SizedBox(height: 20),
+          ..._reports.map((report) => _buildReportCard(report)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAreasTab() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildMapOverview(),
+          SizedBox(height: 20),
+          ..._areas.map((area) => _buildAreaCard(area)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_primaryColor.withOpacity(0.8), _primaryColor],
+>>>>>>> Stashed changes
           ),
         ],
       ),
