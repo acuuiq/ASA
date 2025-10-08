@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
-import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/user_main_screen.dart';
+
 import 'dart:io';
 import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -175,7 +175,6 @@ class _EregesyerScreenState extends State<EregesyerScreen>
                 Navigator.pop(context);
                 await Future.delayed(const Duration(seconds: 1));
                 if (!mounted) return;
-                Navigator.pushNamed(context, UserMainScreen .screenRoot);
               },
               child: Text(
                 "تأكيد وإنشاء الحساب",

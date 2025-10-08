@@ -33,39 +33,7 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
       imageAsset: 'assets/waste1.jpg',
       status: 'لم يتم المعالجة',
     ),
-    WasteProblem(
-      employeeName: 'خالد عبدالله',
-      employeeId: 'EMP-002',
-      problemType: 'عدم جمع النفايات',
-      location: 'حي الروضة - شارع الأمير سلطان',
-      date: '2024-01-14',
-      time: '09:15 ص',
-      description: 'تأخر في جمع النفايات لمدة ساعتين عن الموعد المحدد. أدى هذا إلى انتشار الروائح الكريهة وتجمع الحشرات.',
-      imageAsset: 'assets/waste2.jpg',
-      status: 'قيد المعالجة',
-    ),
-    WasteProblem(
-      employeeName: 'محمد علي',
-      employeeId: 'EMP-003',
-      problemType: 'عدم جمع النفايات',
-      location: 'حي العليا - شارع العروبة',
-      date: '2024-01-13',
-      time: '10:00 ص',
-      description: 'لم يمر موظف جمع النفايات على المنطقة اليوم. النفايات متراكمة منذ يومين وتسبب إزعاجاً للسكان.',
-      imageAsset: 'assets/waste3.jpg',
-      status: 'تم المعالجة',
-    ),
-    WasteProblem(
-      employeeName: 'سعيد حسن',
-      employeeId: 'EMP-004',
-      problemType: 'عدم جمع النفايات',
-      location: 'حي النزهة - شارع الخليج',
-      date: '2024-01-12',
-      time: '07:45 ص',
-      description: 'جمع جزئي للنفايات حيث تم ترك بعض الحاويات دون جمع. يحتاج لمتابعة عاجلة.',
-      imageAsset: 'assets/waste4.jpg',
-      status: 'لم يتم المعالجة',
-    ),
+    // ... البيانات الحالية الأخرى
   ];
 
   // بيانات المشاكل لتسرب من الحاويات
@@ -80,36 +48,7 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
       imageAsset: 'assets/leakage1.jpg',
       status: 'لم يتم المعالجة',
     ),
-    LeakageProblem(
-      citizenName: 'عبدالرحمن سعيد',
-      location: 'حي الروابي - شارع الجامعة',
-      area: 'حي الروابي',
-      date: '2024-01-15',
-      time: '03:15 م',
-      description: 'تسرب مستمر من حاوية النفايات قرب المسجد. السائل المتسرب لونه بني داكن ورائحته نفاذة. يشكل خطراً على صحة المصلين والأطفال في المنطقة.',
-      imageAsset: 'assets/leakage2.jpg',
-      status: 'قيد المعالجة',
-    ),
-    LeakageProblem(
-      citizenName: 'نورة خالد',
-      location: 'حي الضباب - شارع الربيع',
-      area: 'حي الضباب',
-      date: '2024-01-14',
-      time: '10:45 ص',
-      description: 'تسرب من قاع حاوية النفايات بسبب صدأ المعدن. السائل يتجمع حول الحاوية ويجذب الحشرات والحيوانات الضالة. يحتاج تدخل سريع.',
-      imageAsset: 'assets/leakage3.jpg',
-      status: 'لم يتم المعالجة',
-    ),
-    LeakageProblem(
-      citizenName: 'ياسر عبدالله',
-      location: 'حي الورود - شارع الخزامى',
-      area: 'حي الورود',
-      date: '2024-01-13',
-      time: '06:20 م',
-      description: 'تسرب من غطاء حاوية النفايات أثناء الأمطار. المياه المختلطة بالنفايات تنتشر في الشارع وتسبب تلوث بيئي.',
-      imageAsset: 'assets/leakage4.jpg',
-      status: 'تم المعالجة',
-    ),
+    // ... البيانات الحالية الأخرى
   ];
 
   // بيانات المشاكل لروائح كريهة
@@ -124,36 +63,7 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
       imageAsset: 'assets/odor1.jpg',
       status: 'لم يتم المعالجة',
     ),
-    OdorProblem(
-      citizenName: 'مريم عبدالله',
-      location: 'حي النزهة - شارع الورود',
-      area: 'حي النزهة',
-      date: '2024-01-16',
-      time: '10:15 ص',
-      description: 'روائح كريهة مستمرة من موقع تجميع النفايات خلف المركز التجاري. الرائحة تنتشر لمسافات بعيدة وتؤثر على المحلات التجارية المجاورة والمقاهي. يحتاج الأمر إلى تدخل عاجل لتنظيف الموقع.',
-      imageAsset: 'assets/odor2.jpg',
-      status: 'قيد المعالجة',
-    ),
-    OdorProblem(
-      citizenName: 'خالد محمد',
-      location: 'حي السلام - شارع الملك فيصل',
-      area: 'حي السلام',
-      date: '2024-01-15',
-      time: '06:45 م',
-      description: 'روائح كريهة تنبعث من حاوية النفايات المقابلة للمسجد. الرائحة تزداد سوءاً مع ارتفاع درجة الحرارة وتسبب إزعاجاً للمصلين خاصة في أوقات الصلاة. يلاحظ وجود حشرات طائرة حول الحاوية.',
-      imageAsset: 'assets/odor3.jpg',
-      status: 'لم يتم المعالجة',
-    ),
-    OdorProblem(
-      citizenName: 'فاطمة ناصر',
-      location: 'حي الروضة - شارع الأمير محمد',
-      area: 'حي الروضة',
-      date: '2024-01-14',
-      time: '04:20 م',
-      description: 'روائح كريهة قوية من حاوية النفايات المجاورة للمدرسة. الرائحة تؤثر على الطلاب أثناء الدخول والخروج وقد تسبب مشاكل صحية. الحاوية ممتلئة بشكل زائد وتحتاج إلى إفراغ عاجل.',
-      imageAsset: 'assets/odor4.jpg',
-      status: 'تم المعالجة',
-    ),
+    // ... البيانات الحالية الأخرى
   ];
 
   // بيانات المشاكل لحاويات تالفة
@@ -168,36 +78,7 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
       imageAsset: 'assets/damaged1.jpg',
       status: 'لم يتم المعالجة',
     ),
-    DamagedContainerProblem(
-      citizenName: 'هدى محمد',
-      location: 'حي الفيصلية - شارع الملك عبدالله',
-      area: 'حي الفيصلية',
-      date: '2024-01-17',
-      time: '03:45 م',
-      description: 'حاوية النفايات تعرضت للتخريب حيث تم قطع جزء كبير من الجانب الأيمن. الحاوية لا تحتفظ بالنفايات بداخلها وتسقط على الأرض. تشكل خطراً على المارة.',
-      imageAsset: 'assets/damaged2.jpg',
-      status: 'قيد المعالجة',
-    ),
-    DamagedContainerProblem(
-      citizenName: 'راشد العتيبي',
-      location: 'حي العزيزية - شارع الأمير نايف',
-      area: 'حي العزيزية',
-      date: '2024-01-16',
-      time: '11:20 ص',
-      description: 'حاوية النفايات بها كسر كبير في القاعدة مما يسمح بتسرب السوائل والنفايات. العجلات تالفة وغير قابلة للحركة. تحتاج إلى إصلاح عاجل.',
-      imageAsset: 'assets/damaged3.jpg',
-      status: 'لم يتم المعالجة',
-    ),
-    DamagedContainerProblem(
-      citizenName: 'لطيفة القحطاني',
-      location: 'حي الشفا - شارع الريان',
-      area: 'حي الشفا',
-      date: '2024-01-15',
-      time: '05:30 م',
-      description: 'حاوية النفايات محروقة جزئياً بسبب حريق متعمد. البلاستيك منصهر والهيكل مشوه. تشوه المظهر العام للمنطقة وتحتاج لإزالة فورية.',
-      imageAsset: 'assets/damaged4.jpg',
-      status: 'تم المعالجة',
-    ),
+    // ... البيانات الحالية الأخرى
   ];
 
   // بيانات جديدة لمشاكل تراكم النفايات من المواطنين
@@ -212,44 +93,64 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
       imageAsset: 'assets/accumulation1.jpg',
       status: 'لم يتم المعالجة',
     ),
-    WasteAccumulationProblem(
-      citizenName: 'نورة السعد',
+    // ... البيانات الحالية الأخرى
+  ];
+
+  // بيانات جديدة لمشاكل أخرى متنوعة
+  final List<OtherProblem> _otherProblems = [
+    OtherProblem(
+      citizenName: 'سارة عبدالله',
       area: 'حي الروضة',
-      location: 'شارع الأمير محمد - بجوار المركز التجاري',
-      date: '2024-01-19',
-      time: '03:45 م',
-      description: 'تراكم نفايات بناء ومواد خشبية وأثاث قديم في الساحة الخلفية للمجمع السكني. هذه النفايات متراكمة منذ أسبوع وتشوه المظهر العام للمنطقة. يلاحظ وجود روائح كريهة تنبعث من الموقع خاصة في فترة المساء.',
-      imageAsset: 'assets/accumulation2.jpg',
-      status: 'قيد المعالجة',
-    ),
-    WasteAccumulationProblem(
-      citizenName: 'خالد الحربي',
-      area: 'حي السلام',
-      location: 'شارع الخزان - أمام مسجد الفرقان',
-      date: '2024-01-18',
-      time: '11:30 ص',
-      description: 'تراكم نفايات منزلية بشكل غير منظم أمام كل منزل في الشارع. الحاويات ممتلئة بشكل زائد والنفايات منتشرة على الرصيف. هذا التراكم يجذب الحيوانات الضالة ويسبب إزعاجاً للمارة والمصلين في المسجد المجاور.',
-      imageAsset: 'assets/accumulation3.jpg',
+      location: 'شارع الأمير سلطان - بجوار المركز الصحي',
+      date: '2024-01-22',
+      time: '10:30 ص',
+      description: 'وجود حيوانات ضالة تتغذى على النفايات المتراكمة في المنطقة. هذه الحيوانات تشكل خطراً على الأطفال والمارة وتنقل الأمراض. توجد مجموعة من القطط والكلاب الضالة تتجمع حول حاويات النفايات ليلاً ونهاراً.',
+      imageAsset: 'assets/other1.jpg',
+      problemType: 'حيوانات ضالة',
       status: 'لم يتم المعالجة',
     ),
-    WasteAccumulationProblem(
-      citizenName: 'الجوهرة القحطاني',
-      area: 'حي النزهة',
-      location: 'شارع الورود - بين العمارتين ٥٦ و٥٨',
-      date: '2024-01-17',
-      time: '06:20 م',
-      description: 'تراكم نفايات حدائق وأعشاب جافة وأغصان أشجار في الركن الشمالي من الحي. هذه النفايات ناتجة عن تقليم الأشجار ولم يتم جمعها منذ عشرة أيام. بدأت تظهر عليها علامات التحلل وتنبعث منها روائح كريهة.',
-      imageAsset: 'assets/accumulation4.jpg',
+    OtherProblem(
+      citizenName: 'محمد العازمي',
+      area: 'حي الخليج',
+      location: 'شارع الكورنيش - قريب من المطاعم',
+      date: '2024-01-21',
+      time: '08:45 م',
+      description: 'حرق النفايات بشكل عشوائي من قبل بعض الأفراد مما يسبب تلوثاً هوائياً شديداً. الدخان الأسود الكثيف ينتشر في المنطقة ويسبب مشاكل في التنفس للسكان وخاصة كبار السن والأطفال. الرائحة الكريهة تصل إلى داخل المنازل.',
+      imageAsset: 'assets/other2.jpg',
+      problemType: 'حرق نفايات عشوائي',
+      status: 'قيد المعالجة',
+    ),
+    OtherProblem(
+      citizenName: 'لطيفة السعد',
+      area: 'حي العليا',
+      location: 'شارع الملك فهد - أمام المجمع التجاري',
+      date: '2024-01-20',
+      time: '03:15 م',
+      description: 'إلقاء نفايات البناء والهدم في الأماكن العامة بشكل غير قانوني. توجد كميات كبيرة من الأنقاض والأتربة والمواد الإنشائية متراكمة على جانب الطريق مما يعيق حركة المرور ويشوه المظهر الحضري للمنطقة.',
+      imageAsset: 'assets/other3.jpg',
+      problemType: 'نفايات بناء عشوائية',
+      status: 'لم يتم المعالجة',
+    ),
+    OtherProblem(
+      citizenName: 'خالد الشمري',
+      area: 'حي السلام',
+      location: 'شارع الأمير نايف - بالقرب من سوق الخضار',
+      date: '2024-01-19',
+      time: '11:20 ص',
+      description: 'تجميع خاطئ للنفايات حيث يتم خلط النفايات القابلة لإعادة التدوير مع النفايات العضوية. عدم وجود فرز للنفايات من المصدر يقلل من فرص إعادة التدوير ويزيد من كمية النفايات المرسلة إلى المطامر.',
+      imageAsset: 'assets/other4.jpg',
+      problemType: 'خلط النفايات',
       status: 'تم المعالجة',
     ),
-    WasteAccumulationProblem(
-      citizenName: 'محمد الشمري',
+    OtherProblem(
+      citizenName: 'نورة القحطاني',
       area: 'حي المصيف',
-      location: 'شارع الكورنيش - قريب من الشاطئ',
-      date: '2024-01-16',
-      time: '04:10 م',
-      description: 'تراكم نفايات بلاستيكية وزجاجية وعلب معدنية على طول الشاطئ. هذه النفايات تشكل خطراً على البيئة البحرية والزوار. يلاحظ أن بعض النفايات تحمل علامات المطاعم والمقاهي القريبة من المنطقة.',
-      imageAsset: 'assets/accumulation5.jpg',
+      location: 'شارع البحيرة - منطقة الشاطئ العام',
+      date: '2024-01-18',
+      time: '06:30 م',
+      description: 'إلقاء النفايات في الأماكن الطبيعية والشواطئ مما يضر بالبيئة البحرية والكائنات البحرية. توجد عبوات بلاستيكية وعلب معدنية وأكياس متناثرة على طول الشاطئ تشكل خطراً على السلاحف البحرية والطيور.',
+      imageAsset: 'assets/other5.jpg',
+      problemType: 'تلوث شاطئ',
       status: 'قيد المعالجة',
     ),
   ];
@@ -321,11 +222,21 @@ class _ReportingOfficerWasteScreenState extends State<ReportingOfficerWasteScree
     _animationController.forward();
   }
 
-  // دالة جديدة لعرض تفاصيل تراكم النفايات
   void _showWasteAccumulationProblemDetails(WasteAccumulationProblem problem) {
     setState(() {
       _selectedProblem = 'تراكم النفايات';
       _problemDescription = _buildWasteAccumulationProblemDetailsText(problem);
+      _problemImage = problem.imageAsset;
+      _showDetails = true;
+    });
+    _animationController.forward();
+  }
+
+  // دالة جديدة لعرض تفاصيل المشاكل الأخرى
+  void _showOtherProblemDetails(OtherProblem problem) {
+    setState(() {
+      _selectedProblem = problem.problemType;
+      _problemDescription = _buildOtherProblemDetailsText(problem);
       _problemImage = problem.imageAsset;
       _showDetails = true;
     });
@@ -389,7 +300,6 @@ ${problem.description}
 ''';
   }
 
-  // دالة جديدة لبناء تفاصيل تراكم النفايات
   String _buildWasteAccumulationProblemDetailsText(WasteAccumulationProblem problem) {
     return '''
 المبلغ: ${problem.citizenName}
@@ -397,6 +307,22 @@ ${problem.description}
 الموقع: ${problem.location}
 التاريخ: ${problem.date}
 الوقت: ${problem.time}
+الحالة: ${problem.status}
+
+تفاصيل المشكلة:
+${problem.description}
+''';
+  }
+
+  // دالة جديدة لبناء تفاصيل المشاكل الأخرى
+  String _buildOtherProblemDetailsText(OtherProblem problem) {
+    return '''
+المبلغ: ${problem.citizenName}
+المنطقة: ${problem.area}
+الموقع: ${problem.location}
+التاريخ: ${problem.date}
+الوقت: ${problem.time}
+نوع المشكلة: ${problem.problemType}
 الحالة: ${problem.status}
 
 تفاصيل المشكلة:
@@ -908,7 +834,6 @@ ${problem.description}
     );
   }
 
-  // دالة جديدة لمشاركة بلاغات تراكم النفايات
   void _showWasteAccumulationShareDialog(WasteAccumulationProblem problem) {
     showDialog(
       context: context,
@@ -1014,6 +939,131 @@ ${problem.description}
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFFF57C00),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'تأكيد المشاركة',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // دالة جديدة لمشاركة بلاغات المشاكل الأخرى
+  void _showOtherShareDialog(OtherProblem problem) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.share, color: Color(0xFF607D8B)),
+              SizedBox(width: 8),
+              Text(
+                'مشاركة البلاغ',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF607D8B),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'سيتم مشاركة هذا البلاغ مع:',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
+              ),
+              SizedBox(height: 16),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Color(0xFF607D8B).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Color(0xFF607D8B),
+                      child: Icon(Icons.person, color: Colors.white, size: 20),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'مسؤول جدولة النظافة',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF607D8B),
+                            ),
+                          ),
+                          Text(
+                            'Cleaning Schedule Manager',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'تأكيد مشاركة بلاغ ${problem.problemType}؟',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'إلغاء',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showShareSuccessMessage();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF607D8B),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1239,12 +1289,8 @@ ${problem.description}
               _buildLeakageContent(),
               _buildOdorContent(),
               _buildDamagedContainerContent(),
-              _buildWasteAccumulationContent(), // القسم الجديد
-              _buildWasteProblemContent(
-                'أخرى',
-                Icons.more_horiz,
-                Color(0xFF607D8B),
-              ),
+              _buildWasteAccumulationContent(),
+              _buildOtherContent(), // القسم الجديد للمشاكل الأخرى
             ],
           ),
         ),
@@ -1456,7 +1502,7 @@ ${problem.description}
     );
   }
 
-  // محتوى خاص بتراكم النفايات - جديد
+  // محتوى خاص بتراكم النفايات
   Widget _buildWasteAccumulationContent() {
     return Column(
       children: [
@@ -1504,6 +1550,264 @@ ${problem.description}
           ),
         ),
       ],
+    );
+  }
+
+  // محتوى خاص بالمشاكل الأخرى - جديد
+  Widget _buildOtherContent() {
+    return Column(
+      children: [
+        // رأس القسم
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.more_horiz, color: Color(0xFF607D8B), size: 24),
+              SizedBox(width: 8),
+              Text(
+                'بلاغات أخرى متنوعة',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF607D8B),
+                ),
+              ),
+              Spacer(),
+              Chip(
+                label: Text(
+                  '${_otherProblems.length} بلاغ',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
+                backgroundColor: Color(0xFF607D8B),
+              ),
+            ],
+          ),
+        ),
+        
+        // قائمة المشاكل الأخرى
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _otherProblems.length,
+            itemBuilder: (context, index) {
+              final problem = _otherProblems[index];
+              return _buildOtherProblemCard(problem);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // بطاقة عرض المشكلة
+  Widget _buildProblemCard(WasteProblem problem) {
+    Color statusColor = Colors.grey;
+    if (problem.status == 'لم يتم المعالجة') {
+      statusColor = Colors.red;
+    } else if (problem.status == 'قيد المعالجة') {
+      statusColor = Colors.orange;
+    } else if (problem.status == 'تم المعالجة') {
+      statusColor = Colors.green;
+    }
+
+    return Card(
+      margin: EdgeInsets.only(bottom: 12),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: InkWell(
+        onTap: () => _showProblemDetails(problem),
+        borderRadius: BorderRadius.circular(15),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // رأس البطاقة
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Color(0xFF2E7D32).withOpacity(0.1),
+                    child: Icon(
+                      Icons.person,
+                      color: Color(0xFF2E7D32),
+                      size: 20,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          problem.employeeName,
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        ),
+                        Text(
+                          problem.employeeId,
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: statusColor),
+                    ),
+                    child: Text(
+                      problem.status,
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: 12),
+              
+              // معلومات المشكلة
+              Row(
+                children: [
+                  Icon(Icons.location_on, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      problem.location,
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: 4),
+              
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    problem.date,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Icon(Icons.access_time, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    problem.time,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: 8),
+              
+              // وصف مختصر
+              Text(
+                problem.description.length > 100 
+                    ? '${problem.description.substring(0, 100)}...' 
+                    : problem.description,
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 13,
+                  color: Colors.grey[800],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              
+              SizedBox(height: 8),
+              
+              // صورة المشكلة
+              Container(
+                height: 120,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.grey[200],
+                ),
+                child: Icon(
+                  Icons.photo_camera,
+                  size: 40,
+                  color: Colors.grey[400],
+                ),
+              ),
+
+              // علامة المشاركة - في الأسفل من الجهة اليسرى
+              SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: InkWell(
+                  onTap: () => _showShareDialog(problem),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.share,
+                          size: 14,
+                          color: Colors.blue,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'مشاركة',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 10,
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -2128,7 +2432,7 @@ ${problem.description}
     );
   }
 
-  // بطاقة عرض مشكلة تراكم النفايات - جديد
+  // بطاقة عرض مشكلة تراكم النفايات
   Widget _buildWasteAccumulationProblemCard(WasteAccumulationProblem problem) {
     Color statusColor = Colors.grey;
     if (problem.status == 'لم يتم المعالجة') {
@@ -2335,8 +2639,8 @@ ${problem.description}
     );
   }
 
-  // بطاقة عرض المشكلة
-  Widget _buildProblemCard(WasteProblem problem) {
+  // بطاقة عرض المشاكل الأخرى - جديد
+  Widget _buildOtherProblemCard(OtherProblem problem) {
     Color statusColor = Colors.grey;
     if (problem.status == 'لم يتم المعالجة') {
       statusColor = Colors.red;
@@ -2353,7 +2657,7 @@ ${problem.description}
         borderRadius: BorderRadius.circular(15),
       ),
       child: InkWell(
-        onTap: () => _showProblemDetails(problem),
+        onTap: () => _showOtherProblemDetails(problem),
         borderRadius: BorderRadius.circular(15),
         child: Padding(
           padding: EdgeInsets.all(16),
@@ -2364,10 +2668,10 @@ ${problem.description}
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: Color(0xFF2E7D32).withOpacity(0.1),
+                    backgroundColor: Color(0xFF607D8B).withOpacity(0.1),
                     child: Icon(
                       Icons.person,
-                      color: Color(0xFF2E7D32),
+                      color: Color(0xFF607D8B),
                       size: 20,
                     ),
                   ),
@@ -2377,16 +2681,16 @@ ${problem.description}
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          problem.employeeName,
+                          problem.citizenName,
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E7D32),
+                            color: Color(0xFF607D8B),
                           ),
                         ),
                         Text(
-                          problem.employeeId,
+                          problem.area,
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 12,
@@ -2417,6 +2721,26 @@ ${problem.description}
               ),
               
               SizedBox(height: 12),
+              
+              // نوع المشكلة
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Color(0xFF607D8B).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  problem.problemType,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF607D8B),
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: 8),
               
               // معلومات المشكلة
               Row(
@@ -2498,12 +2822,12 @@ ${problem.description}
                 ),
               ),
 
-              // علامة المشاركة - في الأسفل من الجهة اليسرى
+              // علامة المشاركة الصغيرة في الأسفل من الجهة اليسرى
               SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
                 child: InkWell(
-                  onTap: () => _showShareDialog(problem),
+                  onTap: () => _showOtherShareDialog(problem),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -2537,45 +2861,6 @@ ${problem.description}
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // محتوى كل مشكلة نفايات (للتبويبات الأخرى)
-  Widget _buildWasteProblemContent(String title, IconData icon, Color color) {
-    return SingleChildScrollView(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 50,
-              color: color.withOpacity(0.6),
-            ),
-            SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'سيتم إضافة محتوى هذه المشكلة قريباً',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -3138,7 +3423,7 @@ class DamagedContainerProblem {
   });
 }
 
-// نموذج بيانات جديد لمشكلة تراكم النفايات
+// نموذج بيانات مشكلة تراكم النفايات
 class WasteAccumulationProblem {
   final String citizenName;
   final String area;
@@ -3157,6 +3442,31 @@ class WasteAccumulationProblem {
     required this.time,
     required this.description,
     required this.imageAsset,
+    required this.status,
+  });
+}
+
+// نموذج بيانات جديد للمشاكل الأخرى
+class OtherProblem {
+  final String citizenName;
+  final String area;
+  final String location;
+  final String date;
+  final String time;
+  final String description;
+  final String imageAsset;
+  final String problemType;
+  final String status;
+
+  OtherProblem({
+    required this.citizenName,
+    required this.area,
+    required this.location,
+    required this.date,
+    required this.time,
+    required this.description,
+    required this.imageAsset,
+    required this.problemType,
     required this.status,
   });
 }
