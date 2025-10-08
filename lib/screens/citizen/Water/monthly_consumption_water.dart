@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
 
-class MonthlyConsumptionScreen extends StatefulWidget {
+class MonthlyConsumptionWaterScreen extends StatefulWidget {
 
   final Color serviceColor;
   final List<Color> serviceGradient;
   final String serviceTitle;
 
-  const MonthlyConsumptionScreen({
+  const MonthlyConsumptionWaterScreen({
     super.key,
     required this.serviceColor,
     required this.serviceGradient,
@@ -16,10 +16,10 @@ class MonthlyConsumptionScreen extends StatefulWidget {
   });
 
   @override
-  State<MonthlyConsumptionScreen> createState() => _MonthlyConsumptionScreenState();
+  State<MonthlyConsumptionWaterScreen> createState() => _MonthlyConsumptionWaterScreenState();
 }
 
-class _MonthlyConsumptionScreenState extends State<MonthlyConsumptionScreen> {
+class _MonthlyConsumptionWaterScreenState extends State<MonthlyConsumptionWaterScreen> {
   int? _selectedMonthIndex;
 
   // بيانات الاستهلاك السنوي

@@ -2,17 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/payment_screen.dart';
-import '../services/points_and_gifts_screen.dart';
-import '../services/waste_schedule_screen.dart';
+import 'points_and_gifts_screen.dart';
+import '../Waste/waste_schedule_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
-import '../auth/signin_screen.dart';
-import '../services/monthly_consumption_screen.dart';
-import '../services/problem_report_screen.dart';
-import '../services/emergency_screen.dart';
-import '../services/paid_services_screen.dart';
-import '../services/daily_consumption_screen.dart';
-import '../screens/events_screen.dart';
+import 'signin_screen.dart';
+
+import '../Electricity/monthly_consumption_electricity.dart'; // أضف هذا
+import '../Water/monthly_consumption_water.dart'; // أضف هذا
+import '../Water/water_consumption_screen.dart'; // أضف هذا
+import '../Electricity/electricity_consumption_screen.dart'; // أضف هذا
+
+import 'events_screen.dart';
+// استيراد ملفات المشاكل الجديدة
+import '../Water/water_problem_report_screen.dart';
+import '../Electricity/electricity_problem_report_screen.dart';
+import '../Waste/waste_problem_report_screen.dart';
+// استيراد ملفات الطوارئ الجديدة
+import '../Water/water_emergency_screen.dart';
+import '../Electricity/electricity_emergency_screen.dart';
+import '../Waste/waste_emergency_screen.dart';
+// استيراد الملفات الجديدة:
+import '../Electricity/electricity_paid_services.dart';
+import '../Water/water_paid_services.dart';
+import '../Waste/waste_paid_services.dart';
 
 class UserMainScreen extends StatefulWidget {
   static const String screenRoot = 'user_main';
@@ -254,84 +267,84 @@ class _UserMainScreenState extends State<UserMainScreen>
       ],
     },
   ];
-final List<Map<String, dynamic>> _events = [
-  {
-    'title': 'صيانة مخططة',
-    'description': 'سيتم إيقاف خدمة الكهرباء للصيانة الدورية يوم السبت القادم من الساعة 10 صباحاً حتى 2 ظهراً',
-    'color': const Color(0xFF0D47A1),
-    'icon': Icons.engineering,
-    'date': DateTime.now().add(const Duration(days: 3)),
-    'location': 'جميع الأحياء',
-  },
-  {
-    'title': 'توعية بيئية',
-    'description': 'ورشة عمل حول ترشيد استهلاك المياه والطاقة يوم الأحد القادم في المركز الثقافي',
-    'color': const Color(0xFF00B4D8),
-    'icon': Icons.eco,
-    'date': DateTime.now().add(const Duration(days: 4)),
-    'location': 'المركز الثقافي - وسط المدينة',
-  },
-  {
-    'title': 'تحديث النظام',
-    'description': 'سيتم تحديث نظام الفواتير الإلكترونية يوم الاثنين القادم، قد تؤثر على بعض الخدمات مؤقتاً',
-    'color': const Color(0xFF4CAF50),
-    'icon': Icons.system_update,
-    'date': DateTime.now().add(const Duration(days: 5)),
-    'location': 'جميع المناطق',
-  },
-];
-Widget _buildEventsButton() {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 8),
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IconButton(
-          icon: const Icon(
-            Icons.event,
-            size: 24,
-            color: Colors.white,
+  final List<Map<String, dynamic>> _events = [
+    {
+      'title': 'صيانة مخططة',
+      'description':
+          'سيتم إيقاف خدمة الكهرباء للصيانة الدورية يوم السبت القادم من الساعة 10 صباحاً حتى 2 ظهراً',
+      'color': const Color(0xFF0D47A1),
+      'icon': Icons.engineering,
+      'date': DateTime.now().add(const Duration(days: 3)),
+      'location': 'جميع الأحياء',
+    },
+    {
+      'title': 'توعية بيئية',
+      'description':
+          'ورشة عمل حول ترشيد استهلاك المياه والطاقة يوم الأحد القادم في المركز الثقافي',
+      'color': const Color(0xFF00B4D8),
+      'icon': Icons.eco,
+      'date': DateTime.now().add(const Duration(days: 4)),
+      'location': 'المركز الثقافي - وسط المدينة',
+    },
+    {
+      'title': 'تحديث النظام',
+      'description':
+          'سيتم تحديث نظام الفواتير الإلكترونية يوم الاثنين القادم، قد تؤثر على بعض الخدمات مؤقتاً',
+      'color': const Color(0xFF4CAF50),
+      'icon': Icons.system_update,
+      'date': DateTime.now().add(const Duration(days: 5)),
+      'location': 'جميع المناطق',
+    },
+  ];
+  Widget _buildEventsButton() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.event, size: 24, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EventsScreen(
+                    events: _events,
+                    serviceColor: _services[_currentIndex]['color'] as Color,
+                  ),
+                ),
+              );
+            },
+            tooltip: 'الأحداث',
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EventsScreen(
-                  events: _events,
-                  serviceColor: _services[_currentIndex]['color'] as Color,
+          if (_events.isNotEmpty)
+            Positioned(
+              right: 8,
+              top: 8,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF9800),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
                 ),
-              ),
-            );
-          },
-          tooltip: 'الأحداث',
-        ),
-        if (_events.isNotEmpty)
-          Positioned(
-            right: 8,
-            top: 8,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF9800),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-              child: Text(
-                _events.length.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  _events.length.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
-          ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
+
   // دالة جديدة لعرض معلومات الفواتير
   void _showBillingInformation(BuildContext context, Color serviceColor) {
     showModalBottomSheet(
@@ -653,16 +666,20 @@ Widget _buildEventsButton() {
   ) {
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DailyConsumptionScreen(
-              serviceTitle: title,
-              serviceColor: color,
-              serviceGradient: gradient,
+        // تحديث الاستدعاء ليتناسب مع الملفات المنفصلة
+        if (title == 'الماء') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => WaterConsumptionScreen()),
+          );
+        } else if (title == 'الكهرباء') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ElectricityConsumptionScreen(),
             ),
-          ),
-        );
+          );
+        }
       },
       child: Card(
         elevation: 0,
@@ -815,9 +832,10 @@ Widget _buildEventsButton() {
             ],
           ),
           leading: _buildProfileButton(serviceColor),
-          actions: [_buildNotificationButton(),
-              _buildEventsButton(), // أضف زر الأحداث هنا
-],
+          actions: [
+            _buildNotificationButton(),
+            _buildEventsButton(), // أضف زر الأحداث هنا
+          ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(50),
             child: Container(
@@ -1131,73 +1149,144 @@ Widget _buildEventsButton() {
         ),
       );
     } else if (serviceName.contains('جدول النظافة')) {
-  
-
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => WasteScheduleScreen(
-        serviceColor: serviceColor,
-      ),
-    ),
-  );
-
-
-
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WasteScheduleScreen(serviceColor: serviceColor),
+        ),
+      );
     } else if (serviceName.contains('معلومات الفواتير')) {
       _showBillingInformation(context, serviceColor);
     } else if (serviceName.contains('الإبلاغ عن مشكلة')) {
-      // توجيه إلى شاشة الإبلاغ عن المشاكل الجديدة
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProblemReportScreen(
-            serviceName: serviceName,
-            serviceColor: serviceColor,
-            serviceGradient: serviceGradient,
-            serviceTitle: serviceTitle,
+      // توجيه إلى شاشة الإبلاغ عن المشاكل الجديدة حسب نوع الخدمة
+      if (serviceTitle.contains('الماء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WaterProblemReportScreen(
+              serviceName: serviceName,
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
           ),
-        ),
-      );
+        );
+      } else if (serviceTitle.contains('الكهرباء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ElectricityProblemReportScreen(
+              serviceName: serviceName,
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
+          ),
+        );
+      } else if (serviceTitle.contains('النفايات')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WasteProblemReportScreen(
+              serviceName: serviceName,
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
+          ),
+        );
+      }
     } else if (serviceName.contains('أمر طارئ')) {
-      // توجيه إلى شاشة الطوارئ الجديدة
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => EmergencyScreen(
-            serviceName: serviceName,
-            serviceColor: serviceColor,
-            serviceGradient: serviceGradient,
-            serviceTitle: serviceTitle,
+      // توجيه إلى شاشة الطوارئ الجديدة حسب نوع الخدمة
+      if (serviceTitle.contains('الماء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WaterEmergencyScreen(
+              serviceName: serviceName,
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
           ),
-        ),
-      );
+        );
+      } else if (serviceTitle.contains('الكهرباء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ElectricityEmergencyScreen(
+              serviceName: serviceName,
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
+          ),
+        );
+      } else if (serviceTitle.contains('النفايات')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WasteEmergencyScreen(
+              serviceName: serviceName,
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
+          ),
+        );
+      }
     } else if (serviceName.contains('خدمات مميزة')) {
-      // توجيه إلى شاشة الخدمات المدفوعة الجديدة
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaidServicesScreen(
-            serviceName: serviceName,
-            serviceColor: serviceColor,
-            serviceGradient: serviceGradient,
-            serviceTitle: serviceTitle,
+      // توجيه إلى شاشة الخدمات المدفوعة الجديدة حسب نوع الخدمة
+      if (serviceTitle.contains('الماء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                const WaterPaidServices(), // استخدام الكونستركتور بدون معطيات
           ),
-        ),
-      );
-    } else {
-      // للخدمات الأخرى، يمكنك إما إظهار رسالة أو توجيه إلى صفحة افتراضية
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MonthlyConsumptionScreen(
-            serviceColor: serviceColor,
-            serviceGradient: serviceGradient,
-            serviceTitle: serviceTitle,
+        );
+      } else if (serviceTitle.contains('الكهرباء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                const ElectricityPaidServices(), // استخدام الكونستركتور بدون معطيات
           ),
-        ),
-      );
+        );
+      } else if (serviceTitle.contains('النفايات')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                const WastePaidServices(), // استخدام الكونستركتور بدون معطيات
+          ),
+        );
+      }
+    } else if (serviceName.contains('الاستهلاك الشهري')) {
+      // توجيه إلى شاشة الاستهلاك الشهري المناسبة حسب نوع الخدمة
+      if (serviceTitle.contains('الماء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MonthlyConsumptionWaterScreen(
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
+          ),
+        );
+      } else if (serviceTitle.contains('الكهرباء')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MonthlyConsumptionElectricityScreen(
+              serviceColor: serviceColor,
+              serviceGradient: serviceGradient,
+              serviceTitle: serviceTitle,
+            ),
+          ),
+        );
+      }
     }
   }
 }

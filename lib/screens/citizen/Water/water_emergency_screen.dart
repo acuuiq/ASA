@@ -3,14 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-class EmergencyScreen extends StatefulWidget {
-  static const String screenRoute = '/emergency';
+class WaterEmergencyScreen extends StatefulWidget {
+  static const String screenRoute = '/water-emergency';
   final String serviceName;
   final Color serviceColor;
   final List<Color> serviceGradient;
   final String serviceTitle;
 
-  const EmergencyScreen({
+  const WaterEmergencyScreen({
     super.key,
     required this.serviceName,
     required this.serviceColor,
@@ -19,10 +19,10 @@ class EmergencyScreen extends StatefulWidget {
   });
   
   @override
-  State<EmergencyScreen> createState() => _EmergencyScreenState();
+  State<WaterEmergencyScreen> createState() => _WaterEmergencyScreenState();
 }
 
-class _EmergencyScreenState extends State<EmergencyScreen> {
+class _WaterEmergencyScreenState extends State<WaterEmergencyScreen> {
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
   String _problemDescription = '';
