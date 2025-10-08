@@ -17,7 +17,7 @@ class WasteEmergencyScreen extends StatefulWidget {
     required this.serviceGradient,
     required this.serviceTitle,
   });
-  
+
   @override
   State<WasteEmergencyScreen> createState() => _WasteEmergencyScreenState();
 }
@@ -79,7 +79,8 @@ class _WasteEmergencyScreenState extends State<WasteEmergencyScreen> {
   }
 
   Widget buildContent() {
-    if (widget.serviceName.contains('طارئ') || widget.serviceName.contains('إبلاغ')) {
+    if (widget.serviceName.contains('طارئ') ||
+        widget.serviceName.contains('إبلاغ')) {
       return _buildEmergencyReportContent();
     } else {
       return Container(
@@ -136,19 +137,22 @@ class _WasteEmergencyScreenState extends State<WasteEmergencyScreen> {
     String instructions = '';
 
     if (serviceType == 'الكهرباء') {
-      instructions = 'يمكنك الإبلاغ عن:\n\n'
+      instructions =
+          'يمكنك الإبلاغ عن:\n\n'
           '• كابلات كهرباء ساقطة أو تالفة\n'
           '• محولات عاطلة أو معطوبة\n'
           '• أعمدة إنارة مكسورة\n'
           '• أي خطر كهربائي في الشارع';
     } else if (serviceType == 'الماء') {
-      instructions = 'يمكنك الإبلاغ عن:\n\n'
+      instructions =
+          'يمكنك الإبلاغ عن:\n\n'
           '• تسرب مياه من الأنابيب في الشارع\n'
           '• أنابيب مياه مكسورة أو متضررة\n'
           '• فيضانات أو تجمعات مياه غير طبيعية\n'
           '• أي مشكلة في شبكة المياه العامة';
     } else if (serviceType == 'النفايات') {
-      instructions = 'يمكنك الإبلاغ عن:\n\n'
+      instructions =
+          'يمكنك الإبلاغ عن:\n\n'
           '• تراكم النفايات في الأماكن العامة\n'
           '• حاويات نفايات ممتلئة أو متضررة\n'
           '• نفايات متسربة أو مبعثرة\n'
@@ -176,7 +180,11 @@ class _WasteEmergencyScreenState extends State<WasteEmergencyScreen> {
           ),
           child: Column(
             children: [
-              Icon(Icons.report_problem_rounded, color: Colors.orange, size: 60),
+              Icon(
+                Icons.report_problem_rounded,
+                color: Colors.orange,
+                size: 60,
+              ),
               const SizedBox(height: 16),
               Text(
                 instructions,
@@ -213,8 +221,11 @@ class _WasteEmergencyScreenState extends State<WasteEmergencyScreen> {
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.camera_alt_rounded, 
-                            color: Colors.grey[400], size: 50),
+                        Icon(
+                          Icons.camera_alt_rounded,
+                          color: Colors.grey[400],
+                          size: 50,
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           'انقر لالتقاط صورة',
@@ -277,10 +288,7 @@ class _WasteEmergencyScreenState extends State<WasteEmergencyScreen> {
           const SizedBox(height: 16),
           const Text(
             'ملاحظة: سيتم إرسال التقرير إلى الجهة المختصة للمعالجة في أقرب وقت',
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey, fontSize: 14),
             textAlign: TextAlign.center,
           ),
         ],
@@ -301,9 +309,7 @@ class _WasteEmergencyScreenState extends State<WasteEmergencyScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('حدث خطأ أثناء التقاط الصورة'),
-        ),
+        const SnackBar(content: Text('حدث خطأ أثناء التقاط الصورة')),
       );
     }
   }
@@ -312,20 +318,20 @@ class _WasteEmergencyScreenState extends State<WasteEmergencyScreen> {
     if (_formKey.currentState!.validate()) {
       if (_selectedImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('يرجى التقاط صورة للمشكلة'),
-          ),
+          const SnackBar(content: Text('يرجى التقاط صورة للمشكلة')),
         );
         return;
       }
 
       // هنا سيتم إضافة كود إرسال التقرير مع الصورة إلى الخادم
-      
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('تم إرسال التقرير'),
-          content: const Text('شكراً لك على مساهمتك في تحسين خدمات المدينة. تم إرسال تقريرك وسيتم معالجته قريباً.'),
+          content: const Text(
+            'شكراً لك على مساهمتك في تحسين خدمات المدينة. تم إرسال تقريرك وسيتم معالجته قريباً.',
+          ),
           actions: [
             TextButton(
               onPressed: () {
