@@ -38,6 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   iconsax: ^0.0.8
   syncfusion_flutter_charts: ^31.1.19
+  google_maps_flutter: ^2.13.1
 
  
 dev_dependencies:
