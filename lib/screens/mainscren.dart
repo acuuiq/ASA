@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/welcome_screen.dart';
-import 'package:mang_mu/screens/employee/Shared%20Services/ewecome_screen.dart';
 import 'dart:ui';
 import 'dart:math';
 
@@ -358,48 +357,7 @@ class _MainscrenState extends State<Mainscren>
                         position: _slideAnimation,
                         child: FadeTransition(
                           opacity: _opacityAnimation,
-                          child: Column(
-                            children: [
-                              _buildEnhancedAuthButton(
-                                context,
-                                icon: Icons.people_alt_rounded,
-                                label: 'دخول المواطنين',
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color.fromARGB(255, 17, 126, 117),
-                                    const Color.fromARGB(255, 16, 78, 88),
-                                  ],
-                                  transform: const GradientRotation(0.5),
-                                ),
-                                onPressed: () {
-                                  Navigator.pushReplacementNamed(
-                                    context,
-                                    WecomeScreen.screenroot,
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              _buildEnhancedAuthButton(
-                                context,
-                                icon: Icons.badge_rounded,
-                                label: 'دخول الموظفين',
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color.fromARGB(255, 17, 126, 117),
-                                    const Color.fromARGB(255, 16, 78, 88),
-                                  ],
-                                  transform: const GradientRotation(0.5),
-                                ),
-                                onPressed: () {
-                                  Navigator.pushReplacementNamed(
-                                    context,
-                                    EwecomeScreen.screenroot,
-                                  );
-                                },
-                              ),
-                              if (size.width > 600) const SizedBox(height: 20),
-                            ],
-                          ),
+                          
                         ),
                       ),
 
