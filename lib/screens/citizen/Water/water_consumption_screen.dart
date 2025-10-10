@@ -2,41 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-class DailyConsumptionScreen extends StatelessWidget {
-  final String serviceTitle;
-  final Color serviceColor;
-  final List<Color> serviceGradient;
-
-  const DailyConsumptionScreen({
-    super.key,
-    required this.serviceTitle,
-    required this.serviceColor,
-    required this.serviceGradient,
-  });
+class WaterConsumptionScreen extends StatelessWidget {
+  const WaterConsumptionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // بيانات نموذجية للاستهلاك
+    // بيانات نموذجية للاستهلاك اليومي للماء
     final dailyData = [
-      {'day': 'الإثنين', 'consumption': 22, 'cost': 4500},
-      {'day': 'الثلاثاء', 'consumption': 25, 'cost': 5100},
-      {'day': 'الأربعاء', 'consumption': 18, 'cost': 3600},
-      {'day': 'الخميس', 'consumption': 30, 'cost': 6200},
-      {'day': 'الجمعة', 'consumption': 15, 'cost': 3000},
-      {'day': 'السبت', 'consumption': 28, 'cost': 5800},
-      {'day': 'الأحد', 'consumption': 20, 'cost': 4100},
+      {'day': 'الإثنين', 'consumption': 220, 'cost': 4500},
+      {'day': 'الثلاثاء', 'consumption': 250, 'cost': 5100},
+      {'day': 'الأربعاء', 'consumption': 180, 'cost': 3600},
+      {'day': 'الخميس', 'consumption': 300, 'cost': 6200},
+      {'day': 'الجمعة', 'consumption': 150, 'cost': 3000},
+      {'day': 'السبت', 'consumption': 280, 'cost': 5800},
+      {'day': 'الأحد', 'consumption': 200, 'cost': 4100},
     ];
 
-    final currentConsumption = 25; // كيلوواط/ساعة أو لتر
+    final currentConsumption = 250; // لتر
     final currentCost = 5100; // دينار
-    final dailyAverage = 23;
-    final monthlyTotal = 690;
+    final dailyAverage = 230;
+    final monthlyTotal = 6900;
     final monthlyCost = 138000;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('تفاصيل الاستهلاك اليومي - $serviceTitle'),
-        backgroundColor: serviceColor,
+        title: const Text('تفاصيل الاستهلاك اليومي - الماء'),
+        backgroundColor: const Color(0xFF2196F3),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -63,7 +54,7 @@ class DailyConsumptionScreen extends StatelessWidget {
             
             const SizedBox(height: 20),
             
-            // نصائح لتوفير الطاقة/الماء
+            // نصائح لتوفير الماء
             _buildTipsSection(),
             
             const SizedBox(height: 40),
@@ -79,8 +70,8 @@ class DailyConsumptionScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: serviceGradient,
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2196F3), Color(0xFF21CBF3)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -100,7 +91,7 @@ class DailyConsumptionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                serviceTitle == 'الماء' ? '$consumption لتر' : '$consumption كيلوواط/ساعة',
+                '$consumption لتر',
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -117,15 +108,15 @@ class DailyConsumptionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 15),
               LinearProgressIndicator(
-                value: consumption / 50, // افترض أن الحد الأقصى 50
+                value: consumption / 500, // الحد الأقصى 500 لتر
                 backgroundColor: Colors.white.withOpacity(0.3),
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(4),
               ),
               const SizedBox(height: 10),
               Text(
-                '${(consumption / 50 * 100).toStringAsFixed(1)}% من الحد اليومي',
+                '${(consumption / 500 * 100).toStringAsFixed(1)}% من الحد اليومي',
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.white70,
@@ -160,14 +151,14 @@ class DailyConsumptionScreen extends StatelessWidget {
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  maxY: 35,
+                  maxY: 350,
                   barTouchData: BarTouchData(
                     enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      tooltipBgColor: serviceColor,
+                      tooltipBgColor: const Color(0xFF2196F3),
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
-                          '${rod.toY.toInt()} ${serviceTitle == 'الماء' ? 'لتر' : 'ك.و/س'}',
+                          '${rod.toY.toInt()} لتر',
                           const TextStyle(color: Colors.white),
                         );
                       },
@@ -216,7 +207,7 @@ class DailyConsumptionScreen extends StatelessWidget {
                       barRods: [
                         BarChartRodData(
                           toY: item['consumption'].toDouble(),
-                          color: serviceColor,
+                          color: const Color(0xFF2196F3),
                           width: 16,
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -252,12 +243,12 @@ class DailyConsumptionScreen extends StatelessWidget {
             _buildStatItem(
               icon: Icons.av_timer,
               title: 'المتوسط اليومي',
-              value: serviceTitle == 'الماء' ? '$average لتر' : '$average كيلوواط/ساعة',
+              value: '$average لتر',
             ),
             _buildStatItem(
               icon: Icons.calendar_month,
               title: 'الإجمالي الشهري',
-              value: serviceTitle == 'الماء' ? '$monthlyTotal لتر' : '$monthlyTotal كيلوواط/ساعة',
+              value: '$monthlyTotal لتر',
             ),
             _buildStatItem(
               icon: Icons.attach_money,
@@ -286,7 +277,7 @@ class DailyConsumptionScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, color: serviceColor, size: 20),
+          Icon(icon, color: const Color(0xFF2196F3), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -308,19 +299,14 @@ class DailyConsumptionScreen extends StatelessWidget {
   }
 
   Widget _buildTipsSection() {
-    final tips = serviceTitle == 'الماء'
-        ? [
-            'استخدم الدش بدلاً من حوض الاستحمام لتوفير الماء',
-            'أصلح التسريبات فور اكتشافها',
-            'استخدم غسالة الملابس عندما تكون ممتلئة بالكامل',
-            'اغسل الخضروات في وعاء بدلاً من تحت الصنبور',
-          ]
-        : [
-            'افصل الأجهزة الإلكترونية عند عدم الاستخدام',
-            'استخدم مصابيح LED الموفرة للطاقة',
-            'اضبط مكيف الهواء على 24 درجة مئوية',
-            'نظف مرشحات المكيف بانتظام لتحسين الكفاءة',
-          ];
+    final tips = [
+      'استخدم الدش بدلاً من حوض الاستحمام لتوفير الماء',
+      'أصلح التسريبات فور اكتشافها',
+      'استخدم غسالة الملابس عندما تكون ممتلئة بالكامل',
+      'اغسل الخضروات في وعاء بدلاً من تحت الصنبور',
+      'استخدم صنابير موفرة للماء',
+      'اجمع ماء المطر لري النباتات',
+    ];
 
     return Card(
       elevation: 3,
@@ -330,9 +316,9 @@ class DailyConsumptionScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'نصائح لتوفير ${serviceTitle == "الماء" ? "الماء" : "الطاقة"}',
-              style: const TextStyle(
+            const Text(
+              'نصائح لتوفير الماء',
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -343,7 +329,7 @@ class DailyConsumptionScreen extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.lightbulb_outline, color: serviceColor, size: 16),
+                      Icon(Icons.lightbulb_outline, color: const Color(0xFF2196F3), size: 16),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

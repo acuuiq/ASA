@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'invoices_service.dart'; // أضف هذا الاستيراد
+import '../Shared Services Citizen/invoices_service.dart'; // أضف هذا الاستيراد
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:mang_mu/screens/citizen/screens/user_main_screen.dart';
-import 'points_service.dart'; // Make sure this import is correct
+import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/user_main_screen.dart';
+import '../Shared Services Citizen/points_service.dart'; // Make sure this import is correct
 import 'dart:async'; // أضف هذا الاستيراد
 import 'package:flutter/services.dart'; // لإضافة Clipboard
+import 'dart:convert';
 
 // نموذج بيانات الخدمة
 class ServiceItem {
@@ -26,6 +27,39 @@ class ServiceItem {
     this.additionalInfo,
     this.isSelected = false,
   });
+  // دالة مساعدة لتحويل ServiceItem إلى Map بشكل صحيح
+  Map<String, dynamic> _convertServiceToMap(ServiceItem service) {
+    return {
+      'id': service.id,
+      'name': service.name,
+      'amount': service.amount,
+      'color': service.color.value,
+      'gradient': service.gradient.map((color) => color.value).toList(),
+      'additionalInfo': service.additionalInfo ?? 'خدمة مدفوعة',
+      'serviceType': _getServiceType(service.name),
+    };
+  }
+
+  // دالة لتحديد نوع الخدمة
+  String _getServiceType(String serviceName) {
+    if (serviceName.contains('كهرباء') ||
+        serviceName.contains('عداد') ||
+        serviceName.contains('طاقة')) {
+      return 'الكهرباء';
+    } else if (serviceName.contains('ماء') ||
+        serviceName.contains('خزان') ||
+        serviceName.contains('ري')) {
+      return 'الماء';
+    } else if (serviceName.contains('نفايات') ||
+        serviceName.contains('نفاية') ||
+        serviceName.contains('قمامة')) {
+      return 'النفايات';
+    } else if (serviceName.contains('مميزة') || serviceName.contains('مخصصة')) {
+      return 'خدمات مميزة';
+    } else {
+      return 'خدمات عامة';
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -1708,6 +1742,49 @@ class _PaidInvoicesScreenState extends State<PaidInvoicesScreen> {
     _markAsSeenOnEnter(); // تأكد من استدعاء هذه الدالة
   }
 
+  // أضف هذه الدالة المساعدة في _PaidInvoicesScreenState
+  String _getServiceNameFromJson(dynamic serviceData) {
+    try {
+      if (serviceData is Map<String, dynamic>) {
+        // إذا كانت البيانات Map مباشرة
+        return serviceData['name'] ??
+            serviceData['title'] ??
+            serviceData['serviceName'] ??
+            'خدمة غير محددة';
+      } else if (serviceData is String) {
+        // إذا كانت البيانات نص JSON
+        final parsed = json.decode(serviceData);
+        return parsed['name'] ??
+            parsed['title'] ??
+            parsed['serviceName'] ??
+            'خدمة غير محددة';
+      }
+    } catch (e) {
+      print('Error parsing service name: $e');
+    }
+    return 'خدمة غير محددة';
+  }
+
+  String _getServiceAmountFromJson(dynamic serviceData) {
+    try {
+      if (serviceData is Map<String, dynamic>) {
+        final amount = serviceData['amount'];
+        if (amount is double) return amount.toStringAsFixed(2);
+        if (amount is int) return amount.toDouble().toStringAsFixed(2);
+        if (amount is String) return amount;
+      } else if (serviceData is String) {
+        final parsed = json.decode(serviceData);
+        final amount = parsed['amount'];
+        if (amount is double) return amount.toStringAsFixed(2);
+        if (amount is int) return amount.toDouble().toStringAsFixed(2);
+        if (amount is String) return amount;
+      }
+    } catch (e) {
+      print('Error parsing service amount: $e');
+    }
+    return '0.00';
+  }
+
   Future<void> _markAsSeenOnEnter() async {
     try {
       print('🚀 Marking invoices as seen on screen enter...');
@@ -1813,19 +1890,36 @@ class _PaidInvoicesScreenState extends State<PaidInvoicesScreen> {
   // دالة نسخ تفاصيل الفاتورة
   void _copyInvoiceDetails(Map<String, dynamic> invoice) {
     final paymentDate = DateTime.parse(invoice['payment_date']);
-    final services = (invoice['services'] as List).cast<Map<String, dynamic>>();
+    final servicesData = invoice['services'];
 
     String invoiceDetails =
-        '''
-فاتورة #${invoice['id']}
+        '''فاتورة #${invoice['id']}
 طريقة الدفع: ${invoice['payment_method']}
-المبلغ: ${invoice['amount'].toStringAsFixed(2)} د.ع
+المبلغ الإجمالي: ${invoice['amount'].toStringAsFixed(2)} د.ع
 تاريخ الدفع: ${DateFormat('yyyy/MM/dd - HH:mm').format(paymentDate)}
-الخدمات:
-${services.map((service) => '• ${service['name']} - ${service['amount']} د.ع').join('\n')}
-    ''';
 
-    // نسخ النص إلى الحافظة
+الخدمات:''';
+
+    try {
+      List<dynamic> servicesList = [];
+
+      if (servicesData is List) {
+        servicesList = servicesData;
+      } else if (servicesData is String) {
+        servicesList = json.decode(servicesData);
+      }
+
+      for (int i = 0; i < servicesList.length; i++) {
+        final service = servicesList[i];
+        final serviceName = _getServiceNameFromJson(service);
+        final serviceAmount = _getServiceAmountFromJson(service);
+
+        invoiceDetails += '\n${i + 1}. $serviceName - $serviceAmount د.ع';
+      }
+    } catch (e) {
+      invoiceDetails += '\nخطأ في عرض تفاصيل الخدمات';
+    }
+
     Clipboard.setData(ClipboardData(text: invoiceDetails));
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1925,7 +2019,24 @@ ${services.map((service) => '• ${service['name']} - ${service['amount']} د.ع
 
   Widget _buildInvoiceCard(Map<String, dynamic> invoice) {
     final paymentDate = DateTime.parse(invoice['payment_date']);
-    final services = (invoice['services'] as List).cast<Map<String, dynamic>>();
+    final servicesData = invoice['services']; // هذا هو الـ JSONB
+
+    // استخراج اسم الخدمة الأولى
+    String firstServiceName = 'خدمة غير محددة';
+    if (servicesData != null) {
+      try {
+        if (servicesData is List && servicesData.isNotEmpty) {
+          firstServiceName = _getServiceNameFromJson(servicesData[0]);
+        } else if (servicesData is String) {
+          final parsed = json.decode(servicesData);
+          if (parsed is List && parsed.isNotEmpty) {
+            firstServiceName = _getServiceNameFromJson(parsed[0]);
+          }
+        }
+      } catch (e) {
+        print('Error getting first service name: $e');
+      }
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1939,13 +2050,27 @@ ${services.map((service) => '• ${service['name']} - ${service['amount']} د.ع
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    'فاتورة #${invoice['id']}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: widget.primaryColor,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'فاتورة #${invoice['id']}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: widget.primaryColor,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        firstServiceName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
@@ -1961,7 +2086,7 @@ ${services.map((service) => '• ${service['name']} - ${service['amount']} د.ع
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 12),
             Text(
               'طريقة الدفع: ${invoice['payment_method']}',
               style: TextStyle(color: Colors.grey[600]),
@@ -1977,32 +2102,21 @@ ${services.map((service) => '• ${service['name']} - ${service['amount']} د.ع
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
 
-            if (services.isNotEmpty) ...[
-              SizedBox(height: 8),
+            // عرض جميع الخدمات
+            if (servicesData != null) ...[
+              SizedBox(height: 12),
               Text(
-                'الخدمات:',
+                'الخدمات المدفوعة:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
-              ...services
-                  .take(2)
-                  .map(
-                    (service) => Text(
-                      '• ${service['name']} - ${service['amount']} د.ع',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-              if (services.length > 2)
-                Text(
-                  'و ${services.length - 2} خدمة أخرى',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+              SizedBox(height: 8),
+              ..._buildServicesList(servicesData),
             ],
 
             // أزرار الحذف والنسخ
-            SizedBox(height: 12),
+            SizedBox(height: 16),
             Row(
               children: [
-                // زر النسخ
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: Icon(Icons.content_copy, size: 18),
@@ -2015,7 +2129,6 @@ ${services.map((service) => '• ${service['name']} - ${service['amount']} د.ع
                   ),
                 ),
                 SizedBox(width: 8),
-                // زر الحذف
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: Icon(Icons.delete, size: 18),
@@ -2035,6 +2148,80 @@ ${services.map((service) => '• ${service['name']} - ${service['amount']} د.ع
         ),
       ),
     );
+  }
+
+  List<Widget> _buildServicesList(dynamic servicesData) {
+    final List<Widget> serviceWidgets = [];
+
+    try {
+      List<dynamic> servicesList = [];
+
+      if (servicesData is List) {
+        servicesList = servicesData;
+      } else if (servicesData is String) {
+        servicesList = json.decode(servicesData);
+      }
+
+      for (int i = 0; i < servicesList.length; i++) {
+        final service = servicesList[i];
+        final serviceName = _getServiceNameFromJson(service);
+        final serviceAmount = _getServiceAmountFromJson(service);
+
+        serviceWidgets.add(
+          Container(
+            margin: EdgeInsets.only(bottom: 6),
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    '${i + 1}. $serviceName',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+                Text(
+                  '$serviceAmount د.ع',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: widget.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error building services list: $e');
+      serviceWidgets.add(
+        Text('خطأ في عرض الخدمات', style: TextStyle(color: Colors.red)),
+      );
+    }
+
+    return serviceWidgets;
+  }
+
+  String _getServiceAmount(Map<String, dynamic> service) {
+    try {
+      if (service['amount'] != null) {
+        if (service['amount'] is double) {
+          return service['amount'].toStringAsFixed(2);
+        } else if (service['amount'] is int) {
+          return service['amount'].toDouble().toStringAsFixed(2);
+        } else if (service['amount'] is String) {
+          return double.parse(service['amount']).toStringAsFixed(2);
+        }
+      }
+      return '0.00';
+    } catch (e) {
+      return '0.00';
+    }
   }
 
   // دالة لعرض تأكيد الحذف

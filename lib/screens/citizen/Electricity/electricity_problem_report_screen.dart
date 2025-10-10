@@ -3,14 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-class ProblemReportScreen extends StatefulWidget {
-  static const String screenRoute = '/problem-report';
+class ElectricityProblemReportScreen extends StatefulWidget {
+  static const String screenRoute = '/electricity-problem-report';
   final String serviceName;
   final Color serviceColor;
   final List<Color> serviceGradient;
   final String serviceTitle;
 
-  const ProblemReportScreen({
+  const ElectricityProblemReportScreen({
     super.key,
     required this.serviceName,
     required this.serviceColor,
@@ -19,10 +19,10 @@ class ProblemReportScreen extends StatefulWidget {
   });
 
   @override
-  State<ProblemReportScreen> createState() => _ProblemReportScreenState();
+  State<ElectricityProblemReportScreen> createState() => _ElectricityProblemReportScreenState();
 }
 
-class _ProblemReportScreenState extends State<ProblemReportScreen> {
+class _ElectricityProblemReportScreenState extends State<ElectricityProblemReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
