@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mang_mu/providers/language_provider.dart' show LanguageProvider;
+import 'package:mang_mu/screens/employee/Shared Services/esignin_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
-import 'package:mang_mu/screens/employee/Shared Services/esignin_screen.dart';
-import 'package:mang_mu/language/app_localizations.dart';
 
 class BillingAccountantScreen extends StatefulWidget {
   static const String screenRoute = '/billing-accountant';
@@ -18,11 +17,18 @@ class BillingAccountantScreen extends StatefulWidget {
 class BillingAccountantScreenState extends State<BillingAccountantScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _currentIndex = 0;
-  
+  int _currentCitizenTab = 0;
+  int _currentPaymentTab = 0;
+  String _billFilter = 'الكل';
+
   // إضافة متغيرات البحث
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  
+  // إضافة متغيرات البحث للتحويلات
+  String _transferSearchQuery = '';
+  final TextEditingController _transferSearchController = TextEditingController();
+  String _selectedPaymentMethodFilter = 'الكل'; // فلتر طريقة الدفع
 
   // الألوان الحكومية (أخضر وذهبي وبني)
   final Color _primaryColor = Color(0xFF2E7D32); // أخضر حكومي
@@ -39,26 +45,23 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
 
   // ألوان الوضع الداكن
   final Color _darkPrimaryColor = Color(0xFF1B5E20);
-  final Color _darkSecondaryColor = Color(0xFFD4AF37);
   final Color _darkBackgroundColor = Color(0xFF121212);
   final Color _darkCardColor = Color(0xFF1E1E1E);
   final Color _darkTextColor = Color(0xFFFFFFFF);
   final Color _darkTextSecondaryColor = Color(0xFFB0B0B0);
 
   String _formatCurrency(dynamic amount) {
-  final localizations = AppLocalizations.of(context);
-  // تحويل المبلغ إلى double أولاً
-  double numericAmount = 0.0;
-  if (amount is int) {
-    numericAmount = amount.toDouble();
-  } else if (amount is double) {
-    numericAmount = amount;
-  } else if (amount is String) {
-    numericAmount = double.tryParse(amount) ?? 0.0;
+    double numericAmount = 0.0;
+    if (amount is int) {
+      numericAmount = amount.toDouble();
+    } else if (amount is double) {
+      numericAmount = amount;
+    } else if (amount is String) {
+      numericAmount = double.tryParse(amount) ?? 0.0;
+    }
+    
+    return '${NumberFormat('#,##0').format(numericAmount)} ';
   }
-  
-  return '${NumberFormat('#,##0').format(numericAmount)} ${localizations.translate('currency')}';
-}
 
   // بيانات المواطنين
   final List<Map<String, dynamic>> citizens = [
@@ -208,6 +211,57 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     },
   ];
 
+  // بيانات التحويلات لكل طريقة دفع
+  final List<Map<String, dynamic>> paymentTransfers = [
+    {
+      'id': 'TRF-2024-001',
+      'paymentMethodId': 'PM-001',
+      'citizenName': 'أحمد محمد',
+      'amount': 185750,
+      'currency': 'دينار عراقي',
+      'transferDate': DateTime.now().subtract(Duration(days: 2)),
+      'status': 'مكتمل',
+      'referenceNumber': 'REF-001234',
+      'bankName': 'البنك المركزي العراقي',
+      'accountNumber': '1234567890',
+    },
+    {
+      'id': 'TRF-2024-002', 
+      'paymentMethodId': 'PM-002',
+      'citizenName': 'فاطمة علي',
+      'amount': 230500,
+      'currency': 'دينار عراقي',
+      'transferDate': DateTime.now().subtract(Duration(days: 1)),
+      'status': 'مكتمل',
+      'referenceNumber': 'REF-001235',
+      'bankName': 'الرشيد',
+      'accountNumber': '0987654321',
+    },
+    {
+      'id': 'TRF-2024-003',
+      'paymentMethodId': 'PM-001',
+      'citizenName': 'خالد إبراهيم', 
+      'amount': 315250,
+      'currency': 'دينار عراقي',
+      'transferDate': DateTime.now().subtract(Duration(days: 3)),
+      'status': 'معلق',
+      'referenceNumber': 'REF-001236',
+      'bankName': 'البلاد',
+      'accountNumber': '1122334455',
+    },
+    {
+      'id': 'TRF-2024-004',
+      'paymentMethodId': 'PM-003',
+      'citizenName': 'سارة عبدالله',
+      'amount': 150000,
+      'currency': 'دينار عراقي',
+      'transferDate': DateTime.now().subtract(Duration(hours: 5)),
+      'status': 'مكتمل',
+      'referenceNumber': 'REF-001237',
+      'paymentLocation': 'فرع الوزارة - بغداد',
+    },
+  ];
+
   // دالة للبحث في المواطنين
   List<Map<String, dynamic>> get filteredCitizens {
     if (_searchQuery.isEmpty) {
@@ -221,6 +275,60 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
              citizen['address'].contains(_searchQuery) ||
              citizen['meterNumber'].contains(_searchQuery);
     }).toList();
+  }
+  
+  // دالة للبحث في التحويلات
+  List<Map<String, dynamic>> get filteredTransfers {
+    List<Map<String, dynamic>> allTransfers = paymentTransfers;
+    
+    // تطبيق فلتر طريقة الدفع أولاً
+    if (_selectedPaymentMethodFilter != 'الكل') {
+      String methodId = paymentMethods.firstWhere(
+        (method) => method['name'] == _selectedPaymentMethodFilter,
+        orElse: () => {'id': ''}
+      )['id'];
+      
+      allTransfers = allTransfers.where((transfer) => transfer['paymentMethodId'] == methodId).toList();
+    }
+    
+    // ثم تطبيق البحث النصي
+    if (_transferSearchQuery.isEmpty) {
+      return allTransfers;
+    }
+    
+    return allTransfers.where((transfer) {
+      return transfer['citizenName'].contains(_transferSearchQuery) ||
+             transfer['referenceNumber'].contains(_transferSearchQuery) ||
+             transfer['bankName']?.contains(_transferSearchQuery) == true ||
+             transfer['paymentLocation']?.contains(_transferSearchQuery) == true ||
+             transfer['status'].contains(_transferSearchQuery) ||
+             _formatCurrency(transfer['amount']).contains(_transferSearchQuery);
+    }).toList();
+  }
+
+  // دالة لتصفية الفواتير حسب التبويب المختار
+  List<Map<String, dynamic>> _getFilteredBills() {
+    switch (_billFilter) {
+      case 'مدفوعة':
+        return bills.where((bill) => bill['status'] == 'paid').toList();
+      case 'غير مدفوعة':
+        return bills.where((bill) => bill['status'] == 'unpaid').toList();
+      case 'متأخرة':
+        return bills.where((bill) => bill['status'] == 'overdue').toList();
+      case 'الكل':
+      default:
+        return bills;
+    }
+  }
+
+  // دالة للحصول على التحويلات حسب طريقة الدفع
+  List<Map<String, dynamic>> _getTransfersByPaymentMethod(String paymentMethodId) {
+    return paymentTransfers.where((transfer) => transfer['paymentMethodId'] == paymentMethodId).toList();
+  }
+
+  // دالة لحساب إجمالي المبالغ المحولة
+  double _getTotalTransfersAmount(List<Map<String, dynamic>> transfers) {
+    return transfers.fold(0.0, (sum, transfer) => sum + (transfer['amount'] ?? 0));
   }
 
   // دالة لتحديث البحث
@@ -238,14 +346,34 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     });
   }
 
+  // دالة لتحديث بحث التحويلات
+  void _updateTransferSearchQuery(String query) {
+    setState(() {
+      _transferSearchQuery = query;
+    });
+  }
+
+  // دالة لمسح بحث التحويلات
+  void _clearTransferSearch() {
+    setState(() {
+      _transferSearchQuery = '';
+      _transferSearchController.clear();
+    });
+  }
+
+  // دالة لتغيير فلتر طريقة الدفع
+  void _changePaymentMethodFilter(String method) {
+    setState(() {
+      _selectedPaymentMethodFilter = method;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
-      setState(() {
-        _currentIndex = _tabController.index;
-      });
+      setState(() {});
     });
   }
 
@@ -253,13 +381,14 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _transferSearchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final localizations = AppLocalizations.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
     
     return Scaffold(
       appBar: AppBar(
@@ -276,12 +405,15 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
               child: Icon(Icons.bolt_rounded, color: _primaryColor, size: 20),
             ),
             SizedBox(width: 12),
-            Text(
-              'وزارة الكهرباء - نظام الفواتير',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                color: Colors.white,
+            Expanded(
+              child: Text(
+                'وزارة الكهرباء - نظام الفواتير',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -335,40 +467,46 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                 bottom: BorderSide(color: _secondaryColor, width: 2),
               ),
             ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(width: 3, color: _secondaryColor),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                indicator: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(width: 3, color: _secondaryColor),
+                  ),
                 ),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white.withOpacity(0.7),
+                labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize:15),
+                unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 11),
+                labelPadding: EdgeInsets.symmetric(horizontal: 8),
+                tabs: [
+                  Tab(
+                    icon: Icon(Icons.people_alt_rounded, size: 30),
+                    text: 'المواطنين',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.receipt_long_rounded, size:30),
+                    text: 'الفواتير',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.analytics_rounded, size:30),
+                    text: 'التقارير',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.payment_rounded, size: 30),
+                    text: 'طرق الدفع',
+                  ),
+                ],
               ),
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white.withOpacity(0.7),
-              labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
-              tabs: [
-                Tab(
-                  icon: Icon(Icons.people_alt_rounded, size: 20),
-                  text: 'المواطنين',
-                ),
-                Tab(
-                  icon: Icon(Icons.receipt_long_rounded, size: 20),
-                  text: 'الفواتير',
-                ),
-                Tab(
-                  icon: Icon(Icons.analytics_rounded, size: 20),
-                  text: 'التقارير',
-                ),
-                Tab(
-                  icon: Icon(Icons.payment_rounded, size: 20),
-                  text: 'طرق الدفع',
-                ),
-              ],
             ),
           ),
         ),
       ),
       body: Container(
+        width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(
           gradient: isDarkMode 
               ? LinearGradient(
@@ -397,35 +535,41 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   }
 
   Widget _buildCitizensView(bool isDarkMode) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCitizensStatsCard(isDarkMode),
-          SizedBox(height: 20),
-          _buildSearchBar(isDarkMode, 'ابحث عن مواطن...'),
-          SizedBox(height: 20),
-          Text(
-            'سجل المواطنين',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16),
+            _buildSearchBar(isDarkMode, 'ابحث عن مواطن...'),
+            SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Text(
+                'سجل المواطنين',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode ? _darkTextColor : _primaryColor,
+                ),
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          // استخدام filteredCitizens بدلاً من citizens
-          if (filteredCitizens.isEmpty && _searchQuery.isNotEmpty)
-            _buildNoResults(isDarkMode)
-          else
-            ...filteredCitizens.map((citizen) => _buildCitizenCard(citizen, isDarkMode)),
-        ],
+            SizedBox(height: 12),
+            if (filteredCitizens.isEmpty && _searchQuery.isNotEmpty)
+              _buildNoResults(isDarkMode)
+            else
+              ...filteredCitizens.map((citizen) => _buildCitizenCard(citizen, isDarkMode)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBillsView(bool isDarkMode) {
+    List<Map<String, dynamic>> filteredBills = _getFilteredBills();
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -444,7 +588,10 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
             ),
           ),
           SizedBox(height: 16),
-          ...bills.map((bill) => _buildBillCard(bill, isDarkMode)),
+          if (filteredBills.isEmpty)
+            _buildNoBillsMessage(isDarkMode)
+          else
+            ...filteredBills.map((bill) => _buildBillCard(bill, isDarkMode)),
         ],
       ),
     );
@@ -535,65 +682,32 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     );
   }
 
-  Widget _buildCitizensStatsCard(bool isDarkMode) {
+  Widget _buildNoBillsMessage(bool isDarkMode) {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
+      padding: EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Icon(Icons.receipt_long_outlined, 
+               size: 64, 
+               color: _textSecondaryColor),
+          SizedBox(height: 16),
+          Text(
+            'لا توجد فواتير',
+            style: TextStyle(
+              fontSize: 18,
+              color: _textSecondaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'لا توجد فواتير تطابق التصفية المختارة',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _textSecondaryColor,
+            ),
           ),
         ],
-        border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _primaryColor.withOpacity(0.1),
-                border: Border.all(color: _primaryColor, width: 2),
-              ),
-              child: Icon(Icons.people_alt_rounded, color: _primaryColor, size: 32),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'إحصائيات المواطنين',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDarkMode ? _darkTextColor : _textColor,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildMiniStat('إجمالي المواطنين', citizens.length.toString(), _primaryColor),
-                      SizedBox(width: 20),
-                      _buildMiniStat('نشط', '${citizens.length}', _successColor),
-                      SizedBox(width: 20),
-                      _buildMiniStat('متأخر', '0', _errorColor),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -729,7 +843,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
 
   Widget _buildCitizenCard(Map<String, dynamic> citizen, bool isDarkMode) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: isDarkMode ? _darkCardColor : _cardColor,
@@ -764,6 +878,8 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
             fontSize: 16,
             color: isDarkMode ? _darkTextColor : _textColor,
           ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,6 +891,8 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                 fontSize: 12,
                 color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
             SizedBox(height: 2),
             Text(
@@ -783,11 +901,17 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                 fontSize: 12,
                 color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ],
         ),
         trailing: Container(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          constraints: BoxConstraints(
+            minWidth: 50,
+            maxWidth: 70,
+          ),
           decoration: BoxDecoration(
             color: _successColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
@@ -800,6 +924,8 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
               color: _successColor,
               fontWeight: FontWeight.w600,
             ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         onTap: () {
@@ -1034,29 +1160,6 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     );
   }
 
-  // دوال مساعدة للتصميم الحكومي
-  Widget _buildMiniStat(String title, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: color,
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 10,
-            color: _textSecondaryColor,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBillStat(String title, String value, IconData icon, Color color) {
     return Column(
       children: [
@@ -1180,39 +1283,213 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     );
   }
 
-  Widget _buildBillsFilterRow(bool isDarkMode) {
+  // شريط البحث للتحويلات
+  Widget _buildTransferSearchBar(bool isDarkMode, String hintText) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: isDarkMode ? _darkCardColor : _cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+        border: Border.all(
+          color: isDarkMode ? Colors.grey[700]! : _borderColor,
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: _transferSearchController,
+        onChanged: _updateTransferSearchQuery,
+        textAlign: TextAlign.right,
+        decoration: InputDecoration(
+          hintText: hintText,
+          prefixIcon: Icon(Icons.search_rounded, color: _textSecondaryColor),
+          suffixIcon: _transferSearchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear_rounded, color: _textSecondaryColor),
+                  onPressed: _clearTransferSearch,
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  // صف أزرار التصفية للتحويلات
+  Widget _buildTransferFilterRow(bool isDarkMode) {
+    List<String> paymentMethodsNames = ['الكل'] + paymentMethods.map((method) => method['name'] as String).toList();
+    
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
+        children: paymentMethodsNames.map((method) {
+          return _buildTransferFilterChip(method, isDarkMode);
+        }).toList(),
+      ),
+    );
+  }
+
+  // زر التصفية للتحويلات
+  Widget _buildTransferFilterChip(String method, bool isDarkMode) {
+    bool isSelected = _selectedPaymentMethodFilter == method;
+    return Container(
+      margin: EdgeInsets.only(left: 8),
+      child: GestureDetector(
+        onTap: () => _changePaymentMethodFilter(method),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? _primaryColor : (isDarkMode ? _darkCardColor : _cardColor),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? _primaryColor : (isDarkMode ? Colors.grey[700]! : _borderColor),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (method != 'الكل')
+                Icon(
+                  paymentMethods.firstWhere(
+                    (m) => m['name'] == method,
+                    orElse: () => {'icon': Icons.payment_rounded}
+                  )['icon'],
+                  size: 14,
+                  color: isSelected ? Colors.white : _primaryColor,
+                ),
+              if (method != 'الكل') SizedBox(width: 4),
+              Text(
+                method,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // إحصائيات مصغرة للتحويلات
+  Widget _buildTransferMiniStat(String title, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            color: _textSecondaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // رسالة عدم وجود تحويلات
+  Widget _buildNoTransfersMessage(bool isDarkMode) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildFilterChip('الكل', true, isDarkMode),
-          SizedBox(width: 8),
-          _buildFilterChip('مدفوعة', false, isDarkMode),
-          SizedBox(width: 8),
-          _buildFilterChip('غير مدفوعة', false, isDarkMode),
-          SizedBox(width: 8),
-          _buildFilterChip('متأخرة', false, isDarkMode),
+          Icon(Icons.search_off_rounded, 
+               size: 64, 
+               color: _textSecondaryColor),
+          SizedBox(height: 16),
+          Text(
+            'لا توجد تحويلات',
+            style: TextStyle(
+              fontSize: 18,
+              color: _textSecondaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8),
+          if (_transferSearchQuery.isNotEmpty || _selectedPaymentMethodFilter != 'الكل')
+            Text(
+              _transferSearchQuery.isNotEmpty 
+                  ? 'لم نتمكن من العثور على تحويلات تطابق "$_transferSearchQuery"'
+                  : 'لا توجد تحويلات لطريقة الدفع "$_selectedPaymentMethodFilter"',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _textSecondaryColor,
+              ),
+            ),
+          SizedBox(height: 16),
+          if (_transferSearchQuery.isNotEmpty || _selectedPaymentMethodFilter != 'الكل')
+            ElevatedButton(
+              onPressed: () {
+                _clearTransferSearch();
+                _changePaymentMethodFilter('الكل');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('عرض جميع التحويلات'),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, bool isDarkMode) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? _primaryColor : (isDarkMode ? _darkCardColor : _cardColor),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected ? _primaryColor : (isDarkMode ? Colors.grey[700]! : _borderColor),
-        ),
+  Widget _buildBillsFilterRow(bool isDarkMode) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildBillFilterChip('الكل', 'الكل', isDarkMode),
+          SizedBox(width: 8),
+          _buildBillFilterChip('مدفوعة', 'مدفوعة', isDarkMode),
+          SizedBox(width: 8),
+          _buildBillFilterChip('غير مدفوعة', 'غير مدفوعة', isDarkMode),
+          SizedBox(width: 8),
+          _buildBillFilterChip('متأخرة', 'متأخرة', isDarkMode),
+        ],
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+    );
+  }
+
+  Widget _buildBillFilterChip(String label, String filter, bool isDarkMode) {
+    bool isSelected = _billFilter == filter;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _billFilter = filter;
+        });
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _primaryColor : (isDarkMode ? _darkCardColor : _cardColor),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? _primaryColor : (isDarkMode ? Colors.grey[700]! : _borderColor),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -1244,86 +1521,264 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     }
   }
 
-  Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
-    return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDarkMode 
-                ? [_darkPrimaryColor, Color(0xFF0D1B0E)]
-                : [_primaryColor, Color(0xFF4CAF50)],
-          ),
+  // بناء القائمة المنسدلة - محدثة لتكون مطابقة للصورة
+Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
+  return Drawer(
+    child: Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDarkMode 
+              ? [_darkPrimaryColor, Color(0xFF0D1B0E)]
+              : [_primaryColor, Color(0xFF4CAF50)],
         ),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: isDarkMode 
-                      ? [_darkPrimaryColor, Color(0xFF1B5E20)]
-                      : [_primaryColor, Color(0xFF388E3C)],
-                ),
+      ),
+      child: Column(
+        children: [
+          // رأس الملف الشخصي - مطابق للصورة
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDarkMode 
+                    ? [_darkPrimaryColor, Color(0xFF1B5E20)]
+                    : [_primaryColor, Color(0xFF388E3C)],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white.withOpacity(0.2),
-                    child: Icon(Icons.person_rounded, color: Colors.white, size: 32),
+            ),
+            child: Column(
+              children: [
+                // الصورة الرمزية
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  child: Icon(
+                    Icons.account_balance_wallet_rounded,
+                    color: Colors.white,
+                    size: 40,
                   ),
-                  SizedBox(height: 12),
-                  Text(
-                    'محاسب الفواتير',
+                ),
+                SizedBox(height: 16),
+                // الاسم والوظيفة
+                Text(
+                  "محاسب الفواتير",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  "محاسب - قسم المحاسبة",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 8),
+                // المنطقة
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    "المنطقة الوسطى",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
                     ),
                   ),
-                  Text(
-                    'وزارة الكهرباء',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 14,
+                ),
+              ],
+            ),
+          ),
+
+          // القائمة الرئيسية - مطابقة للصورة
+          Expanded(
+            child: Container(
+              color: isDarkMode ? Color(0xFF0D1B0E) : Color(0xFFE8F5E9),
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  SizedBox(height: 20),
+                  // الإعدادات
+                  _buildDrawerMenuItem(
+                    icon: Icons.settings_rounded,
+                    title: 'الإعدادات',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showSettingsScreen(context, isDarkMode);
+                    },
+                    isDarkMode: isDarkMode,
+                  ),
+                  
+                  // المساعدة والدعم
+                  _buildDrawerMenuItem(
+                    icon: Icons.help_rounded,
+                    title: 'المساعدة والدعم',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showHelpSupportScreen(context, isDarkMode);
+                    },
+                    isDarkMode: isDarkMode,
+                  ),
+
+                  SizedBox(height: 30),
+                  
+                  // تسجيل الخروج
+                  _buildDrawerMenuItem(
+                    icon: Icons.logout_rounded,
+                    title: 'تسجيل الخروج',
+                    onTap: () {
+                      _showLogoutConfirmation(context, isDarkMode);
+                    },
+                    isDarkMode: isDarkMode,
+                    isLogout: true,
+                  ),
+
+                  SizedBox(height: 40),
+                  
+                  // معلومات النسخة - في الأسفل
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Divider(
+                          color: isDarkMode ? Colors.white24 : Colors.grey[400],
+                          height: 1,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'وزارة الكهرباء - نظام الفواتير',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'الإصدار 1.0.0',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white54 : Colors.grey[600],
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            _buildDrawerItem(Icons.dashboard_rounded, 'لوحة التحكم', () {}),
-            _buildDrawerItem(Icons.people_alt_rounded, 'إدارة المواطنين', () {}),
-            _buildDrawerItem(Icons.receipt_long_rounded, 'الفواتير', () {}),
-            _buildDrawerItem(Icons.analytics_rounded, 'التقارير', () {}),
-            _buildDrawerItem(Icons.payment_rounded, 'طرق الدفع', () {}),
-            _buildDrawerItem(Icons.settings_rounded, 'الإعدادات', () {}),
-            Divider(color: Colors.white.withOpacity(0.3)),
-            _buildDrawerItem(Icons.logout_rounded, 'تسجيل الخروج', () {
-              Navigator.pushReplacementNamed(context, EsigninScreen.screenroot);
-            }),
-          ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// دالة مساعدة لبناء عناصر القائمة - مطابقة للتصميم في الصورة
+Widget _buildDrawerMenuItem({
+  required IconData icon,
+  required String title,
+  required VoidCallback onTap,
+  required bool isDarkMode,
+  bool isLogout = false,
+}) {
+  final Color textColor = isDarkMode ? Colors.white : Colors.black87;
+  final Color iconColor = isLogout 
+      ? Colors.red 
+      : (isDarkMode ? Colors.white70 : Colors.grey[700]!);
+
+  return Container(
+    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      color: isLogout ? Colors.red.withOpacity(0.1) : Colors.transparent,
+    ),
+    child: ListTile(
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isLogout 
+              ? Colors.red.withOpacity(0.2)
+              : (isDarkMode ? Colors.white12 : Colors.grey[100]),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: iconColor,
+          size: 20,
         ),
       ),
-    );
-  }
-
-  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.white.withOpacity(0.8)),
       title: Text(
         title,
-        style: TextStyle(color: Colors.white),
+        style: TextStyle(
+          color: isLogout ? Colors.red : textColor,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: Icon(
+        Icons.arrow_left_rounded,
+        color: isLogout ? Colors.red : (isDarkMode ? Colors.white54 : Colors.grey[500]),
+        size: 24,
       ),
       onTap: onTap,
-    );
-  }
-
-  // دوال العرض التفصيلي
+      contentPadding: EdgeInsets.symmetric(horizontal: 8),
+    ),
+  );
+}
+void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Icon(Icons.logout_rounded, color: _errorColor),
+          SizedBox(width: 8),
+          Text('تأكيد تسجيل الخروج'),
+        ],
+      ),
+      content: Text(
+        'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
+        style: TextStyle(
+          color: isDarkMode ? _darkTextColor : _textColor,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء', style: TextStyle(color: _textSecondaryColor)),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context); // إغلاق حوار التأكيد
+            Navigator.pushReplacementNamed(context, EsigninScreen.screenroot);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _errorColor,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('تسجيل الخروج'),
+        ),
+      ],
+    ),
+  );
+}
+ // دوال العرض التفصيلي
   void _showCitizenDetails(Map<String, dynamic> citizen, bool isDarkMode) {
   // الحصول على فواتير المواطن
   List<Map<String, dynamic>> citizenBills = bills.where((bill) => bill['citizenId'] == citizen['id']).toList();
@@ -1372,11 +1827,11 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     builder: (context) => StatefulBuilder(
       builder: (context, setState) {
         return Dialog(
-          backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(0), // ⬅️ هذا مهم
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: MediaQuery.of(context).size.height * 0.8,
+            width: MediaQuery.of(context).size.width, // ⬅️ عرض كامل
+            height: MediaQuery.of(context).size.height, // ⬅️ طول كامل
             child: Column(
               children: [
                 // الهيدر
@@ -1385,20 +1840,25 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                   decoration: BoxDecoration(
                     color: _primaryColor,
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
                     ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.person_rounded, color: Colors.white),
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                       SizedBox(width: 8),
-                      Text(
-                        'تفاصيل المواطن - ${citizen['name']}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          'تفاصيل المواطن - ${citizen['name']}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
@@ -1408,6 +1868,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                 // التبويبات
                 Container(
                   height: 50,
+                  color: isDarkMode ? _darkCardColor : _cardColor,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
@@ -1425,7 +1886,10 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                 
                 // المحتوى
                 Expanded(
-                  child: _buildTabContent(_currentCitizenTab, citizen, citizenBills, paidBills, unpaidBills, completedBills, earlyPaymentBills, onTimePaymentBills, latePaymentBills, citizenServices, isDarkMode, setState),
+                  child: Container(
+                    color: isDarkMode ? _darkBackgroundColor : _backgroundColor,
+                    child: _buildTabContent(_currentCitizenTab, citizen, citizenBills, paidBills, unpaidBills, completedBills, earlyPaymentBills, onTimePaymentBills, latePaymentBills, citizenServices, isDarkMode, setState),
+                  ),
                 ),
               ],
             ),
@@ -1435,8 +1899,6 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     ),
   );
 }
-
-int _currentCitizenTab = 0;
 
 Widget _buildTabButton(String title, int tabIndex, StateSetter setState, bool isDarkMode) {
   bool isSelected = _currentCitizenTab == tabIndex;
@@ -1912,33 +2374,509 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   }
 
   void _showPaymentMethodDetails(Map<String, dynamic> method, bool isDarkMode) {
+    List<Map<String, dynamic>> methodTransfers = _getTransfersByPaymentMethod(method['id']);
+    double totalAmount = _getTotalTransfersAmount(methodTransfers);
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(method['icon'], color: _primaryColor),
-            SizedBox(width: 8),
-            Text('تفاصيل طريقة الدفع'),
-          ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.all(20),
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height * 0.8,
+              decoration: BoxDecoration(
+                color: isDarkMode ? _darkCardColor : _cardColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  // الهيدر
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _primaryColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'تفاصيل ${method['name']}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // إحصائيات سريعة
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.black12 : Colors.grey[50],
+                      border: Border(bottom: BorderSide(color: _borderColor)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildTransferStat('إجمالي التحويلات', '${methodTransfers.length}', _primaryColor),
+                        _buildTransferStat('المبلغ الكلي', _formatCurrency(totalAmount), _successColor),
+                        _buildTransferStat('مكتملة', '${methodTransfers.where((t) => t['status'] == 'مكتمل').length}', _successColor),
+                      ],
+                    ),
+                  ),
+
+                  // التبويبات
+                  Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: _borderColor)),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildPaymentTabButton('المعلومات', 0, setState, isDarkMode),
+                        _buildPaymentTabButton('التحويلات', 1, setState, isDarkMode),
+                        _buildPaymentTabButton('الإحصائيات', 2, setState, isDarkMode),
+                      ],
+                    ),
+                  ),
+
+                  // المحتوى
+                  Expanded(
+                    child: _buildPaymentTabContent(_currentPaymentTab, method, methodTransfers, totalAmount, isDarkMode),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPaymentTabButton(String title, int tabIndex, StateSetter setState, bool isDarkMode) {
+    bool isSelected = _currentPaymentTab == tabIndex;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentPaymentTab = tabIndex;
+          });
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: isSelected ? _primaryColor : Colors.transparent,
+            border: Border(
+              bottom: BorderSide(
+                color: isSelected ? _secondaryColor : Colors.transparent,
+                width: 3,
+              ),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ),
         ),
-        content: SingleChildScrollView(
+      ),
+    );
+  }
+
+  Widget _buildPaymentTabContent(int tabIndex, Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, bool isDarkMode) {
+    switch (tabIndex) {
+      case 0: // المعلومات
+        return _buildPaymentInfoTab(method, isDarkMode);
+      case 1: // التحويلات
+        return _buildPaymentTransfersTab(transfers, isDarkMode);
+      case 2: // الإحصائيات
+        return _buildPaymentStatsTab(method, transfers, totalAmount, isDarkMode);
+      default:
+        return _buildPaymentInfoTab(method, isDarkMode);
+    }
+  }
+
+  Widget _buildPaymentInfoTab(Map<String, dynamic> method, bool isDarkMode) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(method['icon'], color: _primaryColor, size: 40),
+            ),
+          ),
+          SizedBox(height: 20),
+          _buildPaymentInfoRow('اسم طريقة الدفع:', method['name'], isDarkMode),
+          _buildPaymentInfoRow('النوع:', method['type'], isDarkMode),
+          _buildPaymentInfoRow('الوصف:', method['description'], isDarkMode),
+          _buildPaymentInfoRow('الحالة:', method['status'] == 'active' ? 'نشط' : 'غير نشط', isDarkMode),
+          SizedBox(height: 20),
+          Text(
+            'معلومات إضافية:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDarkMode ? _darkTextColor : _primaryColor,
+            ),
+          ),
+          SizedBox(height: 10),
+          _buildPaymentInfoRow('وقت المعالجة:', '1-2 يوم عمل', isDarkMode),
+          _buildPaymentInfoRow('الحد الأدنى:', '1,000 دينار', isDarkMode),
+          _buildPaymentInfoRow('الحد الأقصى:', '10,000,000 دينار', isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentTransfersTab(List<Map<String, dynamic>> transfers, bool isDarkMode) {
+    List<Map<String, dynamic>> displayedTransfers = filteredTransfers;
+    
+    return Column(
+      children: [
+        // شريط البحث والتصفية
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _primaryColor.withOpacity(0.05),
+            border: Border(bottom: BorderSide(color: _primaryColor.withOpacity(0.2))),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailRow('الاسم:', method['name']),
-              _buildDetailRow('النوع:', method['type']),
-              _buildDetailRow('الوصف:', method['description']),
-              _buildDetailRow('الحالة:', method['status'] == 'active' ? 'نشط' : 'غير نشط'),
+              // شريط البحث
+              _buildTransferSearchBar(isDarkMode, 'ابحث في التحويلات...'),
+              SizedBox(height: 12),
+              // أزرار التصفية
+              _buildTransferFilterRow(isDarkMode),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق', style: TextStyle(color: _primaryColor)),
+        
+        // إحصائيات سريعة
+        if (displayedTransfers.isNotEmpty)
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black12 : Colors.grey[50],
+              border: Border(bottom: BorderSide(color: _borderColor)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildTransferMiniStat('الإجمالي', displayedTransfers.length.toString(), _primaryColor),
+                _buildTransferMiniStat('المبلغ', _formatCurrency(_getTotalTransfersAmount(displayedTransfers)), _successColor),
+                _buildTransferMiniStat('مكتمل', '${displayedTransfers.where((t) => t['status'] == 'مكتمل').length}', _successColor),
+                _buildTransferMiniStat('معلق', '${displayedTransfers.where((t) => t['status'] == 'معلق').length}', _warningColor),
+              ],
+            ),
+          ),
+        
+        // قائمة التحويلات
+        Expanded(
+          child: displayedTransfers.isEmpty
+              ? _buildNoTransfersMessage(isDarkMode)
+              : ListView.builder(
+                  padding: EdgeInsets.all(16),
+                  itemCount: displayedTransfers.length,
+                  itemBuilder: (context, index) {
+                    return _buildTransferItem(displayedTransfers[index], isDarkMode);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentStatsTab(Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, bool isDarkMode) {
+    int completedTransfers = transfers.where((t) => t['status'] == 'مكتمل').length;
+    int pendingTransfers = transfers.where((t) => t['status'] == 'معلق').length;
+    
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black12 : Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _borderColor),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'نظرة عامة على التحويلات',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? _darkTextColor : _primaryColor,
+                  ),
+                ),
+                SizedBox(height: 20),
+                _buildStatItem('إجمالي التحويلات', transfers.length.toString(), Icons.list_alt_rounded, _primaryColor),
+                _buildStatItem('المبلغ الإجمالي', _formatCurrency(totalAmount), Icons.attach_money_rounded, _successColor),
+                _buildStatItem('تحويلات مكتملة', completedTransfers.toString(), Icons.check_circle_rounded, _successColor),
+                _buildStatItem('تحويلات معلقة', pendingTransfers.toString(), Icons.pending_rounded, _warningColor),
+              ],
+            ),
+          ),
+          
+          SizedBox(height: 20),
+          
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black12 : Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'التوزيع الشهري',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? _darkTextColor : _primaryColor,
+                  ),
+                ),
+                SizedBox(height: 15),
+                _buildMonthStat('يناير 2024', 4500000, isDarkMode),
+                _buildMonthStat('فبراير 2024', 5200000, isDarkMode),
+                _buildMonthStat('مارس 2024', 3800000, isDarkMode),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransferItem(Map<String, dynamic> transfer, bool isDarkMode) {
+    Color statusColor = transfer['status'] == 'مكتمل' ? _successColor : _warningColor;
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: isDarkMode ? Colors.white10 : _cardColor,
+        border: Border.all(color: statusColor.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'تحويل #${transfer['id']}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: isDarkMode ? _darkTextColor : _textColor,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  transfer['status'],
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          _buildTransferDetailRow('المواطن:', transfer['citizenName'], isDarkMode),
+          _buildTransferDetailRow('المبلغ:', _formatCurrency(transfer['amount']), isDarkMode),
+          _buildTransferDetailRow('رقم المرجع:', transfer['referenceNumber'], isDarkMode),
+          _buildTransferDetailRow('التاريخ:', DateFormat('yyyy-MM-dd').format(transfer['transferDate']), isDarkMode),
+          if (transfer['bankName'] != null)
+            _buildTransferDetailRow('اسم البنك:', transfer['bankName'], isDarkMode),
+          if (transfer['accountNumber'] != null)
+            _buildTransferDetailRow('رقم الحساب:', transfer['accountNumber'], isDarkMode),
+          if (transfer['paymentLocation'] != null)
+            _buildTransferDetailRow('موقع الدفع:', transfer['paymentLocation'], isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  // دوال مساعدة
+  Widget _buildTransferStat(String title, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            color: _textSecondaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentInfoRow(String label, String value, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: isDarkMode ? _darkTextColor : _textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransferDetailRow(String label, String value, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? _darkTextColor : _textColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String title, String value, IconData icon, Color color) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(
+        value,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+      subtitle: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          color: _textSecondaryColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthStat(String month, double amount, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            month,
+            style: TextStyle(
+              color: isDarkMode ? _darkTextColor : _textColor,
+            ),
+          ),
+          Text(
+            _formatCurrency(amount),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: _successColor,
+            ),
           ),
         ],
       ),
@@ -1980,8 +2918,568 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
       ),
     );
   }
+  
+  // شاشة الإعدادات
+void _showSettingsScreen(BuildContext context, bool isDarkMode) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SettingsScreen(
+        primaryColor: _primaryColor,
+        secondaryColor: _secondaryColor,
+        accentColor: _accentColor,
+        darkCardColor: _darkCardColor,
+        cardColor: _cardColor,
+        darkTextColor: _darkTextColor,
+        textColor: _textColor,
+        darkTextSecondaryColor: _darkTextSecondaryColor,
+        textSecondaryColor: _textSecondaryColor,
+        onSettingsChanged: (settings) {
+          // معالجة تغييرات الإعدادات هنا
+          print('الإعدادات المحدثة: $settings');
+        },
+      ),
+    ),
+  );
 }
 
+// شاشة المساعدة والدعم
+void _showHelpSupportScreen(BuildContext context, bool isDarkMode) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => HelpSupportScreen(
+        isDarkMode: isDarkMode,
+        primaryColor: _primaryColor,
+        secondaryColor: _secondaryColor,
+        accentColor: _accentColor,
+        darkCardColor: _darkCardColor,
+        cardColor: _cardColor,
+        darkTextColor: _darkTextColor,
+        textColor: _textColor,
+        darkTextSecondaryColor: _darkTextSecondaryColor,
+        textSecondaryColor: _textSecondaryColor,
+      ),
+    ),
+  );
+}
+}
+
+// شاشة الإعدادات الكاملة
+class SettingsScreen extends StatefulWidget {
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color accentColor;
+  final Color darkCardColor;
+  final Color cardColor;
+  final Color darkTextColor;
+  final Color textColor;
+  final Color darkTextSecondaryColor;
+  final Color textSecondaryColor;
+  final Function(Map<String, dynamic>) onSettingsChanged;
+
+  const SettingsScreen({
+    Key? key,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.accentColor,
+    required this.darkCardColor,
+    required this.cardColor,
+    required this.darkTextColor,
+    required this.textColor,
+    required this.darkTextSecondaryColor,
+    required this.textSecondaryColor,
+    required this.onSettingsChanged,
+  }) : super(key: key);
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _notificationsEnabled = true;
+  bool _soundEnabled = true;
+  bool _vibrationEnabled = false;
+  bool _autoBackup = true;
+  bool _biometricAuth = false;
+  bool _autoSync = true;
+  String _language = 'العربية';
+  final List<String> _languages = ['العربية', 'English'];
+
+  void _saveSettings() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final Map<String, dynamic> settings = {
+      'notificationsEnabled': _notificationsEnabled,
+      'soundEnabled': _soundEnabled,
+      'vibrationEnabled': _vibrationEnabled,
+      'darkMode': themeProvider.isDarkMode,
+      'autoBackup': _autoBackup,
+      'biometricAuth': _biometricAuth,
+      'autoSync': _autoSync,
+      'language': _language,
+    };
+    
+    widget.onSettingsChanged(settings);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم حفظ الإعدادات بنجاح'),
+        backgroundColor: widget.primaryColor,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _resetToDefaults() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+        return AlertDialog(
+          backgroundColor: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.restart_alt_rounded, color: widget.primaryColor),
+              SizedBox(width: 8),
+              Text('إعادة التعيين'),
+            ],
+          ),
+          content: Text(
+            'هل أنت متأكد من أنك تريد إعادة جميع الإعدادات إلى القيم الافتراضية؟',
+            style: TextStyle(
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء', style: TextStyle(color: widget.textSecondaryColor)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _notificationsEnabled = true;
+                  _soundEnabled = true;
+                  _vibrationEnabled = false;
+                  _autoBackup = true;
+                  _biometricAuth = false;
+                  _autoSync = true;
+                  _language = 'العربية';
+                });
+                
+                // إعادة تعيين الوضع المظلم إلى الوضع الفاتح
+                themeProvider.toggleTheme(false);
+                
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('تم إعادة التعيين إلى الإعدادات الافتراضية'),
+                    backgroundColor: widget.primaryColor,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: widget.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('تأكيد'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'الإعدادات',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: widget.primaryColor,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            _saveSettings();
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save_rounded, color: Colors.white),
+            onPressed: _saveSettings,
+          ),
+        ],
+      ),
+      body: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: themeProvider.isDarkMode
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFF5F5F5), Color(0xFFE8F5E8)],
+                    ),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSettingsSection('الإشعارات', Icons.notifications_rounded, themeProvider),
+                  _buildSettingSwitch(
+                    'تفعيل الإشعارات',
+                    'استلام إشعارات حول الفواتير والتحديثات',
+                    _notificationsEnabled,
+                    (bool value) => setState(() => _notificationsEnabled = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'الصوت',
+                    'تشغيل صوت للإشعارات الواردة',
+                    _soundEnabled,
+                    (bool value) => setState(() => _soundEnabled = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'الاهتزاز',
+                    'اهتزاز الجهاز عند استلام الإشعارات',
+                    _vibrationEnabled,
+                    (bool value) => setState(() => _vibrationEnabled = value),
+                    themeProvider,
+                  ),
+
+                  SizedBox(height: 24),
+                  _buildSettingsSection('المظهر', Icons.palette_rounded, themeProvider),
+                  
+                  // زر الوضع المظلم - محدث ليعمل مع ThemeProvider
+                  _buildDarkModeSwitch(themeProvider),
+                  
+                  _buildSettingDropdown(
+                    'اللغة',
+                    _language,
+                    _languages,
+                    (String? value) => setState(() => _language = value!),
+                    themeProvider,
+                  ),
+                  
+                  SizedBox(height: 24),
+                  _buildSettingsSection('حول التطبيق', Icons.info_rounded, themeProvider),
+                  _buildAboutCard(themeProvider),
+
+                  SizedBox(height: 32),
+                  Center(
+                    child: Column(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _saveSettings,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text('حفظ الإعدادات'),
+                        ),
+                        SizedBox(height: 12),
+                        TextButton(
+                          onPressed: _resetToDefaults,
+                          child: Text(
+                            'إعادة التعيين إلى الإعدادات الافتراضية',
+                            style: TextStyle(color: widget.textSecondaryColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // زر الوضع المظلم المحدث
+  Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // أيقونة الوضع المظلم
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: themeProvider.isDarkMode ? Colors.amber.withOpacity(0.2) : Colors.grey.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              themeProvider.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              color: themeProvider.isDarkMode ? Colors.amber : Colors.grey,
+              size: 22,
+            ),
+          ),
+          SizedBox(width: 12),
+          
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'الوضع الداكن',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  themeProvider.isDarkMode ? 'مفعل - استمتع بتجربة مريحة للعين' : 'معطل - استمتع بالمظهر الافتراضي',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // زر التبديل
+          Switch(
+            value: themeProvider.isDarkMode,
+            onChanged: (value) {
+              themeProvider.toggleTheme(value);
+            },
+            activeColor: Colors.amber,
+            activeTrackColor: Colors.amber.withOpacity(0.5),
+            inactiveThumbColor: Colors.grey,
+            inactiveTrackColor: Colors.grey.withOpacity(0.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(String title, IconData icon, ThemeProvider themeProvider) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: widget.primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: widget.primaryColor, size: 22),
+          ),
+          SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingSwitch(String title, String subtitle, bool value, Function(bool) onChanged, ThemeProvider themeProvider) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: widget.primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingDropdown(String title, String value, List<String> items, Function(String?) onChanged, ThemeProvider themeProvider) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: themeProvider.isDarkMode ? Colors.white10 : Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: widget.primaryColor.withOpacity(0.3)),
+            ),
+            child: DropdownButton<String>(
+              value: value,
+              onChanged: onChanged,
+              items: items.map<DropdownMenuItem<String>>((String item) {
+                return DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                    ),
+                  ),
+                );
+              }).toList(),
+              underline: SizedBox(),
+              icon: Icon(Icons.arrow_drop_down_rounded, color: widget.primaryColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutCard(ThemeProvider themeProvider) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildAboutRow('الإصدار', '1.0.0', themeProvider),
+          _buildAboutRow('تاريخ البناء', '2024-03-20', themeProvider),
+          _buildAboutRow('المطور', 'وزارة الكهرباء - العراق', themeProvider),
+          _buildAboutRow('رقم الترخيص', 'MOE-2024-001', themeProvider),
+          _buildAboutRow('آخر تحديث', '2024-03-15', themeProvider),
+          _buildAboutRow('البريد الإلكتروني', 'support@electric.gov.iq', themeProvider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutRow(String title, String value, ThemeProvider themeProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 // إضافة NotificationsScreen المفقودة
 class NotificationsScreen extends StatefulWidget {
   static const String routeName = '/notifications';
@@ -2116,6 +3614,788 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// شاشة المساعدة والدعم الكاملة
+class HelpSupportScreen extends StatelessWidget {
+  final bool isDarkMode;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color accentColor;
+  final Color darkCardColor;
+  final Color cardColor;
+  final Color darkTextColor;
+  final Color textColor;
+  final Color darkTextSecondaryColor;
+  final Color textSecondaryColor;
+
+  const HelpSupportScreen({
+    Key? key,
+    required this.isDarkMode,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.accentColor,
+    required this.darkCardColor,
+    required this.cardColor,
+    required this.darkTextColor,
+    required this.textColor,
+    required this.darkTextSecondaryColor,
+    required this.textSecondaryColor,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'المساعدة والدعم',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: primaryColor,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: isDarkMode
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
+                )
+              : LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFF5F5F5), Color(0xFFE8F5E8)],
+                ),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // بطاقة جهات الاتصال
+              _buildContactCard(context),
+
+              SizedBox(height: 24),
+
+              // الأسئلة الشائعة
+              _buildSectionTitle('الأسئلة الشائعة'),
+              ..._buildFAQItems(),
+
+              SizedBox(height: 24),
+              // معلومات التطبيق
+              _buildSectionTitle('معلومات التطبيق'),
+              _buildAppInfoCard(),
+
+              SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // بطاقة جهات الاتصال
+  // في شاشة المساعدة والدعم - تحديث بطاقة جهات الاتصال
+ Widget _buildContactCard(BuildContext context) {
+  return Container(
+    padding: EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      color: isDarkMode ? darkCardColor : cardColor,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.support_agent_rounded, color: primaryColor, size: 28),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                'مركز الدعم الفني',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode ? darkTextColor : textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 20),
+        _buildContactItem(Icons.phone_rounded, 'رقم الدعم الفني', '07725252103', true, context),
+        _buildContactItem(Icons.phone_rounded, 'رقم الطوارئ', '07862268894', true, context),
+        _buildContactItem(Icons.email_rounded, 'البريد الإلكتروني', 'fadhilali402@gmail.com', false, context),
+        _buildContactItem(Icons.access_time_rounded, 'ساعات العمل', '8:00 ص - 4:00 م', false, context),
+        _buildContactItem(Icons.location_on_rounded, 'العنوان', 'بغداد - وزارة الكهرباء', false, context),
+        SizedBox(height: 16),
+        
+        // أزرار الاتصال - محدثة مع إضافة زر المراسلة
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _makePhoneCall('07725252103', context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: Icon(Icons.phone_rounded, size: 20),
+                label: Text('اتصال فوري'),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _openSupportChat(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: secondaryColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: Icon(Icons.chat_rounded, size: 20),
+                label: Text('مراسلة الدعم'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+ }
+
+ // دالة فتح محادثة الدعم
+ void _openSupportChat(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SupportChatScreen(
+        isDarkMode: isDarkMode,
+        primaryColor: primaryColor,
+        secondaryColor: secondaryColor,
+        accentColor: accentColor,
+        darkCardColor: darkCardColor,
+        cardColor: cardColor,
+        darkTextColor: darkTextColor,
+        textColor: textColor,
+        darkTextSecondaryColor: darkTextSecondaryColor,
+        textSecondaryColor: textSecondaryColor,
+      ),
+    ),
+  );
+ }
+
+
+  // عنصر جهة اتصال
+  Widget _buildContactItem(IconData icon, String title, String value, bool isPhone, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: primaryColor, size: 20),
+          SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? darkTextColor : textColor,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: GestureDetector(
+              onTap: isPhone ? () => _makePhoneCall(value, context) : null,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: isPhone ? primaryColor : (isDarkMode ? darkTextSecondaryColor : textSecondaryColor),
+                  decoration: isPhone ? TextDecoration.underline : TextDecoration.none,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // عنوان القسم
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: isDarkMode ? darkTextColor : textColor,
+        ),
+      ),
+    );
+  }
+
+  // الأسئلة الشائعة
+  List<Widget> _buildFAQItems() {
+    List<Map<String, String>> faqs = [
+      {
+        'question': 'كيف يمكنني إضافة فاتورة جديدة؟',
+        'answer': 'اذهب إلى قسم الفواتير → انقر على زر "إضافة فاتورة" → املأ البيانات المطلوبة (اسم المواطن، المبلغ، الاستهلاك) → اضغط على زر "حفظ"'
+      },
+      {
+        'question': 'كيف أعرض تقرير الإيرادات الشهري؟',
+        'answer': 'انتقل إلى قسم التقارير → اختر "تقرير الإيرادات" → حدد الفترة الزمنية المطلوبة → انقر على "عرض التقرير"'
+      },
+      {
+        'question': 'كيف أعدل بيانات مواطن مسجل؟',
+        'answer': 'اذهب إلى قسم المواطنين → انقر على المواطن المطلوب → اختر "تعديل البيانات" → قم بالتعديلات المطلوبة → اضغط على "حفظ التغييرات"'
+      },
+      {
+        'question': 'كيف أتحقق من حالة الدفع للفواتير؟',
+        'answer': 'انتقل إلى قسم الفواتير → استخدم فلتر الحالة → اختر "مدفوعة" أو "غير مدفوعة" أو "متأخرة" → سيتم عرض الفواتير حسب الحالة المختارة'
+      },
+      {
+        'question': 'كيف أقوم بعمل نسخة احتياطية للبيانات؟',
+        'answer': 'اذهب إلى الإعدادات → اختر "التخزين والبيانات" → انقر على "إنشاء نسخة احتياطية" → اختر موقع الحفظ → اضغط على "تأكيد"'
+      },
+    ];
+
+    return faqs.map((faq) {
+      return _buildExpandableItem(faq['question']!, faq['answer']!);
+    }).toList();
+  }
+  // عنصر قابل للتمديد (للأسئلة الشائعة)
+  Widget _buildExpandableItem(String question, String answer) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: isDarkMode ? darkCardColor : cardColor,
+      ),
+      child: ExpansionTile(
+        leading: Icon(Icons.help_outline_rounded, color: primaryColor),
+        title: Text(
+          question,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: isDarkMode ? darkTextColor : textColor,
+          ),
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              answer,
+              style: TextStyle(
+                color: isDarkMode ? darkTextSecondaryColor : textSecondaryColor,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }  
+  // بطاقة معلومات التطبيق
+  Widget _buildAppInfoCard() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: isDarkMode ? darkCardColor : cardColor,
+      ),
+      child: Column(
+        children: [
+          _buildInfoRow('الإصدار', '1.0.0'),
+          _buildInfoRow('تاريخ البناء', '2024-03-20'),
+          _buildInfoRow('المطور', 'وزارة الكهرباء'),
+          _buildInfoRow('رقم الترخيص', 'MOE-2024-001'),
+          _buildInfoRow('آخر تحديث', '2024-03-15'),
+        ],
+      ),
+    );
+  }
+
+  // صف معلومات
+  Widget _buildInfoRow(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? darkTextColor : textColor,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: isDarkMode ? darkTextSecondaryColor : textSecondaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ========== دوال التفاعل ==========
+
+  // الاتصال الهاتفي
+  void _makePhoneCall(String phoneNumber, BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('جاري الاتصال بـ $phoneNumber'),
+        backgroundColor: primaryColor,
+        duration: Duration(seconds: 2),
+      ),
+    );
+     launch('tel:9647862268894');
+  }
+}
+// شاشة محادثة الدعم
+class SupportChatScreen extends StatefulWidget {
+  final bool isDarkMode;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color accentColor;
+  final Color darkCardColor;
+  final Color cardColor;
+  final Color darkTextColor;
+  final Color textColor;
+  final Color darkTextSecondaryColor;
+  final Color textSecondaryColor;
+
+  const SupportChatScreen({
+    Key? key,
+    required this.isDarkMode,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.accentColor,
+    required this.darkCardColor,
+    required this.cardColor,
+    required this.darkTextColor,
+    required this.textColor,
+    required this.darkTextSecondaryColor,
+    required this.textSecondaryColor,
+  }) : super(key: key);
+
+  @override
+  _SupportChatScreenState createState() => _SupportChatScreenState();
+}
+
+class _SupportChatScreenState extends State<SupportChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final List<Map<String, dynamic>> _messages = [
+    {
+      'text': 'مرحباً! كيف يمكنني مساعدتك اليوم؟',
+      'isUser': false,
+      'time': 'الآن',
+      'sender': 'موظف الدعم'
+    }
+  ];
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isEmpty) return;
+
+    setState(() {
+      _messages.add({
+        'text': _messageController.text,
+        'isUser': true,
+        'time': 'الآن',
+        'sender': 'أنت'
+      });
+    });
+
+    _messageController.clear();
+
+    // محاكاة رد الدعم بعد ثانيتين
+    Future.delayed(Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'text': 'شكراً لتواصلكم. سأقوم بمساعدتك في حل هذه المشكلة. هل يمكنك تقديم مزيد من التفاصيل؟',
+            'isUser': false,
+            'time': 'الآن',
+            'sender': 'موظف الدعم'
+          });
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'محادثة الدعم الفني',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              'متصل الآن',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white70,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: widget.primaryColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert_rounded, color: Colors.white),
+            onSelected: (value) {
+              if (value == 'end_chat') {
+                _endChat(context);
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'end_chat',
+                child: Row(
+                  children: [
+                    Icon(Icons.close_rounded, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('إنهاء المحادثة'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // معلومات الدعم
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: widget.primaryColor.withOpacity(0.05),
+              border: Border(
+                bottom: BorderSide(color: widget.primaryColor.withOpacity(0.1)),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: widget.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 20),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'فاضل علي - موظف الدعم',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: widget.isDarkMode ? widget.darkTextColor : widget.textColor,
+                        ),
+                      ),
+                      Text(
+                        'متخصص في نظام الفواتير والمحاسبة',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: widget.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'متصل',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // قائمة الرسائل
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.all(16),
+              reverse: false,
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                return _buildMessageBubble(message);
+              },
+            ),
+          ),
+
+          // حقل إدخال الرسالة
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: widget.isDarkMode ? widget.darkCardColor : widget.cardColor,
+              border: Border(
+                top: BorderSide(color: widget.primaryColor.withOpacity(0.1)),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: widget.isDarkMode ? Colors.white10 : Colors.grey[50],
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: 'اكتب رسالتك هنا...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        suffixIcon: IconButton(
+                          icon: Icon(Icons.attach_file_rounded, color: widget.primaryColor),
+                          onPressed: () => _showAttachmentOptions(context),
+                        ),
+                      ),
+                      maxLines: null,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                CircleAvatar(
+                  backgroundColor: widget.primaryColor,
+                  child: IconButton(
+                    icon: Icon(Icons.send_rounded, color: Colors.white),
+                    onPressed: _sendMessage,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> message) {
+    final bool isUser = message['isUser'] as bool;
+    
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isUser)
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: widget.primaryColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 16),
+            ),
+          SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                if (!isUser)
+                  Text(
+                    message['sender'],
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: widget.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isUser 
+                        ? widget.primaryColor 
+                        : (widget.isDarkMode ? Colors.white10 : Colors.grey[100]),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    message['text'],
+                    style: TextStyle(
+                      color: isUser ? Colors.white : (widget.isDarkMode ? widget.darkTextColor : widget.textColor),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  message['time'],
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: widget.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isUser)
+            SizedBox(width: 8),
+          if (isUser)
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: widget.secondaryColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.person_rounded, color: Colors.white, size: 16),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showAttachmentOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: widget.isDarkMode ? widget.darkCardColor : widget.cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'إرفاق ملف',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: widget.isDarkMode ? widget.darkTextColor : widget.textColor,
+              ),
+            ),
+            SizedBox(height: 16),
+            _buildAttachmentOption(Icons.photo_rounded, 'صورة', () {}),
+            _buildAttachmentOption(Icons.description_rounded, 'ملف', () {}),
+            _buildAttachmentOption(Icons.receipt_rounded, 'فاتورة', () {}),
+            _buildAttachmentOption(Icons.location_on_rounded, 'موقع', () {}),
+            SizedBox(height: 8),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption(IconData icon, String text, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: widget.primaryColor),
+      title: Text(text),
+      onTap: onTap,
+    );
+  }
+
+  void _endChat(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: widget.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.close_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('إنهاء المحادثة'),
+          ],
+        ),
+        content: Text(
+          'هل أنت متأكد من أنك تريد إنهاء المحادثة؟',
+          style: TextStyle(
+            color: widget.isDarkMode ? widget.darkTextColor : widget.textColor,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('البقاء في المحادثة'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // إغلاق حوار التأكيد
+              Navigator.pop(context); // العودة للشاشة السابقة
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('تم إنهاء المحادثة بنجاح'),
+                  backgroundColor: widget.primaryColor,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('إنهاء المحادثة'),
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mang_mu/screens/citizen/auth/welcome_screen.dart';
 import 'package:mang_mu/screens/employee/Shared%20Services/ewecome_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:mang_mu/providers/language_provider.dart';
+import 'package:mang_mu/l10n/app_localizations.dart';
 import 'dart:ui';
 import 'dart:math';
 
@@ -46,6 +49,9 @@ class _MainscrenState extends State<Mainscren>
       'description': 'إنجاز المعاملات في دقائق بدون عناء',
     },
   ];
+
+  // متغير للتحكم في عرض القائمة المنسدلة
+  bool _isLanguageMenuOpen = false;
 
   @override
   void initState() {
@@ -113,6 +119,8 @@ class _MainscrenState extends State<Mainscren>
     final size = MediaQuery.of(context).size;
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final localizations = AppLocalizations.of(context);
 
     return Scaffold(
       body: Stack(
@@ -193,7 +201,7 @@ class _MainscrenState extends State<Mainscren>
                                 duration: const Duration(milliseconds: 500),
                                 padding: const EdgeInsets.all(1),
                                 margin: const EdgeInsets.only(bottom: 20),
-                                width: 300, // ← أضف هذه السطر لتحديد عرض ثابت
+                                width: 300,
                                 height: 300,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(24),
@@ -215,8 +223,6 @@ class _MainscrenState extends State<Mainscren>
                                       ).withOpacity(0.9),
                                     ],
                                   ),
-
-                                  // ... بقية الخصائص
                                   boxShadow: [
                                     BoxShadow(
                                       color: isDarkMode
@@ -239,112 +245,116 @@ class _MainscrenState extends State<Mainscren>
                                     width: 1,
                                   ),
                                 ),
-                                child: Column(
+                                child: Stack(
                                   children: [
-                                    Transform(
-                                      transform: Matrix4.identity()
-                                        ..setEntry(3, 2, 0.001)
-                                        ..rotateX(_isHovering ? 0.1 : 0.0)
-                                        ..rotateY(_isHovering ? 0.05 : 0.0),
-                                      alignment: Alignment.center,
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            width:
-                                                250, // يمكن تعديل العرض حسب الحاجة
-                                            height:
-                                                200, // يمكن تعديل الارتفاع حسب الحاجة
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(
-                                                12,
-                                              ), // زوايا مستديرة - يمكن حذفها إذا أردت زوايا حادة
-                                            ),
-                                            child: Image.asset(
-                                              'images/lbbb.png',
-                                              height: 250,
-                                              width: 250,
-                                              // تغيير إلى BoxFit.contain لعرض الصورة كاملة بدون اقتصاص
-                                            ),
-                                          ),
-                                          const SizedBox(),
-                                          if (_isHovering)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 8,
-                                              ),
-                                              child: Text(
-                                                "المدينة الذكية",
-                                                style: TextStyle(
-                                                  color: const Color.fromARGB(
-                                                    255,
-                                                    250,
-                                                    250,
-                                                    250,
-                                                  ).withOpacity(0.9),
-                                                  fontSize: 18,
-                                                  shadows: [
-                                                    Shadow(
-                                                      color: Colors.black
-                                                          .withOpacity(0.4),
-                                                      blurRadius: 4,
-                                                    ),
-                                                  ],
+                                    Column(
+                                      children: [
+                                        Transform(
+                                          transform: Matrix4.identity()
+                                            ..setEntry(3, 2, 0.001)
+                                            ..rotateX(_isHovering ? 0.1 : 0.0)
+                                            ..rotateY(_isHovering ? 0.05 : 0.0),
+                                          alignment: Alignment.center,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                width: 250,
+                                                height: 200,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: Image.asset(
+                                                  'images/lbbb.png',
+                                                  height: 250,
+                                                  width: 250,
                                                 ),
                                               ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 0),
-                                    AnimatedDefaultTextStyle(
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      style: theme.textTheme.headlineMedium!
-                                          .copyWith(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w800,
-                                            fontFamily: 'Tajawal',
-                                            color: const Color.fromARGB(
-                                              255,
-                                              255,
-                                              255,
-                                              255,
-                                            ), // أو أي لون من ألوان Material
-
-                                            shadows: [
-                                              Shadow(
-                                                color: theme.primaryColor
-                                                    .withOpacity(0.3),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 4),
-                                              ),
+                                              const SizedBox(),
+                                              if (_isHovering)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(
+                                                    top: 8,
+                                                  ),
+                                                  child: Text(
+                                                    localizations?.welcome ?? "المدينة الذكية",
+                                                    style: TextStyle(
+                                                      color: const Color.fromARGB(
+                                                        255,
+                                                        250,
+                                                        250,
+                                                        250,
+                                                      ).withOpacity(0.9),
+                                                      fontSize: 18,
+                                                      shadows: [
+                                                        Shadow(
+                                                          color: Colors.black
+                                                              .withOpacity(0.4),
+                                                          blurRadius: 4,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
                                             ],
                                           ),
-                                      child: const Text('مدينتي الذكية'),
+                                        ),
+                                        const SizedBox(height: 0),
+                                        AnimatedDefaultTextStyle(
+                                          duration: const Duration(
+                                            milliseconds: 300,
+                                          ),
+                                          style: theme.textTheme.headlineMedium!
+                                              .copyWith(
+                                                fontSize: 28,
+                                                fontWeight: FontWeight.w800,
+                                                fontFamily: languageProvider.isArabic ? 'Tajawal' : 'Roboto',
+                                                color: const Color.fromARGB(
+                                                  255,
+                                                  255,
+                                                  255,
+                                                  255,
+                                                ),
+                                                shadows: [
+                                                  Shadow(
+                                                    color: theme.primaryColor
+                                                        .withOpacity(0.3),
+                                                    blurRadius: 12,
+                                                    offset: const Offset(0, 4),
+                                                  ),
+                                                ],
+                                              ),
+                                          child: Text(localizations?.appTitle ?? 'مدينتي الذكية'),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        AnimatedOpacity(
+                                          duration: const Duration(
+                                            milliseconds: 500,
+                                          ),
+                                          opacity: _isHovering ? 1 : 0.8,
+                                          child: Text(
+                                            localizations?.towardsMoreBeautifulCity ?? 'نحو مستقبل رقمي متكامل',
+                                            style: theme.textTheme.titleMedium!
+                                                .copyWith(
+                                                  color: const Color.fromARGB(
+                                                    255,
+                                                    255,
+                                                    255,
+                                                    255,
+                                                  ),
+                                                  fontFamily: languageProvider.isArabic ? 'Tajawal' : 'Roboto',
+                                                  fontSize: 18,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 10),
-                                    AnimatedOpacity(
-                                      duration: const Duration(
-                                        milliseconds: 500,
-                                      ),
-                                      opacity: _isHovering ? 1 : 0.8,
-                                      child: Text(
-                                        'نحو مستقبل رقمي متكامل',
-                                        style: theme.textTheme.titleMedium!
-                                            .copyWith(
-                                              color: const Color.fromARGB(
-                                                255,
-                                                255,
-                                                255,
-                                                255,
-                                              ), // أو أي لون من ألوان Material
 
-                                              fontFamily: 'Tajawal',
-                                              fontSize: 18,
-                                            ),
-                                      ),
+                                    // زر اللغة داخل الصورة في الزاوية اليسرى العليا
+                                    Positioned(
+                                      top: 10,
+                                      left: 10,
+                                      child: _buildLanguageDropdown(context, languageProvider, localizations),
                                     ),
                                   ],
                                 ),
@@ -363,7 +373,7 @@ class _MainscrenState extends State<Mainscren>
                               _buildEnhancedAuthButton(
                                 context,
                                 icon: Icons.people_alt_rounded,
-                                label: 'دخول المواطنين',
+                                label: languageProvider.isArabic ? 'دخول المواطنين' : 'Citizen Login',
                                 gradient: LinearGradient(
                                   colors: [
                                     const Color.fromARGB(255, 17, 126, 117),
@@ -382,7 +392,7 @@ class _MainscrenState extends State<Mainscren>
                               _buildEnhancedAuthButton(
                                 context,
                                 icon: Icons.badge_rounded,
-                                label: 'دخول الموظفين',
+                                label: languageProvider.isArabic ? 'دخول الموظفين' : 'Employee Login',
                                 gradient: LinearGradient(
                                   colors: [
                                     const Color.fromARGB(255, 17, 126, 117),
@@ -416,11 +426,30 @@ class _MainscrenState extends State<Mainscren>
                               controller: _pageController,
                               itemCount: _features.length,
                               itemBuilder: (context, index) {
+                                final feature = _features[index];
+                                String title = feature['title'];
+                                String description = feature['description'];
+                                
+                                // ترجمة النصوص إذا كانت اللغة انجليزية
+                                if (!languageProvider.isArabic) {
+                                  if (title == 'خدمات ذكية') title = 'Smart Services';
+                                  if (title == 'أمان وحماية') title = 'Security & Protection';
+                                  if (title == 'توفير الوقت') title = 'Time Saving';
+                                  
+                                  if (description == 'وصول سريع لجميع الخدمات  عبر المنصة') 
+                                    description = 'Quick access to all services through the platform';
+                                  if (description == 'نظام آمن ومحمي لحماية بياناتك') 
+                                    description = 'Secure system to protect your data';
+                                  if (description == 'إنجاز المعاملات في دقائق بدون عناء') 
+                                    description = 'Complete transactions in minutes without hassle';
+                                }
+                                
                                 return _buildFeatureCard(
-                                  _features[index]['icon'],
-                                  _features[index]['title'],
-                                  _features[index]['description'],
+                                  feature['icon'],
+                                  title,
+                                  description,
                                   theme,
+                                  languageProvider,
                                 );
                               },
                             ),
@@ -446,15 +475,8 @@ class _MainscrenState extends State<Mainscren>
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(4),
                                   color: _currentPage == index
-                                      ? const Color.fromARGB(
-                                          255,
-                                          4,
-                                          126,
-                                          114,
-                                        ) // اللون عند التحديد
-                                      : Colors.teal.withOpacity(
-                                          0.3,
-                                        ), // اللون عند عدم التحديد
+                                      ? const Color.fromARGB(255, 4, 126, 114)
+                                      : Colors.teal.withOpacity(0.3),
                                 ),
                               ),
                             ),
@@ -482,13 +504,13 @@ class _MainscrenState extends State<Mainscren>
                                     key: const ValueKey(1),
                                     padding: const EdgeInsets.only(top: 30),
                                     child: Text(
-                                      'نحو مدينة ذكية متكاملة',
+                                      localizations?.strivingForYourComfort ?? 'نحو مدينة ذكية متكاملة',
                                       textAlign: TextAlign.center,
                                       style: theme.textTheme.headlineSmall!
                                           .copyWith(
                                             fontSize: 22,
                                             color: theme.primaryColor,
-                                            fontFamily: 'Tajawal',
+                                            fontFamily: languageProvider.isArabic ? 'Tajawal' : 'Roboto',
                                             fontWeight: FontWeight.w700,
                                             shadows: [
                                               Shadow(
@@ -533,13 +555,11 @@ class _MainscrenState extends State<Mainscren>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'بلدية المدينة الذكية © ${DateTime.now().year}',
+                      '${localizations?.appTitle ?? 'بلدية المدينة الذكية'} © ${DateTime.now().year}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 14,
-                        color: theme.textTheme.bodyLarge?.color?.withOpacity(
-                          0.7,
-                        ),
-                        fontFamily: 'Tajawal',
+                        color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
+                        fontFamily: languageProvider.isArabic ? 'Tajawal' : 'Roboto',
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -558,6 +578,7 @@ class _MainscrenState extends State<Mainscren>
     String title,
     String description,
     ThemeData theme,
+    LanguageProvider languageProvider,
   ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -604,8 +625,7 @@ class _MainscrenState extends State<Mainscren>
                   title,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Tajawal',
-
+                    fontFamily: languageProvider.isArabic ? 'Tajawal' : 'Roboto',
                     foreground: Paint()
                       ..shader = const LinearGradient(
                         colors: [
@@ -618,7 +638,7 @@ class _MainscrenState extends State<Mainscren>
                 Text(
                   description,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Tajawal',
+                    fontFamily: languageProvider.isArabic ? 'Tajawal' : 'Roboto',
                     color: theme.textTheme.bodyLarge?.color?.withOpacity(0.8),
                   ),
                 ),
@@ -689,41 +709,185 @@ class _MainscrenState extends State<Mainscren>
     );
   }
 
-  Widget _buildToolbarButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-    required ThemeData theme,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: theme.primaryColor.withOpacity(0.1),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: theme.primaryColor, size: 20),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.primaryColor,
-                    fontFamily: 'Tajawal',
-                  ),
-                ),
-              ],
+  // زر اللغة كقائمة منسدلة - تصميم محسن
+  Widget _buildLanguageDropdown(BuildContext context, LanguageProvider languageProvider, AppLocalizations? localizations) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.95),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
+          ],
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.3),
+            width: 1,
           ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // الزر الرئيسي
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isLanguageMenuOpen = !_isLanguageMenuOpen;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.language,
+                      color: const Color.fromARGB(255, 17, 126, 117),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      languageProvider.isArabic ? 'العربية' : 'English',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: languageProvider.isArabic ? 'Tajawal' : 'Roboto',
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      _isLanguageMenuOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                      color: const Color.fromARGB(255, 17, 126, 117),
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // القائمة المنسدلة
+            if (_isLanguageMenuOpen)
+              Container(
+                width: 140,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // اللغة العربية
+                    GestureDetector(
+                      onTap: () {
+                        languageProvider.setLocale(const Locale('ar', ''));
+                        setState(() {
+                          _isLanguageMenuOpen = false;
+                        });
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: languageProvider.isArabic 
+                              ? const Color.fromARGB(255, 17, 126, 117).withOpacity(0.1)
+                              : Colors.transparent,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            topRight: Radius.circular(8),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check,
+                              color: languageProvider.isArabic ? const Color.fromARGB(255, 17, 126, 117) : Colors.transparent,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'العربية',
+                              style: TextStyle(
+                                color: languageProvider.isArabic ? const Color.fromARGB(255, 17, 126, 117) : Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Tajawal',
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    // الخط الفاصل
+                    Container(
+                      height: 1,
+                      color: Colors.grey.withOpacity(0.3),
+                    ),
+                    
+                    // اللغة الإنجليزية
+                    GestureDetector(
+                      onTap: () {
+                        languageProvider.setLocale(const Locale('en', ''));
+                        setState(() {
+                          _isLanguageMenuOpen = false;
+                        });
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: languageProvider.isEnglish 
+                              ? const Color.fromARGB(255, 17, 126, 117).withOpacity(0.1)
+                              : Colors.transparent,
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.circular(8),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check,
+                              color: languageProvider.isEnglish ? const Color.fromARGB(255, 17, 126, 117) : Colors.transparent,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'English',
+                              style: TextStyle(
+                                color: languageProvider.isEnglish ? const Color.fromARGB(255, 17, 126, 117) : Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Roboto',
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );

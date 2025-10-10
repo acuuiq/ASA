@@ -10,12 +10,11 @@ import 'package:mang_mu/screens/employee/Shared%20Services/esignin_screen.dart';
 import 'package:mang_mu/screens/citizen/auth/welcome_screen.dart';
 import 'package:mang_mu/screens/employee/Shared%20Services/ewecome_screen.dart';
 import 'package:mang_mu/screens/mainscren.dart';
-import 'package:mang_mu/screens/splash_screen.dart';
-import 'package:mang_mu/language/app_localizations.dart';
-// أضف استيراد شاشة المحاسب
+import 'package:mang_mu/screens/splash_screen.dart';// أضف استيراد شاشة المحاسب
 import 'package:mang_mu/screens/employee/employee_electricity/billing_accountant_electrity.dart';
 import 'package:mang_mu/providers/language_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mang_mu/l10n/app_localizations.dart'; // أضف هذا الاستيراد
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +46,7 @@ class MyApp extends StatelessWidget {
                 title: 'بلدية المدينة',
                 debugShowCheckedModeBanner: false,
                 localizationsDelegates: [
-                  AppLocalizations.delegate,
+                  AppLocalizations.delegate, // أضف هذا
                   GlobalMaterialLocalizations.delegate,
                   GlobalWidgetsLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,
@@ -56,15 +55,20 @@ class MyApp extends StatelessWidget {
                   Locale('ar', ''),
                   Locale('en', ''),
                 ],
-locale: Provider.of<LanguageProvider>(context).currentLocale,                theme: ThemeData(
+                locale: languageProvider.currentLocale,
+                theme: ThemeData(
                   primarySwatch: Colors.green,
-                  fontFamily: 'Tajawal',
+                  fontFamily: languageProvider.currentLocale.languageCode == 'ar' 
+                      ? 'Tajawal' 
+                      : 'Roboto', // خط مختلف للغة الإنجليزية
                   visualDensity: VisualDensity.adaptivePlatformDensity,
-                  appBarTheme: const AppBarTheme(
+                  appBarTheme: AppBarTheme(
                     centerTitle: true,
                     elevation: 0,
                     titleTextStyle: TextStyle(
-                      fontFamily: 'Tajawal',
+                      fontFamily: languageProvider.currentLocale.languageCode == 'ar' 
+                          ? 'Tajawal' 
+                          : 'Roboto',
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -73,13 +77,17 @@ locale: Provider.of<LanguageProvider>(context).currentLocale,                the
                 ),
                 darkTheme: ThemeData(
                   primarySwatch: Colors.green,
-                  fontFamily: 'Tajawal',
+                  fontFamily: languageProvider.currentLocale.languageCode == 'ar' 
+                      ? 'Tajawal' 
+                      : 'Roboto',
                   visualDensity: VisualDensity.adaptivePlatformDensity,
-                  appBarTheme: const AppBarTheme(
+                  appBarTheme: AppBarTheme(
                     centerTitle: true,
                     elevation: 0,
                     titleTextStyle: TextStyle(
-                      fontFamily: 'Tajawal',
+                      fontFamily: languageProvider.currentLocale.languageCode == 'ar' 
+                          ? 'Tajawal' 
+                          : 'Roboto',
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
