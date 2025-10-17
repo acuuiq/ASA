@@ -415,6 +415,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
+              
             ),
           ],
         ),
@@ -471,17 +472,16 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: TabBar(
                 controller: _tabController,
-                isScrollable: true,
                 indicator: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(width: 3, color: _secondaryColor),
+                    bottom: BorderSide(width: 10, color: _secondaryColor),
                   ),
                 ),
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white.withOpacity(0.7),
                 labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize:15),
                 unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 11),
-                labelPadding: EdgeInsets.symmetric(horizontal: 8),
+                labelPadding: EdgeInsets.symmetric(horizontal:35),
                 tabs: [
                   Tab(
                     icon: Icon(Icons.people_alt_rounded, size: 30),
@@ -506,7 +506,8 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
         ),
       ),
       body: Container(
-        width: MediaQuery.of(context).size.width,
+        width: double.infinity, // ⬅️ التصحيح هنا
+       height: double.infinity, // ⬅️ التصحيح هنا
         decoration: BoxDecoration(
           gradient: isDarkMode 
               ? LinearGradient(
@@ -520,23 +521,32 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                   colors: [_backgroundColor, Color(0xFFE8F5E8)],
                 ),
         ),
-        child: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildCitizensView(isDarkMode),
-            _buildBillsView(isDarkMode),
-            _buildReportsView(isDarkMode),
-            _buildPaymentMethodsView(isDarkMode),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // تحديد حجم الشاشة بناءً على حجم الجهاز
+            final screenWidth = constraints.maxWidth;
+            final screenHeight = constraints.maxHeight;
+            
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildCitizensView(isDarkMode, screenWidth, screenHeight),
+                _buildBillsView(isDarkMode, screenWidth, screenHeight),
+                _buildReportsView(isDarkMode, screenWidth, screenHeight),
+                _buildPaymentMethodsView(isDarkMode, screenWidth, screenHeight),
+              ],
+            );
+          },
         ),
       ),
       drawer: _buildGovernmentDrawer(context, isDarkMode),
     );
   }
 
-  Widget _buildCitizensView(bool isDarkMode) {
+  Widget _buildCitizensView(bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
-      width: MediaQuery.of(context).size.width,
+      width: screenWidth,
+      height: screenHeight,
       child: SingleChildScrollView(
         padding: EdgeInsets.all(15),
         child: Column(
@@ -567,78 +577,90 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     );
   }
 
-  Widget _buildBillsView(bool isDarkMode) {
+  Widget _buildBillsView(bool isDarkMode, double screenWidth, double screenHeight) {
     List<Map<String, dynamic>> filteredBills = _getFilteredBills();
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildBillsStatsCard(isDarkMode),
-          SizedBox(height: 20),
-          _buildBillsFilterRow(isDarkMode),
-          SizedBox(height: 20),
-          Text(
-            'الفواتير الحالية',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
+    return Container(
+      width: screenWidth,
+      height: screenHeight,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildBillsStatsCard(isDarkMode),
+            SizedBox(height: 20),
+            _buildBillsFilterRow(isDarkMode),
+            SizedBox(height: 20),
+            Text(
+              'الفواتير الحالية',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          if (filteredBills.isEmpty)
-            _buildNoBillsMessage(isDarkMode)
-          else
-            ...filteredBills.map((bill) => _buildBillCard(bill, isDarkMode)),
-        ],
+            SizedBox(height: 16),
+            if (filteredBills.isEmpty)
+              _buildNoBillsMessage(isDarkMode)
+            else
+              ...filteredBills.map((bill) => _buildBillCard(bill, isDarkMode)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildReportsView(bool isDarkMode) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildReportsSummaryCard(isDarkMode),
-          SizedBox(height: 20),
-          Text(
-            'التقارير المتاحة',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
+  Widget _buildReportsView(bool isDarkMode, double screenWidth, double screenHeight) {
+    return Container(
+      width: screenWidth,
+      height: screenHeight,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildReportsSummaryCard(isDarkMode),
+            SizedBox(height: 20),
+            Text(
+              'التقارير المتاحة',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          ...reports.map((report) => _buildReportCard(report, isDarkMode)),
-        ],
+            SizedBox(height: 16),
+            ...reports.map((report) => _buildReportCard(report, isDarkMode)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPaymentMethodsView(bool isDarkMode) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildPaymentMethodsSummaryCard(isDarkMode),
-          SizedBox(height: 20),
-          Text(
-            'طرق الدفع المتاحة',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
+  Widget _buildPaymentMethodsView(bool isDarkMode, double screenWidth, double screenHeight) {
+    return Container(
+      width: screenWidth,
+      height: screenHeight,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPaymentMethodsSummaryCard(isDarkMode),
+            SizedBox(height: 20),
+            Text(
+              'طرق الدفع المتاحة',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          ...paymentMethods.map((method) => _buildPaymentMethodCard(method, isDarkMode)),
-        ],
+            SizedBox(height: 16),
+            ...paymentMethods.map((method) => _buildPaymentMethodCard(method, isDarkMode)),
+          ],
+        ),
       ),
     );
   }
@@ -1403,51 +1425,36 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   }
 
   // رسالة عدم وجود تحويلات
-  Widget _buildNoTransfersMessage(bool isDarkMode) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off_rounded, 
-               size: 64, 
-               color: _textSecondaryColor),
-          SizedBox(height: 16),
-          Text(
-            'لا توجد تحويلات',
-            style: TextStyle(
-              fontSize: 18,
-              color: _textSecondaryColor,
-              fontWeight: FontWeight.w600,
-            ),
+  Widget _buildNoTransfersMessageForMethod(bool isDarkMode, String methodName) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.payment_rounded, 
+             size: 64, 
+             color: _textSecondaryColor),
+        SizedBox(height: 16),
+        Text(
+          'لا توجد تحويلات',
+          style: TextStyle(
+            fontSize: 18,
+            color: _textSecondaryColor,
+            fontWeight: FontWeight.w600,
           ),
-          SizedBox(height: 8),
-          if (_transferSearchQuery.isNotEmpty || _selectedPaymentMethodFilter != 'الكل')
-            Text(
-              _transferSearchQuery.isNotEmpty 
-                  ? 'لم نتمكن من العثور على تحويلات تطابق "$_transferSearchQuery"'
-                  : 'لا توجد تحويلات لطريقة الدفع "$_selectedPaymentMethodFilter"',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _textSecondaryColor,
-              ),
-            ),
-          SizedBox(height: 16),
-          if (_transferSearchQuery.isNotEmpty || _selectedPaymentMethodFilter != 'الكل')
-            ElevatedButton(
-              onPressed: () {
-                _clearTransferSearch();
-                _changePaymentMethodFilter('الكل');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryColor,
-                foregroundColor: Colors.white,
-              ),
-              child: Text('عرض جميع التحويلات'),
-            ),
-        ],
-      ),
-    );
-  }
+        ),
+        SizedBox(height: 8),
+        Text(
+          'لم يتم العثور على أي تحويلات لطريقة الدفع\n$methodName',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _textSecondaryColor,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildBillsFilterRow(bool isDarkMode) {
     return SingleChildScrollView(
@@ -2374,101 +2381,100 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   }
 
   void _showPaymentMethodDetails(Map<String, dynamic> method, bool isDarkMode) {
-    List<Map<String, dynamic>> methodTransfers = _getTransfersByPaymentMethod(method['id']);
-    double totalAmount = _getTotalTransfersAmount(methodTransfers);
+  List<Map<String, dynamic>> methodTransfers = _getTransfersByPaymentMethod(method['id']);
+  double totalAmount = _getTotalTransfersAmount(methodTransfers);
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: EdgeInsets.all(20),
-            child: Container(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * 0.8,
-              decoration: BoxDecoration(
-                color: isDarkMode ? _darkCardColor : _cardColor,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  // الهيدر
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: _primaryColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+              color: isDarkMode ? _darkCardColor : _cardColor,
+              borderRadius: BorderRadius.circular(0),
+            ),
+            child: Column(
+              children: [
+                // الهيدر
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: _primaryColor,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
                     ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.close, color: Colors.white),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: MediaQuery.of(context).padding.top + 8,
+                        left: 8,
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 28),
                           onPressed: () => Navigator.pop(context),
                         ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'تفاصيل ${method['name']}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                      ),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(height: MediaQuery.of(context).padding.top + 20),
+                            Text(
+                              'تفاصيل ${method['name']}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
+                            SizedBox(height: 8),
+                            Text(
+                              '${methodTransfers.length} تحويل - ${_formatCurrency(totalAmount)}',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
 
-                  // إحصائيات سريعة
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.black12 : Colors.grey[50],
-                      border: Border(bottom: BorderSide(color: _borderColor)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildTransferStat('إجمالي التحويلات', '${methodTransfers.length}', _primaryColor),
-                        _buildTransferStat('المبلغ الكلي', _formatCurrency(totalAmount), _successColor),
-                        _buildTransferStat('مكتملة', '${methodTransfers.where((t) => t['status'] == 'مكتمل').length}', _successColor),
-                      ],
-                    ),
+                // التبويبات
+                Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: _borderColor)),
                   ),
+                  child: Row(
+                    children: [
+                      _buildPaymentTabButton('المعلومات', 0, setState, isDarkMode),
+                      _buildPaymentTabButton('التحويلات', 1, setState, isDarkMode),
+                      _buildPaymentTabButton('الإحصائيات', 2, setState, isDarkMode),
+                    ],
+                  ),
+                ),
 
-                  // التبويبات
-                  Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: _borderColor)),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildPaymentTabButton('المعلومات', 0, setState, isDarkMode),
-                        _buildPaymentTabButton('التحويلات', 1, setState, isDarkMode),
-                        _buildPaymentTabButton('الإحصائيات', 2, setState, isDarkMode),
-                      ],
-                    ),
-                  ),
-
-                  // المحتوى
-                  Expanded(
-                    child: _buildPaymentTabContent(_currentPaymentTab, method, methodTransfers, totalAmount, isDarkMode),
-                  ),
-                ],
-              ),
+                // المحتوى
+                Expanded(
+                  child: _buildPaymentTabContent(_currentPaymentTab, method, methodTransfers, totalAmount, isDarkMode),
+                ),
+              ],
             ),
-          );
-        },
-      ),
-    );
-  }
-
+          ),
+        );
+      },
+    ),
+  );
+}
   Widget _buildPaymentTabButton(String title, int tabIndex, StateSetter setState, bool isDarkMode) {
     bool isSelected = _currentPaymentTab == tabIndex;
     return Expanded(
@@ -2504,17 +2510,17 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   }
 
   Widget _buildPaymentTabContent(int tabIndex, Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, bool isDarkMode) {
-    switch (tabIndex) {
-      case 0: // المعلومات
-        return _buildPaymentInfoTab(method, isDarkMode);
-      case 1: // التحويلات
-        return _buildPaymentTransfersTab(transfers, isDarkMode);
-      case 2: // الإحصائيات
-        return _buildPaymentStatsTab(method, transfers, totalAmount, isDarkMode);
-      default:
-        return _buildPaymentInfoTab(method, isDarkMode);
-    }
+  switch (tabIndex) {
+    case 0: // المعلومات
+      return _buildPaymentInfoTab(method, isDarkMode);
+    case 1: // التحويلات - معدلة لعرض تحويلات الطريقة فقط
+      return _buildPaymentTransfersTab(transfers, isDarkMode, method['name']);
+    case 2: // الإحصائيات
+      return _buildPaymentStatsTab(method, transfers, totalAmount, isDarkMode);
+    default:
+      return _buildPaymentInfoTab(method, isDarkMode);
   }
+}
 
   Widget _buildPaymentInfoTab(Map<String, dynamic> method, bool isDarkMode) {
     return SingleChildScrollView(
@@ -2539,81 +2545,79 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
           _buildPaymentInfoRow('الوصف:', method['description'], isDarkMode),
           _buildPaymentInfoRow('الحالة:', method['status'] == 'active' ? 'نشط' : 'غير نشط', isDarkMode),
           SizedBox(height: 20),
-          Text(
-            'معلومات إضافية:',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
-            ),
-          ),
-          SizedBox(height: 10),
-          _buildPaymentInfoRow('وقت المعالجة:', '1-2 يوم عمل', isDarkMode),
-          _buildPaymentInfoRow('الحد الأدنى:', '1,000 دينار', isDarkMode),
-          _buildPaymentInfoRow('الحد الأقصى:', '10,000,000 دينار', isDarkMode),
         ],
       ),
     );
   }
 
-  Widget _buildPaymentTransfersTab(List<Map<String, dynamic>> transfers, bool isDarkMode) {
-    List<Map<String, dynamic>> displayedTransfers = filteredTransfers;
-    
-    return Column(
-      children: [
-        // شريط البحث والتصفية
+  Widget _buildPaymentTransfersTab(List<Map<String, dynamic>> transfers, bool isDarkMode, String methodName) {
+  return Column(
+    children: [
+      // عنوان التبويب مع اسم طريقة الدفع
+      Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _primaryColor.withOpacity(0.05),
+          border: Border(bottom: BorderSide(color: _primaryColor.withOpacity(0.2))),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.filter_alt_rounded, color: _primaryColor),
+            SizedBox(width: 8),
+            Text(
+              'تحويلات $methodName',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+              ),
+            ),
+            Spacer(),
+            Text(
+              '${transfers.length} تحويل',
+              style: TextStyle(
+                color: _textSecondaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      
+      // إحصائيات سريعة
+      if (transfers.isNotEmpty)
         Container(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _primaryColor.withOpacity(0.05),
-            border: Border(bottom: BorderSide(color: _primaryColor.withOpacity(0.2))),
+            color: isDarkMode ? Colors.black12 : Colors.grey[50],
+            border: Border(bottom: BorderSide(color: _borderColor)),
           ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // شريط البحث
-              _buildTransferSearchBar(isDarkMode, 'ابحث في التحويلات...'),
-              SizedBox(height: 12),
-              // أزرار التصفية
-              _buildTransferFilterRow(isDarkMode),
+              _buildTransferMiniStat('الإجمالي', transfers.length.toString(), _primaryColor),
+              _buildTransferMiniStat('المبلغ', _formatCurrency(_getTotalTransfersAmount(transfers)), _successColor),
+              _buildTransferMiniStat('مكتمل', '${transfers.where((t) => t['status'] == 'مكتمل').length}', _successColor),
+              _buildTransferMiniStat('معلق', '${transfers.where((t) => t['status'] == 'معلق').length}', _warningColor),
             ],
           ),
         ),
-        
-        // إحصائيات سريعة
-        if (displayedTransfers.isNotEmpty)
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.black12 : Colors.grey[50],
-              border: Border(bottom: BorderSide(color: _borderColor)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildTransferMiniStat('الإجمالي', displayedTransfers.length.toString(), _primaryColor),
-                _buildTransferMiniStat('المبلغ', _formatCurrency(_getTotalTransfersAmount(displayedTransfers)), _successColor),
-                _buildTransferMiniStat('مكتمل', '${displayedTransfers.where((t) => t['status'] == 'مكتمل').length}', _successColor),
-                _buildTransferMiniStat('معلق', '${displayedTransfers.where((t) => t['status'] == 'معلق').length}', _warningColor),
-              ],
-            ),
-          ),
-        
-        // قائمة التحويلات
-        Expanded(
-          child: displayedTransfers.isEmpty
-              ? _buildNoTransfersMessage(isDarkMode)
-              : ListView.builder(
-                  padding: EdgeInsets.all(16),
-                  itemCount: displayedTransfers.length,
-                  itemBuilder: (context, index) {
-                    return _buildTransferItem(displayedTransfers[index], isDarkMode);
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
+      
+      // قائمة التحويلات
+      Expanded(
+        child: transfers.isEmpty
+            ? _buildNoTransfersMessageForMethod(isDarkMode, methodName)
+            : ListView.builder(
+                padding: EdgeInsets.all(16),
+                itemCount: transfers.length,
+                itemBuilder: (context, index) {
+                  return _buildTransferItem(transfers[index], isDarkMode);
+                },
+              ),
+      ),
+    ],
+  );
+}
   Widget _buildPaymentStatsTab(Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, bool isDarkMode) {
     int completedTransfers = transfers.where((t) => t['status'] == 'مكتمل').length;
     int pendingTransfers = transfers.where((t) => t['status'] == 'معلق').length;
@@ -2681,70 +2685,69 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   }
 
   Widget _buildTransferItem(Map<String, dynamic> transfer, bool isDarkMode) {
-    Color statusColor = transfer['status'] == 'مكتمل' ? _successColor : _warningColor;
-    
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? Colors.white10 : _cardColor,
-        border: Border.all(color: statusColor.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'تحويل #${transfer['id']}',
+  Color statusColor = transfer['status'] == 'مكتمل' ? _successColor : _warningColor;
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: isDarkMode ? Colors.white10 : _cardColor,
+      border: Border.all(color: statusColor.withOpacity(0.2)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 4,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'تحويل #${transfer['id']}',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: isDarkMode ? _darkTextColor : _textColor,
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                transfer['status'],
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: isDarkMode ? _darkTextColor : _textColor,
+                  fontSize: 12,
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  transfer['status'],
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: statusColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          _buildTransferDetailRow('المواطن:', transfer['citizenName'], isDarkMode),
-          _buildTransferDetailRow('المبلغ:', _formatCurrency(transfer['amount']), isDarkMode),
-          _buildTransferDetailRow('رقم المرجع:', transfer['referenceNumber'], isDarkMode),
-          _buildTransferDetailRow('التاريخ:', DateFormat('yyyy-MM-dd').format(transfer['transferDate']), isDarkMode),
-          if (transfer['bankName'] != null)
-            _buildTransferDetailRow('اسم البنك:', transfer['bankName'], isDarkMode),
-          if (transfer['accountNumber'] != null)
-            _buildTransferDetailRow('رقم الحساب:', transfer['accountNumber'], isDarkMode),
-          if (transfer['paymentLocation'] != null)
-            _buildTransferDetailRow('موقع الدفع:', transfer['paymentLocation'], isDarkMode),
-        ],
-      ),
-    );
-  }
-
+            ),
+          ],
+        ),
+        SizedBox(height: 12),
+        _buildTransferDetailRow('المواطن:', transfer['citizenName'], isDarkMode),
+        _buildTransferDetailRow('المبلغ:', _formatCurrency(transfer['amount']), isDarkMode),
+        _buildTransferDetailRow('رقم المرجع:', transfer['referenceNumber'], isDarkMode),
+        _buildTransferDetailRow('التاريخ:', DateFormat('yyyy-MM-dd').format(transfer['transferDate']), isDarkMode),
+        if (transfer['bankName'] != null)
+          _buildTransferDetailRow('اسم البنك:', transfer['bankName'], isDarkMode),
+        if (transfer['accountNumber'] != null)
+          _buildTransferDetailRow('رقم الحساب:', transfer['accountNumber'], isDarkMode),
+        if (transfer['paymentLocation'] != null)
+          _buildTransferDetailRow('موقع الدفع:', transfer['paymentLocation'], isDarkMode),
+      ],
+    ),
+  );
+}
   // دوال مساعدة
   Widget _buildTransferStat(String title, String value, Color color) {
     return Column(
@@ -3480,7 +3483,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-// إضافة NotificationsScreen المفقودة
+// شاشة الاشعارات  
+// شاشة الإشعارات المحدثة لتطابق التصميم في الصورة
 class NotificationsScreen extends StatefulWidget {
   static const String routeName = '/notifications';
 
@@ -3491,43 +3495,123 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final Color _primaryColor = Color(0xFF2E7D32);
   final Color _secondaryColor = Color(0xFFD4AF37);
+  final Color _backgroundColor = Color(0xFFF5F5F5);
   final Color _cardColor = Color(0xFFFFFFFF);
-  final Color _darkCardColor = Color(0xFF1E1E1E);
-  final Color _darkBackgroundColor = Color(0xFF121212);
-  final Color _darkTextColor = Color(0xFFFFFFFF);
-  final Color _darkTextSecondaryColor = Color(0xFFB0B0B0);
   final Color _textColor = Color(0xFF212121);
   final Color _textSecondaryColor = Color(0xFF757575);
+  final Color _borderColor = Color(0xFFE0E0E0);
 
-  final List<Map<String, dynamic>> _notifications = [
+  int _selectedTab = 0;
+  final List<String> _tabs = ['الوسائل', 'الطلبات', 'الوظائف', 'الكل'];
+  final List<Map<String, dynamic>> _allNotifications = [
+    // تبويب الوسائل
     {
       'id': '1',
-      'title': 'فاتورة جديدة',
-      'description': 'تم إنشاء فاتورة جديدة للعميل أحمد محمد',
-      'time': 'منذ 5 دقائق',
-      'read': false,
+      'type': 'message',
+      'title': 'رسالة جديدة',
+      'description': 'لديك رسالة من الإدارة بخصوص تحديث نظام الفواتير',
+      'time': 'منذ 3 ساعات',
+      'read': true,
+      'tab': 0, // الوسائل
     },
     {
       'id': '2',
-      'title': 'دفع فاتورة',
-      'description': 'تم دفع فاتورة INV-2024-003',
-      'time': 'منذ ساعة',
-      'read': false,
+      'type': 'system',
+      'title': 'تحديث النظام',
+      'description': 'تم تحديث نظام الفواتير إلى الإصدار 2.1.0',
+      'time': 'منذ يوم',
+      'read': true,
+      'tab': 0, // الوسائل
     },
     {
       'id': '3',
-      'title': 'تذكير بفاتورة',
-      'description': 'فاتورة INV-2024-002 متأخرة الدفع',
-      'time': 'منذ 3 ساعات',
+      'type': 'announcement',
+      'title': 'إعلان هام',
+      'description': 'اجتماع طارئ لموظفي قسم المحاسبة يوم الخميس القادم',
+      'time': 'منذ يومين',
       'read': true,
+      'tab': 0, // الوسائل
+    },
+
+    // تبويب الطلبات
+    {
+      'id': '4',
+      'type': 'payment',
+      'title': 'طلب دفع جديد',
+      'description': 'طلب دفع جديد من المواطن أحمد محمد بقيمة 185,750 دينار',
+      'time': 'منذ 5 دقائق',
+      'read': false,
+      'tab': 1, // الطلبات
+    },
+    {
+      'id': '5',
+      'type': 'complaint',
+      'title': 'شكوى جديدة',
+      'description': 'شكوى من المواطن فاطمة علي بخصوص فاتورة الكهرباء',
+      'time': 'منذ ساعة',
+      'read': false,
+      'tab': 1, // الطلبات
+    },
+    {
+      'id': '6',
+      'type': 'service',
+      'title': 'طلب خدمة جديد',
+      'description': 'طلب تركيب عداد جديد من المواطن خالد إبراهيم',
+      'time': 'منذ ساعتين',
+      'read': false,
+      'tab': 1, // الطلبات
+    },
+
+    // تبويب الفواتير
+    {
+      'id': '7',
+      'type': 'bill',
+      'title': 'فاتورة جديدة',
+      'description': 'تم إنشاء فاتورة جديدة للمواطن سارة عبدالله بقيمة 150,000 دينار',
+      'time': 'منذ 10 دقائق',
+      'read': false,
+      'tab': 2, // الفواتير
+    },
+    {
+      'id': '8',
+      'type': 'overdue',
+      'title': 'فاتورة متأخرة',
+      'description': 'فاتورة رقم INV-2024-002 للمواطن فاطمة علي متأخرة الدفع',
+      'time': 'منذ 3 أيام',
+      'read': true,
+      'tab': 2, // الفواتير
+    },
+    {
+      'id': '9',
+      'type': 'payment_success',
+      'title': 'دفع ناجح',
+      'description': 'تم دفع فاتورة رقم INV-2024-003 بنجاح من المواطن خالد إبراهيم',
+      'time': 'منذ 30 دقيقة',
+      'read': true,
+      'tab': 2, // الفواتير
+    },
+    {
+      'id': '10',
+      'type': 'reading',
+      'title': 'قراءة عداد جديدة',
+      'description': 'تم تسجيل قراءة عداد جديدة للمواطن أحمد محمد',
+      'time': 'منذ ساعة',
+      'read': true,
+      'tab': 2, // الفواتير
     },
   ];
 
+  List<Map<String, dynamic>> get _filteredNotifications {
+    if (_selectedTab == 3) { // الكل
+      return _allNotifications;
+    }
+    return _allNotifications.where((notification) => notification['tab'] == _selectedTab).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
     return Scaffold(
+      backgroundColor: _backgroundColor,
       appBar: AppBar(
         title: Text(
           'الإشعارات',
@@ -3537,88 +3621,178 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: isDarkMode ? Color(0xFF1B5E20) : _primaryColor,
-        elevation: 2,
+        backgroundColor: _primaryColor,
+        elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Container(
-        color: isDarkMode ? _darkBackgroundColor : Color(0xFFF5F5F5),
-        child: ListView.builder(
-          padding: EdgeInsets.all(16),
-          itemCount: _notifications.length,
-          itemBuilder: (context, index) {
-            final notification = _notifications[index];
-            return _buildNotificationCard(notification, isDarkMode);
-          },
+      body: Column(
+        children: [
+          // تبويبات الإشعارات - مطابقة تمامًا للصورة
+          Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: _cardColor,
+              border: Border(
+                bottom: BorderSide(color: _borderColor),
+              ),
+            ),
+            child: Row(
+              children: [
+                for (int i = 0; i < _tabs.length; i++)
+                  _buildTabButton(_tabs[i], i),
+              ],
+            ),
+          ),
+
+          // خط فاصل تحت التبويبات
+          Container(
+            height: 1,
+            color: _borderColor,
+          ),
+
+          // قائمة الإشعارات
+          Expanded(
+            child: _filteredNotifications.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: _filteredNotifications.length,
+                    itemBuilder: (context, index) {
+                      final notification = _filteredNotifications[index];
+                      return _buildNotificationCard(notification);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String title, int index) {
+    bool isSelected = _selectedTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedTab = index;
+          });
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isSelected ? _secondaryColor : Colors.transparent,
+                width: 3,
+              ),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: isSelected ? _primaryColor : _textSecondaryColor,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildNotificationCard(Map<String, dynamic> notification, bool isDarkMode) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
+  Widget _buildNotificationCard(Map<String, dynamic> notification) {
+    return Column(
+      children: [
+        // محتوى الإشعار
+        Container(
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _primaryColor.withOpacity(0.1),
-            shape: BoxShape.circle,
+            color: _cardColor,
           ),
-          child: Icon(Icons.notifications_rounded, color: _primaryColor),
-        ),
-        title: Text(
-          notification['title'],
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: isDarkMode ? _darkTextColor : _textColor,
-          ),
-        ),
-        subtitle: Text(
-          notification['description'],
-          style: TextStyle(
-            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-          ),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              notification['time'],
-              style: TextStyle(
-                fontSize: 12,
-                color: _textSecondaryColor,
-              ),
-            ),
-            if (!notification['read'])
-              Container(
-                margin: EdgeInsets.only(top: 4),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: _secondaryColor,
-                  shape: BoxShape.circle,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // العنوان
+              Text(
+                notification['title'],
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _textColor,
                 ),
               ),
-          ],
+              SizedBox(height: 8),
+              // الوصف
+              Text(
+                notification['description'],
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _textSecondaryColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              // الوقت
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    notification['time'],
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _textSecondaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
+        // خط فاصل - مطابق للصورة
+        Container(
+          height: 1,
+          color: _borderColor,
+          margin: EdgeInsets.symmetric(horizontal: 16),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.notifications_off_rounded,
+            size: 64,
+            color: _textSecondaryColor,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'لا توجد إشعارات',
+            style: TextStyle(
+              fontSize: 18,
+              color: _textSecondaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'لا توجد إشعارات في التبويب المحدد',
+            style: TextStyle(
+              color: _textSecondaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
 // شاشة المساعدة والدعم الكاملة
 class HelpSupportScreen extends StatelessWidget {
   final bool isDarkMode;
