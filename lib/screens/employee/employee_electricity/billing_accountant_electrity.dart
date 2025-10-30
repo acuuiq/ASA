@@ -20,7 +20,6 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   int _currentCitizenTab = 0;
   int _currentPaymentTab = 0;
   String _billFilter = 'الكل';
-
   // إضافة متغيرات البحث
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -30,8 +29,15 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   final TextEditingController _transferSearchController = TextEditingController();
   String _selectedPaymentMethodFilter = 'الكل'; // فلتر طريقة الدفع
 
+    // متغيرات التقارير الجديدة
+  String _selectedReportType = 'اليومي';
+  List<DateTime> _selectedDates = [];
+  String? _selectedWeek;
+  String? _selectedMonth;
+  List<Map<String, dynamic>> _filteredReports = [];
+
   // الألوان الحكومية (أخضر وذهبي وبني)
-  final Color _primaryColor = Color(0xFF2E7D32); // أخضر حكومي
+  final Color _primaryColor = Color.fromARGB(255, 46, 30, 169); // أخضر حكومي
   final Color _secondaryColor = Color(0xFFD4AF37); // ذهبي
   final Color _accentColor = Color(0xFF8D6E63); // بني
   final Color _backgroundColor = Color(0xFFF5F5F5); // خلفية فاتحة
@@ -154,6 +160,9 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
       'totalRevenue': 2500000,
       'totalBills': 150,
       'paidBills': 120,
+      'status': 'مكتمل',
+      'date': '2024-01-15',
+      'time': '10:30 ص',
     },
     {
       'id': 'REP-2024-002',
@@ -163,6 +172,9 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
       'generatedDate': DateTime.now().subtract(Duration(days: 5)),
       'totalConsumption': '45000 ك.و.س',
       'averageConsumption': '300 ك.و.س/عميل',
+      'status': 'قيد المعالجة',
+      'date': '2024-01-20',
+      'time': '02:15 م',
     },
     {
       'id': 'REP-2024-003',
@@ -172,50 +184,212 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
       'generatedDate': DateTime.now().subtract(Duration(days: 1)),
       'overdueAmount': 450000,
       'overdueBills': 15,
+      'status': 'لم يتم المعالجة',
+      'date': '2024-01-25',
+      'time': '09:45 ص',
     },
   ];
 
-  // بيانات طرق الدفع
+
+
+   // بيانات طرق الدفع  
   final List<Map<String, dynamic>> paymentMethods = [
     {
-      'id': 'PM-001',
-      'name': 'الدفع الإلكتروني',
+      'id': 'visa',
+      'name': 'بطاقة فيزا',
       'type': 'الكتروني',
       'status': 'active',
       'description': 'الدفع عبر البطاقات الإئتمانية والإنترنت',
       'icon': Icons.credit_card_rounded,
+      'color': Colors.blue,
+      'formFields': [
+        {
+          'label': 'رقم البطاقة',
+          'type': 'number',
+          'hint': '1234 5678 9012 3456',
+        },
+        {'label': 'اسم حامل البطاقة', 'type': 'text', 'hint': 'John Doe'},
+        {'label': 'تاريخ الانتهاء', 'type': 'text', 'hint': 'MM/YY'},
+        {'label': 'CVV', 'type': 'number', 'hint': '123'},
+      ],
     },
     {
-      'id': 'PM-002',
+      'id': 'mastercard',
+      'name': 'بطاقة ماستركارد',
+      'type': 'الكتروني',
+      'status': 'active',
+      'description': 'الدفع عبر البطاقات الإئتمانية والإنترنت',
+      'icon': Icons.credit_card_rounded,
+      'color': Colors.red,
+      'formFields': [
+        {
+          'label': 'رقم البطاقة',
+          'type': 'number',
+          'hint': '1234 5678 9012 3456',
+        },
+        {'label': 'اسم حامل البطاقة', 'type': 'text', 'hint': 'John Doe'},
+        {'label': 'تاريخ الانتهاء', 'type': 'text', 'hint': 'MM/YY'},
+        {'label': 'CVV', 'type': 'number', 'hint': '123'},
+      ],
+    },
+    {
+      'id': 'asiapay',
+      'name': 'AsiaPay',
+      'type': 'الكتروني',
+      'status': 'active',
+      'description': 'الدفع عبر تطبيقات المحافظ الإلكترونية',
+      'icon': Icons.account_balance_wallet_rounded,
+      'color': Colors.green,
+      'formFields': [
+        {'label': 'رقم الهاتف', 'type': 'phone', 'hint': '07XX XXX XXXX'},
+        {
+          'label': 'كلمة المرور',
+          'type': 'password',
+          'hint': 'أدخل كلمة المرور',
+        },
+      ],
+    },
+    {
+      'id': 'zain_cash',
+      'name': 'زين كاش',
+      'type': 'الكتروني',
+      'status': 'active',
+      'description': 'الدفع عبر تطبيقات المحافظ الإلكترونية',
+      'icon': Icons.phone_iphone_rounded,
+      'color': Colors.purple,
+      'formFields': [
+        {'label': 'رقم الهاتف', 'type': 'phone', 'hint': '07XX XXX XXXX'},
+        {'label': 'رقم PIN', 'type': 'password', 'hint': 'أدخل الرقم السري'},
+      ],
+    },
+    {
+      'id': 'bank_transfer',
       'name': 'التحويل البنكي',
       'type': 'بنكي',
       'status': 'active',
       'description': 'التحويل المباشر عبر فروع البنوك',
       'icon': Icons.account_balance_rounded,
+      'color': Colors.blueGrey,
+      'formFields': [
+        {'label': 'اسم البنك', 'type': 'text', 'hint': 'اسم البنك المحول منه'},
+        {'label': 'رقم الحساب', 'type': 'text', 'hint': 'رقم حسابك'},
+        {'label': 'رقم المرجع', 'type': 'text', 'hint': 'رقم المرجع للتحويل'},
+      ],
     },
     {
-      'id': 'PM-003',
-      'name': 'الدفع النقدي',
-      'type': 'نقدي',
+      'id': 'alrafidain',
+      'name': 'الرافدين',
+      'type': 'بنكي',
       'status': 'active',
-      'description': 'الدفع نقداً في مكاتب الخدمة',
-      'icon': Icons.money_rounded,
+      'description': 'الدفع عبر فروع بنك الرافدين',
+      'icon': Icons.account_balance_rounded,
+      'color': Colors.orange,
+      'formFields': [
+        {'label': 'رقم الحساب', 'type': 'text', 'hint': 'رقم حساب الرافدين'},
+        {
+          'label': 'اسم المستخدم',
+          'type': 'text',
+          'hint': 'اسم المستخدم للإنترنت البنكي',
+        },
+        {
+          'label': 'كلمة المرور',
+          'type': 'password',
+          'hint': 'كلمة المرور للإنترنت البنكي',
+        },
+      ],
     },
     {
-      'id': 'PM-004',
-      'name': 'المحافظ الإلكترونية',
-      'type': 'الكتروني',
-      'status': 'inactive',
-      'description': 'الدفع عبر تطبيقات المحافظ الإلكترونية',
-      'icon': Icons.wallet_rounded,
+      'id': 'alrasheed',
+      'name': 'الرشيد',
+      'type': 'بنكي',
+      'status': 'active',
+      'description': 'الدفع عبر فروع بنك الرشيد',
+      'icon': Icons.account_balance_rounded,
+      'color': Colors.teal,
+      'formFields': [
+        {'label': 'رقم الحساب', 'type': 'text', 'hint': 'رقم حساب الرشيد'},
+        {
+          'label': 'اسم المستخدم',
+          'type': 'text',
+          'hint': 'اسم المستخدم للإنترنت البنكي',
+        },
+        {
+          'label': 'كلمة المرور',
+          'type': 'password',
+          'hint': 'كلمة المرور للإنترنت البنكي',
+        },
+      ],
     },
+    
   ];
-
+    // بيانات الحسابات البنكية الرسمية للوزارة
+  final List<Map<String, dynamic>> bankAccounts = [
+    {
+      'id': 'ACC-001',
+      'bankName': 'البنك المركزي العراقي',
+      'accountNumber': 'IQ100100100100100100',
+      'accountName': 'وزارة الكهرباء - الإيرادات',
+      'branch': 'بغداد - الرصافة',
+      'currency': 'دينار عراقي',
+      'status': 'active',
+      'paymentMethods': ['visa', 'mastercard', 'bank_transfer']
+    },
+    {
+      'id': 'ACC-002',
+      'bankName': 'بنك الرافدين',
+      'accountNumber': '123456789012',
+      'accountName': 'وزارة الكهرباء - فواتير',
+      'branch': 'بغداد - الكرخ',
+      'currency': 'دينار عراقي',
+      'status': 'active',
+      'paymentMethods': ['alrafidain', 'bank_transfer']
+    },
+    {
+      'id': 'ACC-003', 
+      'bankName': 'بنك الرشيد',
+      'accountNumber': '987654321098',
+      'accountName': 'وزارة الكهرباء - خدمات',
+      'branch': 'بغداد - المنصور',
+      'currency': 'دينار عراقي',
+      'status': 'active',
+      'paymentMethods': ['alrasheed', 'bank_transfer']
+    },
+    {
+      'id': 'ACC-004',
+      'bankName': 'زين كاش',
+      'accountNumber': '9647901234567',
+      'accountName': 'وزارة الكهرباء',
+      'branch': 'الخدمة الإلكترونية',
+      'currency': 'دينار عراقي', 
+      'status': 'active',
+      'paymentMethods': ['zain_cash']
+    },
+    {
+      'id': 'ACC-005',
+      'bankName': 'AsiaPay',
+      'accountNumber': 'MOE-ELECTRIC-001',
+      'accountName': 'Ministry of Electricity',
+      'branch': 'Electronic Payment',
+      'currency': 'دينار عراقي',
+      'status': 'active',
+      'paymentMethods': ['asiapay']
+    },
+    {
+      'id': 'ACC-006',
+      'bankName': 'الخزينة العامة',
+      'accountNumber': 'CASH-001',
+      'accountName': 'وزارة الكهرباء - المبالغ النقدية',
+      'branch': 'مكاتب الخدمة',
+      'currency': 'دينار عراقي',
+      'status': 'active',
+      'paymentMethods': ['cash']
+    }
+  ];
   // بيانات التحويلات لكل طريقة دفع
   final List<Map<String, dynamic>> paymentTransfers = [
     {
       'id': 'TRF-2024-001',
-      'paymentMethodId': 'PM-001',
+      'paymentMethodId': 'visa',
       'citizenName': 'أحمد محمد',
       'amount': 185750,
       'currency': 'دينار عراقي',
@@ -227,7 +401,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     },
     {
       'id': 'TRF-2024-002', 
-      'paymentMethodId': 'PM-002',
+      'paymentMethodId': 'mastercard',
       'citizenName': 'فاطمة علي',
       'amount': 230500,
       'currency': 'دينار عراقي',
@@ -239,7 +413,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     },
     {
       'id': 'TRF-2024-003',
-      'paymentMethodId': 'PM-001',
+      'paymentMethodId': 'asiapay',
       'citizenName': 'خالد إبراهيم', 
       'amount': 315250,
       'currency': 'دينار عراقي',
@@ -251,7 +425,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     },
     {
       'id': 'TRF-2024-004',
-      'paymentMethodId': 'PM-003',
+      'paymentMethodId': 'zain_cash',
       'citizenName': 'سارة عبدالله',
       'amount': 150000,
       'currency': 'دينار عراقي',
@@ -259,6 +433,41 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
       'status': 'مكتمل',
       'referenceNumber': 'REF-001237',
       'paymentLocation': 'فرع الوزارة - بغداد',
+    },
+    {
+      'id': 'TRF-2024-005',
+      'paymentMethodId': 'alrafidain',
+      'citizenName': 'محمد حسن',
+      'amount': 275000,
+      'currency': 'دينار عراقي',
+      'transferDate': DateTime.now().subtract(Duration(days: 4)),
+      'status': 'مكتمل',
+      'referenceNumber': 'REF-001238',
+      'bankName': 'الرافدين',
+      'accountNumber': '5566778899',
+    },
+    {
+      'id': 'TRF-2024-006',
+      'paymentMethodId': 'alrasheed',
+      'citizenName': 'ليلى أحمد',
+      'amount': 189000,
+      'currency': 'دينار عراقي',
+      'transferDate': DateTime.now().subtract(Duration(days: 2)),
+      'status': 'معلق',
+      'referenceNumber': 'REF-001239',
+      'bankName': 'الرشيد',
+      'accountNumber': '3344556677',
+    },
+    {
+      'id': 'TRF-2024-007',
+      'paymentMethodId': 'cash',
+      'citizenName': 'علي كريم',
+      'amount': 95000,
+      'currency': 'دينار عراقي',
+      'transferDate': DateTime.now().subtract(Duration(hours: 2)),
+      'status': 'مكتمل',
+      'referenceNumber': 'REF-001240',
+      'paymentLocation': 'مكتب الخدمة - الكرخ',
     },
   ];
 
@@ -368,6 +577,116 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     });
   }
 
+  // دالة للحصول على الحسابات البنكية المرتبطة بطريقة دفع معينة
+  List<Map<String, dynamic>> _getBankAccountsForPaymentMethod(String paymentMethodId) {
+    return bankAccounts.where((account) => 
+      account['paymentMethods'].contains(paymentMethodId)
+    ).toList();
+  }
+
+    // ========== دوال التقارير الجديدة ==========
+
+  void _filterReports() {
+    setState(() {
+      if (_selectedReportType == 'اليومي') {
+        if (_selectedDates.isNotEmpty) {
+          _filteredReports = reports.where((report) {
+            final reportDate = DateTime.parse(report['date']);
+            return _selectedDates.any((selectedDate) =>
+              reportDate.year == selectedDate.year &&
+              reportDate.month == selectedDate.month &&
+              reportDate.day == selectedDate.day);
+          }).toList();
+        } else {
+          _filteredReports = reports;
+        }
+      }
+      else if (_selectedReportType == 'الأسبوعي' && _selectedWeek != null) {
+        _filteredReports = reports;
+      }
+      else if (_selectedReportType == 'الشهري' && _selectedMonth != null) {
+        _filteredReports = reports;
+      }
+      else {
+        _filteredReports = reports;
+      }
+    });
+  }
+
+  void _showMultiDatePicker() async {
+    final List<DateTime>? picked = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return MultiDatePickerDialog(
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2023),
+          lastDate: DateTime.now(),
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDates = picked;
+        _filterReports();
+      });
+    }
+  }
+
+  String _getFilterTitle() {
+    switch (_selectedReportType) {
+      case 'اليومي':
+        return _selectedDates.isNotEmpty 
+            ? '${_selectedDates.length} يوم مختار'
+            : 'جميع الأيام';
+      case 'الأسبوعي':
+        return _selectedWeek ?? 'جميع الأسابيع';
+      case 'الشهري':
+        return _selectedMonth ?? 'جميع الأشهر';
+      default:
+        return 'الكل';
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'لم يتم المعالجة':
+        return _errorColor;
+      case 'قيد المعالجة':
+        return _warningColor;
+      case 'مكتمل':
+        return _successColor;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getReportTypeIcon(String type) {
+    switch (type) {
+      case 'مالي':
+        return Icons.attach_money_rounded;
+      case 'فني':
+        return Icons.engineering_rounded;
+      case 'متابعة':
+        return Icons.track_changes_rounded;
+      default:
+        return Icons.description_rounded;
+    }
+  }
+
+  Color _getReportTypeColor(String type) {
+    switch (type) {
+      case 'مالي':
+        return _successColor;
+      case 'فني':
+        return _primaryColor;
+      case 'متابعة':
+        return _warningColor;
+      default:
+        return _accentColor;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -386,125 +705,131 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
+Widget build(BuildContext context) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return Scaffold(
+    appBar: AppBar(
+      title: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: _secondaryColor, width: 2),
+            ),
+            child: Icon(Icons.bolt_rounded, color: _primaryColor, size: 20),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'وزارة الكهرباء - نظام الفواتير',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: _secondaryColor, width: 2),
               ),
-              child: Icon(Icons.bolt_rounded, color: _primaryColor, size: 20),
+              overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'وزارة الكهرباء - نظام الفواتير',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              
-            ),
-          ],
-        ),
-        backgroundColor: isDarkMode ? _darkPrimaryColor : _primaryColor,
-        elevation: 0,
-        centerTitle: false,
-        iconTheme: IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: Stack(
-              children: [
-                Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: _secondaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      '3',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => NotificationsScreen()),
-              );
-            },
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(60),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? _darkPrimaryColor : _primaryColor,
-              border: Border(
-                bottom: BorderSide(color: _secondaryColor, width: 2),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(width: 10, color: _secondaryColor),
+      ),
+      backgroundColor: isDarkMode ? _darkPrimaryColor : _primaryColor,
+      elevation: 0,
+      centerTitle: false,
+      iconTheme: IconThemeData(color: Colors.white),
+      actions: [
+        IconButton(
+          icon: Stack(
+            children: [
+              Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: _secondaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: BoxConstraints(minWidth: 16, minHeight: 16),
+                  child: Text(
+                    '3',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white.withOpacity(0.7),
-                labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize:15),
-                unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 11),
-                labelPadding: EdgeInsets.symmetric(horizontal:35),
-                tabs: [
-                  Tab(
-                    icon: Icon(Icons.people_alt_rounded, size: 30),
-                    text: 'المواطنين',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.receipt_long_rounded, size:30),
-                    text: 'الفواتير',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.analytics_rounded, size:30),
-                    text: 'التقارير',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.payment_rounded, size: 30),
-                    text: 'طرق الدفع',
-                  ),
-                ],
               ),
+            ],
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => NotificationsScreen()),
+            );
+          },
+        ),
+      ],
+      bottom: PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? _darkPrimaryColor : _primaryColor,
+            border: Border(
+              bottom: BorderSide(color: _secondaryColor, width: 2),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(left:0, right:0), // تقليل الهوامش الجانبية
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(width: 4, color: _secondaryColor),
+                ),
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white.withOpacity(0.7),
+              labelStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: TextStyle(
+                fontWeight: FontWeight.normal,
+                fontSize: 12,
+              ),
+              padding: EdgeInsets.zero, // إزالة الباددنج الداخلي
+              labelPadding: EdgeInsets.symmetric(horizontal:5), // تباعد مناسب بين التبويبات
+              tabs: [
+                Tab(
+                  icon: Icon(Icons.people_alt_rounded, size: 22),
+                  text: 'المواطنين',
+                ),
+                Tab(
+                  icon: Icon(Icons.receipt_long_rounded, size: 22),
+                  text: 'الفواتير',
+                ),
+                Tab(
+                  icon: Icon(Icons.analytics_rounded, size: 22),
+                  text: 'التقارير',
+                ),
+                Tab(
+                  icon: Icon(Icons.payment_rounded, size: 22),
+                  text: 'طرق الدفع',
+                ),
+              ],
             ),
           ),
         ),
       ),
+    ),
       body: Container(
         width: double.infinity, // ⬅️ التصحيح هنا
        height: double.infinity, // ⬅️ التصحيح هنا
@@ -612,31 +937,430 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   }
 
   Widget _buildReportsView(bool isDarkMode, double screenWidth, double screenHeight) {
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildReportsSummaryCard(isDarkMode),
-            SizedBox(height: 20),
-            Text(
-              'التقارير المتاحة',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: isDarkMode ? _darkTextColor : _primaryColor,
-              ),
+  return SingleChildScrollView(
+    padding: EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // بطاقة العنوان الرئيسية
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_primaryColor, _secondaryColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            SizedBox(height: 16),
-            ...reports.map((report) => _buildReportCard(report, isDarkMode)),
-          ],
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryColor.withOpacity(0.3),
+                blurRadius: 15,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(Icons.analytics, size: 30, color: Colors.white),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'نظام التقارير المتقدم',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'تصفية وعرض التقارير حسب الفترة الزمنية',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: 20),
+
+        // بطاقة الفلترة الزمنية
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDarkMode ? _darkCardColor : _cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.filter_alt, color: _primaryColor),
+                  SizedBox(width: 8),
+                  Text(
+                    'الفلترة الزمنية',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDarkMode ? _darkTextColor : _textColor,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+
+              // أزرار نوع التقرير
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildReportTypeButton('اليومي', Icons.today, _primaryColor, isDarkMode),
+                    SizedBox(width: 8),
+                    _buildReportTypeButton('الأسبوعي', Icons.calendar_view_week, _secondaryColor, isDarkMode),
+                    SizedBox(width: 8),
+                    _buildReportTypeButton('الشهري', Icons.calendar_today, _accentColor, isDarkMode),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // واجهة الفلترة حسب النوع المختار
+              _buildDateFilterInterface(isDarkMode),
+            ],
+          ),
+        ),
+
+        SizedBox(height: 20),
+
+        // بطاقة الإحصائيات
+        _buildStatisticsCard(isDarkMode),
+
+        SizedBox(height: 20),
+
+        // قائمة التقارير المفلترة
+        _buildFilteredReportsList(isDarkMode),
+
+        SizedBox(height: 20),
+      ],
+    ),
+  );
+ }
+ Widget _buildReportTypeButton(String title, IconData icon, Color color, bool isDarkMode) {
+  bool isSelected = _selectedReportType == title;
+  return ElevatedButton(
+    onPressed: () {
+      setState(() {
+        _selectedReportType = title;
+        _selectedDates = [];
+        _selectedWeek = null;
+        _selectedMonth = null;
+        _filterReports();
+      });
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: isSelected ? color : (isDarkMode ? _darkCardColor : _cardColor),
+      foregroundColor: isSelected ? Colors.white : color,
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? color : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
+          width: 2,
         ),
       ),
-    );
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18),
+        SizedBox(width: 6),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  );
+ }
+ Widget _buildDateFilterInterface(bool isDarkMode) {
+  switch (_selectedReportType) {
+    case 'اليومي':
+      return _buildDailyFilter(isDarkMode);
+    case 'الأسبوعي':
+      return _buildWeeklyFilter(isDarkMode);
+    case 'الشهري':
+      return _buildMonthlyFilter(isDarkMode);
+    default:
+      return _buildDailyFilter(isDarkMode);
   }
+} 
+Widget _buildDailyFilter(bool isDarkMode) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'اختر التاريخ:',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? _darkTextColor : _textColor,
+        ),
+      ),
+      SizedBox(height: 12),
+      
+      Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
+        ),
+        child: ListTile(
+          leading: Icon(Icons.calendar_today, color: _primaryColor),
+          title: Text(
+            _selectedDates.isNotEmpty 
+                ? '${_selectedDates.length} يوم مختار'
+                : 'اختر التاريخ',
+            style: TextStyle(
+              color: isDarkMode ? _darkTextColor : _textColor,
+            ),
+          ),
+          trailing: Icon(Icons.arrow_drop_down),
+          onTap: _showMultiDatePicker,
+        ),
+      ),
+      
+      if (_selectedDates.isNotEmpty) ...[
+        SizedBox(height: 12),
+        Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.black12 : Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _primaryColor.withOpacity(0.3)),
+          ),
+          child: ListView.builder(
+            padding: EdgeInsets.all(8),
+            itemCount: _selectedDates.length,
+            itemBuilder: (context, index) {
+              final date = _selectedDates[index];
+              return ListTile(
+                leading: Icon(Icons.event, color: _primaryColor),
+                title: Text(
+                  DateFormat('yyyy-MM-dd').format(date),
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextColor : _textColor,
+                  ),
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.close, color: _errorColor, size: 18),
+                  onPressed: () {
+                    setState(() {
+                      _selectedDates.removeAt(index);
+                      _filterReports();
+                    });
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+      
+      SizedBox(height: 12),
+      if (_selectedDates.isNotEmpty)
+        ElevatedButton(
+          onPressed: _filterReports,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+            minimumSize: Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(
+            'عرض التقارير للفترة المختارة',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+    ],
+  );
+}
+
+Widget _buildWeeklyFilter(bool isDarkMode) {
+  List<String> weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
+  
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'اختر الأسبوع:',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? _darkTextColor : _textColor,
+        ),
+      ),
+      SizedBox(height: 12),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: weeks.map((week) {
+          bool isSelected = _selectedWeek == week;
+          return FilterChip(
+            label: Text(week),
+            selected: isSelected,
+            onSelected: (selected) {
+              setState(() {
+                _selectedWeek = selected ? week : null;
+                _filterReports();
+              });
+            },
+            selectedColor: _secondaryColor,
+            checkmarkColor: Colors.white,
+            labelStyle: TextStyle(
+              color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+            ),
+          );
+        }).toList(),
+      ),
+    ],
+  );
+}
+
+Widget _buildMonthlyFilter(bool isDarkMode) {
+  List<String> months = [
+    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+  ];
+  
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'اختر الشهر:',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? _darkTextColor : _textColor,
+        ),
+      ),
+      SizedBox(height: 12),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: months.map((month) {
+          bool isSelected = _selectedMonth == month;
+          return FilterChip(
+            label: Text(month),
+            selected: isSelected,
+            onSelected: (selected) {
+              setState(() {
+                _selectedMonth = selected ? month : null;
+                _filterReports();
+              });
+            },
+            selectedColor: _accentColor,
+            checkmarkColor: Colors.white,
+            labelStyle: TextStyle(
+              color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+            ),
+          );
+        }).toList(),
+      ),
+    ],
+  );
+}
+Widget _buildStatisticsCard(bool isDarkMode) {
+  return Container(
+    padding: EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: isDarkMode ? _darkCardColor : _cardColor,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 20,
+          offset: Offset(0, 8),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.bar_chart, color: _primaryColor),
+            SizedBox(width: 8),
+            Text(
+              'الإحصائيات',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode ? _darkTextColor : _textColor,
+              ),
+            ),
+            Spacer(),
+            Text(
+              _getFilterTitle(),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 20),
+        
+        GridView.count(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.3,
+          children: [
+            _buildStatItem('إجمالي التقارير', _filteredReports.length.toString(), 
+                Icons.description, _primaryColor, isDarkMode),
+            _buildStatItem('لم تتم المعالجة', 
+                _filteredReports.where((r) => r['status'] == 'لم يتم المعالجة').length.toString(),
+                Icons.pending_actions, _errorColor, isDarkMode),
+            _buildStatItem('قيد المعالجة', 
+                _filteredReports.where((r) => r['status'] == 'قيد المعالجة').length.toString(),
+                Icons.hourglass_bottom, _warningColor, isDarkMode),
+            _buildStatItem('مكتمل', 
+                _filteredReports.where((r) => r['status'] == 'مكتمل').length.toString(),
+                Icons.check_circle, _successColor, isDarkMode),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildPaymentMethodsView(bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
@@ -655,7 +1379,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: isDarkMode ? _darkTextColor : _primaryColor,
-              ),
+              ), 
             ),
             SizedBox(height: 16),
             ...paymentMethods.map((method) => _buildPaymentMethodCard(method, isDarkMode)),
@@ -1043,75 +1767,133 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   }
 
   Widget _buildReportCard(Map<String, dynamic> report, bool isDarkMode) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
-          width: 1,
+  Color statusColor = _getStatusColor(report['status']);
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: isDarkMode ? Colors.white10 : _cardColor,
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: Offset(0, 4),
         ),
-      ),
-      child: ListTile(
-        contentPadding: EdgeInsets.all(16),
-        leading: Container(
+      ],
+    ),
+    child: Row(
+      children: [
+        Container(
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: _accentColor.withOpacity(0.1),
-            shape: BoxShape.circle,
+            color: _getReportTypeColor(report['type']).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(Icons.description_rounded, color: _accentColor, size: 24),
+          child: Icon(
+            _getReportTypeIcon(report['type']),
+            color: _getReportTypeColor(report['type']),
+            size: 24,
+          ),
         ),
-        title: Text(
-          report['title'],
+        SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                report['title'],
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? _darkTextColor : _textColor,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                '${report['type']} - ${report['period']}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
+                  SizedBox(width: 4),
+                  Text(
+                    report['date'],
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Icon(Icons.access_time, size: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
+                  SizedBox(width: 4),
+                  Text(
+                    report['time'],
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            report['status'],
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: statusColor,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+ }
+ Widget _buildEmptyState(bool isDarkMode) {
+  return Container(
+    padding: EdgeInsets.all(40),
+    child: Column(
+      children: [
+        Icon(Icons.inbox, size: 60, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
+        SizedBox(height: 16),
+        Text(
+          'لا توجد تقارير',
           style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: isDarkMode ? _darkTextColor : _textColor,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 4),
-            Text(
-              'النوع: ${report['type']}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-              ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              'الفترة: ${report['period']}',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-              ),
-            ),
-          ],
+        SizedBox(height: 8),
+        Text(
+          'لم يتم العثور على تقارير تطابق معايير البحث الحالية',
+          style: TextStyle(
+            fontSize: 14,
+            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+          ),
+          textAlign: TextAlign.center,
         ),
-        trailing: IconButton(
-          icon: Icon(Icons.download_rounded, color: _primaryColor),
-          onPressed: () {
-            _downloadReport(report);
-          },
-        ),
-        onTap: () {
-          _showReportDetails(report, isDarkMode);
-        },
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   Widget _buildPaymentMethodCard(Map<String, dynamic> method, bool isDarkMode) {
     bool isActive = method['status'] == 'active';
@@ -2383,6 +3165,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   void _showPaymentMethodDetails(Map<String, dynamic> method, bool isDarkMode) {
   List<Map<String, dynamic>> methodTransfers = _getTransfersByPaymentMethod(method['id']);
   double totalAmount = _getTotalTransfersAmount(methodTransfers);
+  List<Map<String, dynamic>> methodBankAccounts = _getBankAccountsForPaymentMethod(method['id']);
 
   showDialog(
     context: context,
@@ -2406,8 +3189,8 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                   decoration: BoxDecoration(
                     color: _primaryColor,
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(16),
-                      bottomRight: Radius.circular(16),
+                      bottomLeft: Radius.circular(0),
+                      bottomRight: Radius.circular(0),
                     ),
                   ),
                   child: Stack(
@@ -2419,63 +3202,64 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                           icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 28),
                           onPressed: () => Navigator.pop(context),
                         ),
-                      ),
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(height: MediaQuery.of(context).padding.top + 20),
-                            Text(
-                              'تفاصيل ${method['name']}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              '${methodTransfers.length} تحويل - ${_formatCurrency(totalAmount)}',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
+                       ),
+                       Center(
+                         child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                             SizedBox(height: MediaQuery.of(context).padding.top + 2),
+                             Text(
+                               'تفاصيل ${method['name']}',
+                               style: TextStyle(
+                                 color: Colors.white,
+                                 fontSize: 22,
+                                 fontWeight: FontWeight.w700,
+                               ),
+                             ),
+                             SizedBox(height: 8),
+                             Text(
+                               '${methodTransfers.length} تحويل - ${_formatCurrency(totalAmount)}',
+                               style: TextStyle(
+                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // التبويبات
-                Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: _borderColor)),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildPaymentTabButton('المعلومات', 0, setState, isDarkMode),
-                      _buildPaymentTabButton('التحويلات', 1, setState, isDarkMode),
-                      _buildPaymentTabButton('الإحصائيات', 2, setState, isDarkMode),
-                    ],
-                  ),
-                ),
-
-                // المحتوى
-                Expanded(
-                  child: _buildPaymentTabContent(_currentPaymentTab, method, methodTransfers, totalAmount, isDarkMode),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ),
-  );
-}
-  Widget _buildPaymentTabButton(String title, int tabIndex, StateSetter setState, bool isDarkMode) {
+                               ),
+                             ),
+                           ],
+                         ),
+                       ),
+                     ],
+                   ),
+                 ),
+ 
+                 // التبويبات
+                 Container(
+                   height: 50,
+                   decoration: BoxDecoration(
+                     border: Border(bottom: BorderSide(color: _borderColor)),
+                   ),
+                   child: Row(
+                     children: [
+                       _buildPaymentTabButton('المعلومات', 0, setState, isDarkMode),
+                       _buildPaymentTabButton('الحسابات', 1, setState, isDarkMode),
+                       _buildPaymentTabButton('التحويلات', 2, setState, isDarkMode),
+                       _buildPaymentTabButton('الإحصائيات', 3, setState, isDarkMode),
+                     ],
+                   ),
+                 ),
+ 
+                 // المحتوى
+                 Expanded(
+                   child: _buildPaymentTabContent(_currentPaymentTab, method, methodTransfers, totalAmount, methodBankAccounts, isDarkMode),
+                 ),
+               ],
+             ),
+           ),
+         );
+       },
+     ),
+   );
+ }
+ Widget _buildPaymentTabButton(String title, int tabIndex, StateSetter setState, bool isDarkMode) {
     bool isSelected = _currentPaymentTab == tabIndex;
     return Expanded(
       child: GestureDetector(
@@ -2509,18 +3293,20 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
     );
   }
 
-  Widget _buildPaymentTabContent(int tabIndex, Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, bool isDarkMode) {
-  switch (tabIndex) {
-    case 0: // المعلومات
-      return _buildPaymentInfoTab(method, isDarkMode);
-    case 1: // التحويلات - معدلة لعرض تحويلات الطريقة فقط
-      return _buildPaymentTransfersTab(transfers, isDarkMode, method['name']);
-    case 2: // الإحصائيات
-      return _buildPaymentStatsTab(method, transfers, totalAmount, isDarkMode);
-    default:
-      return _buildPaymentInfoTab(method, isDarkMode);
-  }
-}
+  Widget _buildPaymentTabContent(int tabIndex, Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, List<Map<String, dynamic>> bankAccounts, bool isDarkMode) {
+    switch (tabIndex) {
+     case 0: // المعلومات
+       return _buildPaymentInfoTab(method, isDarkMode);
+     case 1: // الحسابات البنكية
+       return _buildBankAccountsTab(bankAccounts, method['name'], isDarkMode);
+     case 2: // التحويلات - معدلة لعرض تحويلات الطريقة فقط
+       return _buildPaymentTransfersTab(transfers, isDarkMode, method['name']);
+     case 3: // الإحصائيات
+       return _buildPaymentStatsTab(method, transfers, totalAmount, isDarkMode);
+     default:
+       return _buildPaymentInfoTab(method, isDarkMode);
+   }
+ }
 
   Widget _buildPaymentInfoTab(Map<String, dynamic> method, bool isDarkMode) {
     return SingleChildScrollView(
@@ -2545,6 +3331,173 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
           _buildPaymentInfoRow('الوصف:', method['description'], isDarkMode),
           _buildPaymentInfoRow('الحالة:', method['status'] == 'active' ? 'نشط' : 'غير نشط', isDarkMode),
           SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  // تبويب الحسابات البنكية الجديد
+  Widget _buildBankAccountsTab(List<Map<String, dynamic>> accounts, String methodName, bool isDarkMode) {
+    return Column(
+      children: [
+        // عنوان التبويب
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _primaryColor.withOpacity(0.05),
+            border: Border(bottom: BorderSide(color: _primaryColor.withOpacity(0.2))),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.account_balance_rounded, color: _primaryColor),
+              SizedBox(width: 8),
+              Text(
+                'الحسابات البنكية الرسمية - $methodName',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode ? _darkTextColor : _primaryColor,
+                ),
+              ),
+              Spacer(),
+              Text(
+                '${accounts.length} حساب',
+                style: TextStyle(
+                  color: _textSecondaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // قائمة الحسابات البنكية
+        Expanded(
+          child: accounts.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.account_balance_outlined, size: 64, color: _textSecondaryColor),
+                      SizedBox(height: 16),
+                      Text(
+                        'لا توجد حسابات بنكية',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: _textSecondaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'لم يتم العثور على حسابات بنكية رسمية\nلطريقة الدفع $methodName',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: _textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.all(16),
+                  itemCount: accounts.length,
+                  itemBuilder: (context, index) {
+                    return _buildBankAccountItem(accounts[index], isDarkMode);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  // عنصر الحساب البنكي
+  Widget _buildBankAccountItem(Map<String, dynamic> account, bool isDarkMode) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: isDarkMode ? Colors.white10 : _cardColor,
+        border: Border.all(color: _primaryColor.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  account['bankName'],
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: isDarkMode ? _darkTextColor : _textColor,
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _successColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'نشط',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _successColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          _buildBankAccountDetailRow('اسم الحساب:', account['accountName'], isDarkMode),
+          _buildBankAccountDetailRow('رقم الحساب:', account['accountNumber'], isDarkMode),
+          _buildBankAccountDetailRow('الفرع:', account['branch'], isDarkMode),
+          _buildBankAccountDetailRow('العملة:', account['currency'], isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBankAccountDetailRow(String label, String value, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? _darkTextColor : _textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -2619,70 +3572,74 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   );
 }
   Widget _buildPaymentStatsTab(Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, bool isDarkMode) {
-    int completedTransfers = transfers.where((t) => t['status'] == 'مكتمل').length;
-    int pendingTransfers = transfers.where((t) => t['status'] == 'معلق').length;
-    
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.black12 : Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _borderColor),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'نظرة عامة على التحويلات',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? _darkTextColor : _primaryColor,
-                  ),
-                ),
-                SizedBox(height: 20),
-                _buildStatItem('إجمالي التحويلات', transfers.length.toString(), Icons.list_alt_rounded, _primaryColor),
-                _buildStatItem('المبلغ الإجمالي', _formatCurrency(totalAmount), Icons.attach_money_rounded, _successColor),
-                _buildStatItem('تحويلات مكتملة', completedTransfers.toString(), Icons.check_circle_rounded, _successColor),
-                _buildStatItem('تحويلات معلقة', pendingTransfers.toString(), Icons.pending_rounded, _warningColor),
-              ],
-            ),
+  int completedTransfers = transfers.where((t) => t['status'] == 'مكتمل').length;
+  int pendingTransfers = transfers.where((t) => t['status'] == 'معلق').length;
+  
+  return SingleChildScrollView(
+    padding: EdgeInsets.all(16),
+    child: Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.black12 : Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor),
           ),
-          
-          SizedBox(height: 20),
-          
-          Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.black12 : Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'التوزيع الشهري',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? _darkTextColor : _primaryColor,
-                  ),
+          child: Column(
+            children: [
+              Text(
+                'نظرة عامة على التحويلات',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode ? _darkTextColor : _primaryColor,
                 ),
-                SizedBox(height: 15),
-                _buildMonthStat('يناير 2024', 4500000, isDarkMode),
-                _buildMonthStat('فبراير 2024', 5200000, isDarkMode),
-                _buildMonthStat('مارس 2024', 3800000, isDarkMode),
-              ],
-            ),
+              ),
+              SizedBox(height: 20),
+              _buildStatItem('إجمالي التحويلات', transfers.length.toString(), 
+                  Icons.list_alt_rounded, _primaryColor, isDarkMode), // ⬅️ إضافة isDarkMode
+              _buildStatItem('المبلغ الإجمالي', _formatCurrency(totalAmount), 
+                  Icons.attach_money_rounded, _successColor, isDarkMode), // ⬅️ إضافة isDarkMode
+              _buildStatItem('تحويلات مكتملة', completedTransfers.toString(), 
+                  Icons.check_circle_rounded, _successColor, isDarkMode), // ⬅️ إضافة isDarkMode
+              _buildStatItem('تحويلات معلقة', pendingTransfers.toString(), 
+                  Icons.pending_rounded, _warningColor, isDarkMode), // ⬅️ إضافة isDarkMode
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        
+        SizedBox(height: 20),
+        
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.black12 : Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'التوزيع الشهري',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode ? _darkTextColor : _primaryColor,
+                ),
+              ),
+              SizedBox(height: 15),
+              _buildMonthStat('يناير 2024', 4500000, isDarkMode),
+              _buildMonthStat('فبراير 2024', 5200000, isDarkMode),
+              _buildMonthStat('مارس 2024', 3800000, isDarkMode),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildTransferItem(Map<String, dynamic> transfer, bool isDarkMode) {
   Color statusColor = transfer['status'] == 'مكتمل' ? _successColor : _warningColor;
@@ -2832,35 +3789,107 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
       ),
     );
   }
+  Widget _buildFilteredReportsList(bool isDarkMode) {
+  return Container(
+    padding: EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: isDarkMode ? _darkCardColor : _cardColor,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 20,
+          offset: Offset(0, 8),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.list_alt, color: _accentColor),
+            SizedBox(width: 8),
+            Text(
+              'التقارير',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode ? _darkTextColor : _textColor,
+              ),
+            ),
+            Spacer(),
+            Chip(
+              label: Text(
+                '${_filteredReports.length} تقرير',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+              backgroundColor: _accentColor,
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
 
-  Widget _buildStatItem(String title, String value, IconData icon, Color color) {
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          shape: BoxShape.circle,
+        if (_filteredReports.isEmpty)
+          _buildEmptyState(isDarkMode)
+        else
+          Column(
+            children: _filteredReports.map((report) {
+              return _buildReportCard(report, isDarkMode);
+            }).toList(),
+          ),
+      ],
+    ),
+  );
+}
+
+
+  // تحديث تعريف الدالة لقبول isDarkMode
+Widget _buildStatItem(String title, String value, IconData icon, Color color, bool isDarkMode) {
+  return Container(
+    padding: EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: isDarkMode ? _darkCardColor : _cardColor,
+      border: Border.all(color: color.withOpacity(0.2)),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
         ),
-        child: Icon(icon, color: color, size: 20),
-      ),
-      title: Text(
-        value,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          color: color,
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
         ),
-      ),
-      subtitle: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          color: _textSecondaryColor,
+        SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+          ),
+          textAlign: TextAlign.center,
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   Widget _buildMonthStat(String month, double amount, bool isDarkMode) {
     return Padding(
@@ -3484,7 +4513,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 // شاشة الاشعارات  
-// شاشة الإشعارات المحدثة لتطابق التصميم في الصورة
 class NotificationsScreen extends StatefulWidget {
   static const String routeName = '/notifications';
 
@@ -4572,5 +5600,119 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
         ],
       ),
     );
+  }
+}
+class MultiDatePickerDialog extends StatefulWidget {
+  final DateTime initialDate;
+  final DateTime firstDate;
+  final DateTime lastDate;
+
+  const MultiDatePickerDialog({
+    Key? key,
+    required this.initialDate,
+    required this.firstDate,
+    required this.lastDate,
+  }) : super(key: key);
+
+  @override
+  _MultiDatePickerDialogState createState() => _MultiDatePickerDialogState();
+}
+
+class _MultiDatePickerDialogState extends State<MultiDatePickerDialog> {
+  List<DateTime> _selectedDates = [];
+
+  @override
+  Widget build(BuildContext context) {
+    // إنشاء قائمة بالأيام من 1 إلى 30 للشهر الحالي
+    final now = DateTime.now();
+    final currentYear = now.year;
+    final currentMonth = now.month;
+    
+    List<DateTime> days = List.generate(30, (index) {
+      return DateTime(currentYear, currentMonth, index + 1);
+    });
+
+    return AlertDialog(
+      title: Text('اختر التاريخ', textAlign: TextAlign.center),
+      content: Container(
+        width: double.maxFinite,
+        height: 400,
+        child: ListView.builder(
+          itemCount: days.length,
+          itemBuilder: (context, index) {
+            final date = days[index];
+            final isSelected = _selectedDates.any((selectedDate) =>
+                selectedDate.year == date.year &&
+                selectedDate.month == date.month &&
+                selectedDate.day == date.day);
+            
+            return CheckboxListTile(
+              title: Text(
+                '${date.day} ${_getMonthName(date.month)} ${date.year} - ${_getDayName(date.weekday)}',
+                style: TextStyle(
+                  fontSize: 14,
+                ),
+              ),
+              value: isSelected,
+              onChanged: (bool? value) {
+                setState(() {
+                  if (value == true) {
+                    _selectedDates.add(date);
+                  } else {
+                    _selectedDates.removeWhere((selectedDate) =>
+                        selectedDate.year == date.year &&
+                        selectedDate.month == date.month &&
+                        selectedDate.day == date.day);
+                  }
+                });
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, _selectedDates),
+          child: Text('تأكيد'),
+        ),
+      ],
+    );
+  }
+
+  // دالة للحصول على اسم الشهر بالعربية
+  String _getMonthName(int month) {
+    switch (month) {
+      case 1: return 'يناير';
+      case 2: return 'فبراير';
+      case 3: return 'مارس';
+      case 4: return 'أبريل';
+      case 5: return 'مايو';
+      case 6: return 'يونيو';
+      case 7: return 'يوليو';
+      case 8: return 'أغسطس';
+      case 9: return 'سبتمبر';
+      case 10: return 'أكتوبر';
+      case 11: return 'نوفمبر';
+      case 12: return 'ديسمبر';
+      default: return '';
+    }
+  }
+
+  // دالة للحصول على اسم اليوم بالعربية
+  String _getDayName(int weekday) {
+    switch (weekday) {
+      case 1: return 'الاثنين';
+      case 2: return 'الثلاثاء';
+      case 3: return 'الأربعاء';
+      case 4: return 'الخميس';
+      case 5: return 'الجمعة';
+      case 6: return 'السبت';
+      case 7: return 'الأحد';
+      default: return '';
+    }
   }
 }
