@@ -16,7 +16,6 @@ import 'package:mang_mu/screens/employee/employee_water/water_emergency_officer.
 import 'package:mang_mu/screens/employee/employee_water/water_maintenance_technician.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_premium_specialist.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_supervisor.dart';
-import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart';
 import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';
 import 'package:mang_mu/screens/employee/employee_wast/reporting_officer_wast.dart';
 import 'package:mang_mu/screens/employee/employee_wast/system_supervisor_waste.dart';
@@ -80,7 +79,6 @@ class _EsigninScreenState extends State<EsigninScreen>
 
     ],
     'نفايات': [
-      'مدير طلبات الحاويات',
       'مسؤول الاستجابة للطوارئ',
       'مسؤول الابلاغ  ',
       'مشرف النظام',
@@ -281,14 +279,8 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => ReportingOfficerWaterScreen(),
             ),
           );
-        } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مدير طلبات الحاويات') {
-          // التنقل إلى شاشة مدير طلبات الحاويات
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ContainerRequestManager()),
-          );
-        } else if (_selectedSection == 'نفايات' &&
+        }
+          else if (_selectedSection == 'نفايات' &&
             _selectedSpecialization == 'مسؤول الاستجابة للطوارئ') {
           // التنقل إلى شاشة مسؤول استجابة للطوارئ
           Navigator.pushReplacement(

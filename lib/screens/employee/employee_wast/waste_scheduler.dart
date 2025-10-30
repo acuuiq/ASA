@@ -60,22 +60,6 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
       sector: 'القطاع ٣ - المنطقة الغربية',
       districts: ['حي الخليج', 'حي الربيع', 'حي الضباب'],
     ),
-    Truck(
-      id: 4,
-      name: 'شاحنة ٤',
-      capacity: '٧ طن',
-      plateNumber: 'ك ل م 101',
-      sector: 'القطاع ٤ - المنطقة الشمالية',
-      districts: ['حي الياسمين', 'حي النخيل', 'حي الصفاء'],
-    ),
-    Truck(
-      id: 5,
-      name: 'شاحنة ٥',
-      capacity: '٥ طن',
-      plateNumber: 'ن س ع 112',
-      sector: 'القطاع ٥ - المنطقة الجنوبية',
-      districts: ['حي الواحة', 'حي الريان', 'حي الضاحية'],
-    ),
   ];
 
   final List<Cleaner> _cleaners = [
@@ -95,7 +79,6 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
 
   void _initializeSchedule() {
     final now = DateTime.now();
-    // بداية الأسبوع من الأحد (اليوم 7 في DateTime)
     final currentWeekStart = now.subtract(Duration(days: now.weekday % 7));
     
     _weeklySchedule = List.generate(7, (index) {
@@ -122,13 +105,13 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
 
   String _getArabicDayName(int weekday) {
     switch (weekday) {
-      case 7: return 'الأحد'; // Sunday
-      case 1: return 'الإثنين'; // Monday
-      case 2: return 'الثلاثاء'; // Tuesday
-      case 3: return 'الأربعاء'; // Wednesday
-      case 4: return 'الخميس'; // Thursday
-      case 5: return 'الجمعة'; // Friday
-      case 6: return 'السبت'; // Saturday
+      case 7: return 'الأحد';
+      case 1: return 'الإثنين';
+      case 2: return 'الثلاثاء';
+      case 3: return 'الأربعاء';
+      case 4: return 'الخميس';
+      case 5: return 'الجمعة';
+      case 6: return 'السبت';
       default: return '';
     }
   }
@@ -221,6 +204,210 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
     );
   }
 
+  void _showQuickActions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'إجراءات سريعة',
+              style: TextStyle(
+                color: Color(0xFF117E75),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Tajawal',
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildQuickActionButton(
+              'تعيين جميع الأيام كأيام دوام',
+              Icons.work,
+              const Color(0xFF4CAF50),
+              () {
+                setState(() {
+                  for (int i = 0; i < _weeklySchedule.length; i++) {
+                    if (_weeklySchedule[i].isDayOff) {
+                      _toggleDayOff(i);
+                    }
+                  }
+                });
+                Navigator.pop(context);
+              },
+            ),
+            _buildQuickActionButton(
+              'تعيين الجمعة كعطلة',
+              Icons.beach_access,
+              Colors.orange,
+              () {
+                setState(() {
+                  for (int i = 0; i < _weeklySchedule.length; i++) {
+                    if (_weeklySchedule[i].date.weekday == DateTime.friday && !_weeklySchedule[i].isDayOff) {
+                      _toggleDayOff(i);
+                    }
+                  }
+                });
+                Navigator.pop(context);
+              },
+            ),
+            _buildQuickActionButton(
+              'تعيين وقت موحد للصباح',
+              Icons.access_time,
+              const Color(0xFF2196F3),
+              () {
+                setState(() {
+                  for (int i = 0; i < _weeklySchedule.length; i++) {
+                    if (!_weeklySchedule[i].isDayOff) {
+                      _weeklySchedule[i] = DaySchedule(
+                        date: _weeklySchedule[i].date,
+                        dayName: _weeklySchedule[i].dayName,
+                        startTime: '06:00 ص',
+                        endTime: '08:00 ص',
+                        truck: _weeklySchedule[i].truck,
+                        isDayOff: false,
+                        assignedCleaners: _weeklySchedule[i].assignedCleaners,
+                      );
+                    }
+                  }
+                });
+                Navigator.pop(context);
+              },
+            ),
+            _buildQuickActionButton(
+              'توزيع العمال تلقائياً',
+              Icons.people,
+              const Color(0xFF9C27B0),
+              () {
+                setState(() {
+                  for (int i = 0; i < _weeklySchedule.length; i++) {
+                    if (!_weeklySchedule[i].isDayOff) {
+                      _weeklySchedule[i] = DaySchedule(
+                        date: _weeklySchedule[i].date,
+                        dayName: _weeklySchedule[i].dayName,
+                        startTime: _weeklySchedule[i].startTime,
+                        endTime: _weeklySchedule[i].endTime,
+                        truck: _weeklySchedule[i].truck,
+                        isDayOff: false,
+                        assignedCleaners: _getRandomCleanersForDay(i),
+                      );
+                    }
+                  }
+                });
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'إلغاء',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showInstructions() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'إرشادات إدارة الجدول',
+          textAlign: TextAlign.right,
+          style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildInstructionItem('• يمكنك تعديل وقت الجمع لكل يوم'),
+              _buildInstructionItem('• يمكنك تغيير الشاحنة المخصصة لكل يوم'),
+              _buildInstructionItem('• يمكنك تعيين أي يوم كعطلة أو دوام'),
+              _buildInstructionItem('• يمكنك إدارة عمال النظافة لكل يوم'),
+              _buildInstructionItem('• استخدم الأزرار السريعة للإجراءات الجماعية'),
+              _buildInstructionItem('• التغييرات تحفظ تلقائياً'),
+              _buildInstructionItem('• يمكنك التنقل بين الأسابيع باستخدام الأسهم'),
+              _buildInstructionItem('• استخدم زر الشاحنة لإدارة أسطول الشاحنات'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'تم الفهم',
+              style: TextStyle(
+                color: Color(0xFF117E75),
+                fontFamily: 'Tajawal',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCleanersList() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'قائمة عمال النظافة',
+          textAlign: TextAlign.right,
+          style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _cleaners.map((cleaner) => ListTile(
+              trailing: CircleAvatar(
+                backgroundColor: const Color(0xFF117E75),
+                child: Text(
+                  cleaner.id.toString(),
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+              title: Text(
+                cleaner.name,
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontFamily: 'Tajawal'),
+              ),
+              subtitle: Text(
+                cleaner.phone,
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontFamily: 'Tajawal'),
+              ),
+            )).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'إغلاق',
+              style: TextStyle(
+                color: Color(0xFF117E75),
+                fontFamily: 'Tajawal',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -244,10 +431,7 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
       ),
       body: Column(
         children: [
-          // Week Navigation
           _buildWeekNavigation(),
-          
-          // Schedule List
           Expanded(
             child: ListView.builder(
               itemCount: _weeklySchedule.length,
@@ -298,10 +482,10 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
             ),
             Column(
               children: [
-                Text(
+                const Text(
                   'الجدول الأسبوعي',
                   style: TextStyle(
-                    color: const Color(0xFF117E75),
+                    color: Color(0xFF117E75),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Tajawal',
@@ -310,8 +494,8 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
                 const SizedBox(height: 4),
                 Text(
                   _getWeekRange(),
-                  style: TextStyle(
-                    color: Colors.grey[700],
+                  style: const TextStyle(
+                    color: Colors.grey,
                     fontFamily: 'Tajawal',
                   ),
                 ),
@@ -481,11 +665,11 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
         const SizedBox(width: 8),
         Container(
           width: 80,
-          child: Text(
+          child: const Text(
             'العمال:',
             textAlign: TextAlign.right,
             style: TextStyle(
-              color: const Color(0xFF117E75),
+              color: Color(0xFF117E75),
               fontWeight: FontWeight.bold,
               fontFamily: 'Tajawal',
             ),
@@ -495,222 +679,18 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
     );
   }
 
-  void _showQuickActions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'إجراءات سريعة',
-              style: TextStyle(
-                color: const Color(0xFF117E75),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Tajawal',
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildQuickActionButton(
-              'تعيين جميع الأيام كأيام دوام',
-              Icons.work,
-              const Color(0xFF4CAF50),
-              () {
-                setState(() {
-                  for (int i = 0; i < _weeklySchedule.length; i++) {
-                    if (_weeklySchedule[i].isDayOff) {
-                      _toggleDayOff(i);
-                    }
-                  }
-                });
-                Navigator.pop(context);
-              },
-            ),
-            _buildQuickActionButton(
-              'تعيين الجمعة كعطلة',
-              Icons.beach_access,
-              Colors.orange,
-              () {
-                setState(() {
-                  for (int i = 0; i < _weeklySchedule.length; i++) {
-                    if (_weeklySchedule[i].date.weekday == DateTime.friday && !_weeklySchedule[i].isDayOff) {
-                      _toggleDayOff(i);
-                    }
-                  }
-                });
-                Navigator.pop(context);
-              },
-            ),
-            _buildQuickActionButton(
-              'تعيين وقت موحد للصباح',
-              Icons.access_time,
-              const Color(0xFF2196F3),
-              () {
-                setState(() {
-                  for (int i = 0; i < _weeklySchedule.length; i++) {
-                    if (!_weeklySchedule[i].isDayOff) {
-                      _weeklySchedule[i] = DaySchedule(
-                        date: _weeklySchedule[i].date,
-                        dayName: _weeklySchedule[i].dayName,
-                        startTime: '06:00 ص',
-                        endTime: '08:00 ص',
-                        truck: _weeklySchedule[i].truck,
-                        isDayOff: false,
-                        assignedCleaners: _weeklySchedule[i].assignedCleaners,
-                      );
-                    }
-                  }
-                });
-                Navigator.pop(context);
-              },
-            ),
-            _buildQuickActionButton(
-              'توزيع العمال تلقائياً',
-              Icons.people,
-              const Color(0xFF9C27B0),
-              () {
-                setState(() {
-                  for (int i = 0; i < _weeklySchedule.length; i++) {
-                    if (!_weeklySchedule[i].isDayOff) {
-                      _weeklySchedule[i] = DaySchedule(
-                        date: _weeklySchedule[i].date,
-                        dayName: _weeklySchedule[i].dayName,
-                        startTime: _weeklySchedule[i].startTime,
-                        endTime: _weeklySchedule[i].endTime,
-                        truck: _weeklySchedule[i].truck,
-                        isDayOff: false,
-                        assignedCleaners: _getRandomCleanersForDay(i),
-                      );
-                    }
-                  }
-                });
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'إلغاء',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontFamily: 'Tajawal',
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildQuickActionButton(String text, IconData icon, Color color, VoidCallback onPressed) {
     return ListTile(
       trailing: Icon(icon, color: color),
       title: Text(
         text,
         textAlign: TextAlign.right,
-        style: TextStyle(
-          color: Colors.grey[800],
+        style: const TextStyle(
+          color: Colors.black87,
           fontFamily: 'Tajawal',
         ),
       ),
       onTap: onPressed,
-    );
-  }
-
-  void _showInstructions() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: Text(
-          'إرشادات إدارة الجدول',
-          textAlign: TextAlign.right,
-          style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _buildInstructionItem('• يمكنك تعديل وقت الجمع لكل يوم'),
-              _buildInstructionItem('• يمكنك تغيير الشاحنة المخصصة لكل يوم'),
-              _buildInstructionItem('• يمكنك تعيين أي يوم كعطلة أو دوام'),
-              _buildInstructionItem('• يمكنك إدارة عمال النظافة لكل يوم'),
-              _buildInstructionItem('• استخدم الأزرار السريعة للإجراءات الجماعية'),
-              _buildInstructionItem('• التغييرات تحفظ تلقائياً'),
-              _buildInstructionItem('• يمكنك التنقل بين الأسابيع باستخدام الأسهم'),
-              _buildInstructionItem('• استخدم زر الشاحنة لإدارة أسطول الشاحنات'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'تم الفهم',
-              style: TextStyle(
-                color: const Color(0xFF117E75),
-                fontFamily: 'Tajawal',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCleanersList() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: Text(
-          'قائمة عمال النظافة',
-          textAlign: TextAlign.right,
-          style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: _cleaners.map((cleaner) => ListTile(
-              trailing: CircleAvatar(
-                backgroundColor: const Color(0xFF117E75),
-                child: Text(
-                  cleaner.id.toString(),
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
-              title: Text(
-                cleaner.name,
-                textAlign: TextAlign.right,
-                style: const TextStyle(fontFamily: 'Tajawal'),
-              ),
-              subtitle: Text(
-                cleaner.phone,
-                textAlign: TextAlign.right,
-                style: const TextStyle(fontFamily: 'Tajawal'),
-              ),
-            )).toList(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إغلاق',
-              style: TextStyle(
-                color: const Color(0xFF117E75),
-                fontFamily: 'Tajawal',
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -720,8 +700,8 @@ class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> {
       child: Text(
         text,
         textAlign: TextAlign.right,
-        style: TextStyle(
-          color: Colors.grey[700],
+        style: const TextStyle(
+          color: Colors.black87,
           fontFamily: 'Tajawal',
         ),
       ),
@@ -854,10 +834,10 @@ class _TruckManagementBottomSheetState extends State<TruckManagementBottomSheet>
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        title: Text(
+        title: const Text(
           'تأكيد الحذف',
           textAlign: TextAlign.right,
-          style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+          style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
         ),
         content: Text(
           'هل أنت متأكد من حذف ${_trucks[index].name}؟',
@@ -867,10 +847,10 @@ class _TruckManagementBottomSheetState extends State<TruckManagementBottomSheet>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
+            child: const Text(
               'إلغاء',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: Colors.grey,
                 fontFamily: 'Tajawal',
               ),
             ),
@@ -920,10 +900,10 @@ class _TruckManagementBottomSheetState extends State<TruckManagementBottomSheet>
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
               ),
-              Text(
+              const Text(
                 'إدارة الشاحنات',
                 style: TextStyle(
-                  color: const Color(0xFF117E75),
+                  color: Color(0xFF117E75),
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Tajawal',
@@ -999,8 +979,8 @@ class _TruckManagementBottomSheetState extends State<TruckManagementBottomSheet>
                   children: [
                     Text(
                       truck.name,
-                      style: TextStyle(
-                        color: const Color(0xFF117E75),
+                      style: const TextStyle(
+                        color: Color(0xFF117E75),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Tajawal',
@@ -1045,8 +1025,8 @@ class _TruckManagementBottomSheetState extends State<TruckManagementBottomSheet>
         Text(
           title,
           textAlign: TextAlign.right,
-          style: TextStyle(
-            color: const Color(0xFF117E75),
+          style: const TextStyle(
+            color: Color(0xFF117E75),
             fontWeight: FontWeight.bold,
             fontFamily: 'Tajawal',
             fontSize: 12,
@@ -1088,10 +1068,10 @@ class _AddTruckDialogState extends State<AddTruckDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.white,
-      title: Text(
+      title: const Text(
         'إضافة شاحنة جديدة',
         textAlign: TextAlign.right,
-        style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+        style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -1217,10 +1197,10 @@ class _AddTruckDialogState extends State<AddTruckDialog> {
         ),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(
+          child: const Text(
             'إلغاء',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Colors.grey,
               fontFamily: 'Tajawal',
             ),
           ),
@@ -1271,10 +1251,10 @@ class _EditTruckDialogState extends State<EditTruckDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.white,
-      title: Text(
+      title: const Text(
         'تعديل بيانات الشاحنة',
         textAlign: TextAlign.right,
-        style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+        style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -1370,10 +1350,10 @@ class _EditTruckDialogState extends State<EditTruckDialog> {
         ),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(
+          child: const Text(
             'إلغاء',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Colors.grey,
               fontFamily: 'Tajawal',
             ),
           ),
@@ -1460,7 +1440,7 @@ class _EditDayScheduleDialogState extends State<EditDayScheduleDialog> {
       title: Text(
         'تعديل ${widget.daySchedule.dayName}',
         textAlign: TextAlign.right,
-        style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+        style: const TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -1470,10 +1450,10 @@ class _EditDayScheduleDialogState extends State<EditDayScheduleDialog> {
             // Day Off Toggle
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(
+              title: const Text(
                 'عطلة',
                 textAlign: TextAlign.right,
-                style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+                style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
               ),
               value: _isDayOff,
               onChanged: (value) {
@@ -1488,10 +1468,10 @@ class _EditDayScheduleDialogState extends State<EditDayScheduleDialog> {
               const SizedBox(height: 16),
               
               // Start Time
-              Text(
+              const Text(
                 'وقت البدء:',
                 textAlign: TextAlign.right,
-                style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+                style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
               ),
               DropdownButtonFormField(
                 value: _selectedStartTime,
@@ -1513,10 +1493,10 @@ class _EditDayScheduleDialogState extends State<EditDayScheduleDialog> {
               const SizedBox(height: 16),
               
               // End Time
-              Text(
+              const Text(
                 'وقت الانتهاء:',
                 textAlign: TextAlign.right,
-                style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+                style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
               ),
               DropdownButtonFormField(
                 value: _selectedEndTime,
@@ -1538,12 +1518,12 @@ class _EditDayScheduleDialogState extends State<EditDayScheduleDialog> {
               const SizedBox(height: 16),
               
               // Truck Selection
-              Text(
+              const Text(
                 'الشاحنة:',
                 textAlign: TextAlign.right,
-                style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+                style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
               ),
-              DropdownButtonFormField<Truck>(
+              DropdownButtonFormField<Truck?>(
                 value: _selectedTruck,
                 items: widget.availableTrucks
                     .map((truck) => DropdownMenuItem(
@@ -1563,16 +1543,16 @@ class _EditDayScheduleDialogState extends State<EditDayScheduleDialog> {
               const SizedBox(height: 16),
               
               // Cleaners Selection
-              Text(
+              const Text(
                 'اختر العمال:',
                 textAlign: TextAlign.right,
-                style: TextStyle(color: const Color(0xFF117E75), fontFamily: 'Tajawal'),
+                style: TextStyle(color: Color(0xFF117E75), fontFamily: 'Tajawal'),
               ),
               const SizedBox(height: 8),
               Container(
                 height: 200,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ListView.builder(
@@ -1621,10 +1601,10 @@ class _EditDayScheduleDialogState extends State<EditDayScheduleDialog> {
         ),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(
+          child: const Text(
             'إلغاء',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Colors.grey,
               fontFamily: 'Tajawal',
             ),
           ),
