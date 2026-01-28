@@ -5,22 +5,35 @@ class WastePremiumSpecialistScreen extends StatefulWidget {
   const WastePremiumSpecialistScreen({super.key});
 
   @override
-  State<WastePremiumSpecialistScreen> createState() => _WastePremiumSpecialistScreenState();
+  State<WastePremiumSpecialistScreen> createState() =>
+      _WastePremiumSpecialistScreenState();
 }
 
-class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScreen> with SingleTickerProviderStateMixin {
+class _WastePremiumSpecialistScreenState
+    extends State<WastePremiumSpecialistScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentTabIndex = 0;
-  
+
   // الألوان المخصصة لموظف النفايات المميزة (تم التعديل)
-  final Color _primaryColor = const Color.fromARGB(255, 28, 195, 167); // أخضر نيلي داكن
-  final Color _secondaryColor = const Color.fromARGB(255, 0, 137, 89); // أخضر نيلي
+  final Color _primaryColor = const Color.fromARGB(
+    255,
+    28,
+    195,
+    167,
+  ); // أخضر نيلي داكن
+  final Color _secondaryColor = const Color.fromARGB(
+    255,
+    0,
+    137,
+    89,
+  ); // أخضر نيلي
   final Color _accentColor = const Color(0xFF4DB6AC); // أخضر نيلي فاتح
   final Color _backgroundColor = const Color(0xFFE0F2F1); // أخضر فاتح جداً
   final Color _cardColor = Colors.white;
   final Color _textColor = const Color.fromARGB(255, 38, 53, 56);
   final Color _textSecondaryColor = const Color.fromARGB(255, 120, 156, 140);
-  
+
   // البيانات الوهمية
   final List<Map<String, dynamic>> _premiumRequests = [
     {
@@ -56,7 +69,7 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
       'priority': 'منخفض',
     },
   ];
-  
+
   final List<Map<String, dynamic>> _services = [
     {
       'title': 'الطلبات المميزة',
@@ -117,8 +130,14 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
           controller: _tabController,
           indicatorColor: Colors.white,
           indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          unselectedLabelStyle: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+          unselectedLabelStyle: TextStyle(
+            fontSize: 14,
+            color: Colors.white.withOpacity(0.7),
+          ),
           tabs: const [
             Tab(icon: Icon(Icons.dashboard), text: 'لوحة التحكم'),
             Tab(icon: Icon(Icons.list_alt), text: 'الطلبات'),
@@ -153,7 +172,9 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
           // بطاقة الترحيب
           Card(
             elevation: 6,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -202,30 +223,49 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      _buildStatCard('مهمة اليوم', 5, Icons.today, Colors.amber),
+                      _buildStatCard(
+                        'مهمة اليوم',
+                        5,
+                        Icons.today,
+                        Colors.amber,
+                      ),
                       const SizedBox(width: 12),
-                      _buildStatCard('مكتملة', 23, Icons.check_circle, Colors.green),
+                      _buildStatCard(
+                        'مكتملة',
+                        23,
+                        Icons.check_circle,
+                        Colors.green,
+                      ),
                       const SizedBox(width: 12),
-                      _buildStatCard('معلقة', 7, Icons.pending_actions, Colors.orange),
+                      _buildStatCard(
+                        'معلقة',
+                        7,
+                        Icons.pending_actions,
+                        Colors.orange,
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // الخدمات السريعة
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Text(
               'الخدمات السريعة',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: _textColor,
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // استخدام GridView بمقاسات محسنة
           GridView.builder(
             shrinkWrap: true,
@@ -242,9 +282,9 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
               return _buildServiceCard(service);
             },
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // الطلبات الحديثة
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -253,7 +293,11 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
               children: [
                 Text(
                   'الطلبات الحديثة',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: _textColor,
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
@@ -268,7 +312,7 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
             ),
           ),
           const SizedBox(height: 12),
-          
+
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -410,7 +454,10 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 0,
+                horizontal: 16,
+              ),
             ),
           ),
         ),
@@ -431,7 +478,7 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
   Widget _buildRequestItem(Map<String, dynamic> request, int index) {
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.info;
-    
+
     if (request['status'] == 'معلق') {
       statusColor = Colors.orange;
       statusIcon = Icons.pending;
@@ -442,7 +489,7 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
       statusColor = Colors.green;
       statusIcon = Icons.check_circle;
     }
-    
+
     Color priorityColor = Colors.grey;
     if (request['priority'] == 'عالي') {
       priorityColor = Colors.red;
@@ -451,7 +498,7 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
     } else if (request['priority'] == 'منخفض') {
       priorityColor = Colors.green;
     }
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 3,
@@ -469,7 +516,11 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
         ),
         title: Text(
           request['customer'],
-          style: TextStyle(fontWeight: FontWeight.bold, color: _textColor, fontSize: 16),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: _textColor,
+            fontSize: 16,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,7 +530,11 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 16, color: _textSecondaryColor),
+                Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: _textSecondaryColor,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   DateFormat('yyyy-MM-dd').format(request['date']),
@@ -510,8 +565,8 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
                       child: Text(
                         request['status'],
                         style: TextStyle(
-                          color: statusColor, 
-                          fontSize: 10, 
+                          color: statusColor,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
@@ -557,7 +612,11 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
         children: [
           Text(
             'تقارير أداء خدمات النفايات المميزة',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: _textColor,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -565,16 +624,26 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
             style: TextStyle(fontSize: 14, color: _textSecondaryColor),
           ),
           const SizedBox(height: 24),
-          
+
           // إحصائيات سريعة
           Row(
             children: [
               Expanded(
-                child: _buildReportStatCard('إجمالي الطلبات', '142', Icons.request_page, _primaryColor),
+                child: _buildReportStatCard(
+                  'إجمالي الطلبات',
+                  '142',
+                  Icons.request_page,
+                  _primaryColor,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildReportStatCard('طلبات هذا الشهر', '24', Icons.calendar_month, _secondaryColor),
+                child: _buildReportStatCard(
+                  'طلبات هذا الشهر',
+                  '24',
+                  Icons.calendar_month,
+                  _secondaryColor,
+                ),
               ),
             ],
           ),
@@ -582,40 +651,78 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
           Row(
             children: [
               Expanded(
-                child: _buildReportStatCard('معدل الإنجاز', '87%', Icons.trending_up, Colors.green),
+                child: _buildReportStatCard(
+                  'معدل الإنجاز',
+                  '87%',
+                  Icons.trending_up,
+                  Colors.green,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildReportStatCard('رضا العملاء', '4.8/5', Icons.star, Colors.amber),
+                child: _buildReportStatCard(
+                  'رضا العملاء',
+                  '4.8/5',
+                  Icons.star,
+                  Colors.amber,
+                ),
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // تقارير نوعية
           Text(
             'التقارير النوعية',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _textColor),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: _textColor,
+            ),
           ),
           const SizedBox(height: 12),
-          
-          _buildReportItem('تقرير الأداء الشهري', Icons.description, 'يحتوي على إحصائيات الأداء للشهر الحالي'),
-          _buildReportItem('تقرير رضا العملاء', Icons.sentiment_satisfied_alt, 'تحليل لاستبيانات رضا العملاء'),
-          _buildReportItem('تقرير الطلبات المعلقة', Icons.pending_actions, 'الطلبات التي تحتاج لمتابعة'),
-          _buildReportItem('تقرير التكاليف', Icons.attach_money, 'تحليل للتكاليف والإيرادات'),
-          
+
+          _buildReportItem(
+            'تقرير الأداء الشهري',
+            Icons.description,
+            'يحتوي على إحصائيات الأداء للشهر الحالي',
+          ),
+          _buildReportItem(
+            'تقرير رضا العملاء',
+            Icons.sentiment_satisfied_alt,
+            'تحليل لاستبيانات رضا العملاء',
+          ),
+          _buildReportItem(
+            'تقرير الطلبات المعلقة',
+            Icons.pending_actions,
+            'الطلبات التي تحتاج لمتابعة',
+          ),
+          _buildReportItem(
+            'تقرير التكاليف',
+            Icons.attach_money,
+            'تحليل للتكاليف والإيرادات',
+          ),
+
           const SizedBox(height: 24),
           Center(
             child: ElevatedButton.icon(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               icon: Icon(Icons.add_chart, color: Colors.white),
-              label: const Text('إنشاء تقرير جديد', style: TextStyle(color: Colors.white)),
+              label: const Text(
+                'إنشاء تقرير جديد',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -623,8 +730,13 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
       ),
     );
   }
-  
-  Widget _buildReportStatCard(String title, String value, IconData icon, Color color) {
+
+  Widget _buildReportStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -659,17 +771,14 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
             const SizedBox(height: 4),
             Text(
               title,
-              style: TextStyle(
-                fontSize: 14,
-                color: _textSecondaryColor,
-              ),
+              style: TextStyle(fontSize: 14, color: _textSecondaryColor),
             ),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildReportItem(String title, IconData icon, String description) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -686,9 +795,19 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
           ),
           child: Icon(icon, color: _primaryColor),
         ),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: _textColor)),
-        subtitle: Text(description, style: TextStyle(fontSize: 12, color: _textSecondaryColor)),
-        trailing: Icon(Icons.arrow_forward_ios, color: _textSecondaryColor, size: 16),
+        title: Text(
+          title,
+          style: TextStyle(fontWeight: FontWeight.bold, color: _textColor),
+        ),
+        subtitle: Text(
+          description,
+          style: TextStyle(fontSize: 12, color: _textSecondaryColor),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          color: _textSecondaryColor,
+          size: 16,
+        ),
         onTap: () {},
       ),
     );
@@ -714,7 +833,10 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
               _buildDetailRow('الخدمة:', request['service']),
               _buildDetailRow('الحالة:', request['status']),
               _buildDetailRow('الأولوية:', request['priority']),
-              _buildDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(request['date'])),
+              _buildDetailRow(
+                'التاريخ:',
+                DateFormat('yyyy-MM-dd HH:mm').format(request['date']),
+              ),
               const SizedBox(height: 16),
               const Text(
                 'ملاحظات إضافية:',
@@ -785,27 +907,47 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
               TextField(
                 decoration: InputDecoration(
                   labelText: 'اسم العميل',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 decoration: InputDecoration(
                   labelText: 'نوع الخدمة',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField(
                 decoration: InputDecoration(
                   labelText: 'الأولوية',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                 ),
                 items: ['منخفض', 'متوسط', 'عالي']
-                    .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))
+                    .map(
+                      (priority) => DropdownMenuItem(
+                        value: priority,
+                        child: Text(priority),
+                      ),
+                    )
                     .toList(),
                 onChanged: (value) {},
               ),
@@ -826,13 +968,18 @@ class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScr
                           content: const Text('تم إنشاء الطلب بنجاح'),
                           backgroundColor: _primaryColor,
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primaryColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text('إنشاء'),
                   ),

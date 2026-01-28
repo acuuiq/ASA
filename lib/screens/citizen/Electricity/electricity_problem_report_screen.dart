@@ -23,6 +23,8 @@ class ElectricityProblemReportScreen extends StatefulWidget {
 }
 
 class _ElectricityProblemReportScreenState extends State<ElectricityProblemReportScreen> {
+  final ImagePicker _picker = ImagePicker();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,6 +79,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
+    bool isEmergency = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -94,6 +97,9 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
               offset: const Offset(0, 3),
             ),
           ],
+          border: isEmergency
+              ? Border.all(color: Colors.red, width: 2)
+              : null,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -103,24 +109,59 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: isEmergency
+                      ? Colors.red.withOpacity(0.1)
+                      : color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: color.withOpacity(0.3), width: 1),
+                  border: Border.all(
+                    color: isEmergency
+                        ? Colors.red.withOpacity(0.3)
+                        : color.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
-                child: Icon(icon, color: color, size: 28),
+                child: Icon(icon,
+                    color: isEmergency ? Colors.red : color, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.right,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (isEmergency)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red, width: 1),
+                        ),
+                        child: Text(
+                          'طارئ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isEmergency ? Colors.red : Colors.black,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
                 ),
               ),
-              Icon(Icons.chevron_left, color: Colors.grey[600], size: 30),
+              Icon(Icons.chevron_left,
+                  color: isEmergency ? Colors.red : Colors.grey[600],
+                  size: 30),
             ],
           ),
         ),
@@ -128,39 +169,26 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
     );
   }
 
-  // التصحيح في دالة _buildProblemReportContent
   Widget _buildProblemReportContent() {
-    // تحديد الأيقونة واللون حسب نوع الخدمة
-    IconData serviceIcon;
-    Color iconColor;
-    Color cardColor;
-
-    if (widget.serviceTitle.contains('الماء')) {
-      serviceIcon = Icons.water_drop;
-      iconColor = Colors.blue;
-      cardColor = Colors.blue;
-    } else if (widget.serviceTitle.contains('الكهرباء')) {
-      serviceIcon = Icons.bolt;
-      iconColor = Colors.amber;
-      cardColor = Colors.amber;
-    } else if (widget.serviceTitle.contains('النفايات')) {
-      serviceIcon = Icons.delete_outline;
-      iconColor = Colors.green;
-      cardColor = Colors.green;
-    } else {
-      serviceIcon = Icons.help_outline;
-      iconColor = Colors.grey;
-      cardColor = Colors.grey;
-    }
+    // تحديد الأيقونة واللون لخدمة الكهرباء فقط
+    IconData serviceIcon = Icons.bolt;
+    Color iconColor = Colors.amber;
+    Color cardColor = Colors.amber;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 10),
-        _buildSectionTitle('اختر نوع البلاغ'), // تم التصحيح
+        _buildSectionTitle('اختر نوع البلاغ'),
         const SizedBox(height: 10),
         _buildReportTypeCard(
-          // تم التصحيح
+          title: "البلاغ الطارئ (مشكلة خطيرة تتطلب تدخل سريع)",
+          icon: Icons.warning,
+          color: Colors.red,
+          isEmergency: true,
+          onTap: () => _showEmergencyReport(),
+        ),
+        _buildReportTypeCard(
           title: "الإبلاغ عن مشكلة في خدمة ${widget.serviceTitle}",
           icon: serviceIcon,
           color: cardColor,
@@ -197,50 +225,450 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
     );
   }
 
+  void _showEmergencyReport() {
+    final formKey = GlobalKey<FormState>();
+    final descriptionController = TextEditingController();
+    final locationController = TextEditingController();
+    XFile? selectedImage;
+    String? emergencyType;
+
+    // أنواع الطوارئ لخدمة الكهرباء فقط
+    List<String> emergencyTypes = [
+      'كابلات كهرباء ساقطة في الشارع',
+      'شرارة كهربائية أو حريق',
+      'عمود إنارة مائل أو ساقط',
+      'محول كهربائي يحترق أو ينفجر',
+      'خطر صعق كهربائي',
+      'أخرى (أدخل في الوصف)'
+    ];
+
+    // تعليمات خاصة بالكهرباء
+    String instructions = 'يمكنك الإبلاغ عن:\n\n'
+        '• كابلات كهرباء ساقطة أو تالفة\n'
+        '• محولات عاطلة أو معطوبة\n'
+        '• أعمدة إنارة مكسورة\n'
+        '• شرر أو حريق في المعدات الكهربائية\n'
+        '• أي خطر كهربائي في الشارع';
+
+    Future<void> pickImage() async {
+      try {
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+        );
+        if (image != null) {
+          setState(() {
+            selectedImage = image;
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ أثناء التقاط الصورة: $e'),
+          ),
+        );
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(25),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 60,
+                            height: 5,
+                            margin: const EdgeInsets.only(bottom: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.warning, color: Colors.red, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              'البلاغ الطارئ - الكهرباء',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.red.withOpacity(0.2)),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.report_problem_rounded,
+                                  color: Colors.orange, size: 40),
+                              const SizedBox(height: 12),
+                              Text(
+                                instructions,
+                                style: const TextStyle(
+                                    fontSize: 14, height: 1.5),
+                                textAlign: TextAlign.right,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildDropdownFormField(
+                          label: 'نوع الطارئ الكهربائي',
+                          value: emergencyType,
+                          items: emergencyTypes,
+                          onChanged: (value) {
+                            setState(() {
+                              emergencyType = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى اختيار نوع الطارئ الكهربائي';
+                            }
+                            return null;
+                          },
+                          icon: Icons.warning,
+                          iconColor: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextFormField(
+                          controller: locationController,
+                          label: 'موقع المشكلة بالتفصيل',
+                          maxLines: 2,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى إدخال موقع المشكلة';
+                            }
+                            return null;
+                          },
+                          icon: Icons.location_on,
+                          iconColor: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextFormField(
+                          controller: descriptionController,
+                          label: 'وصف المشكلة الطارئة',
+                          maxLines: 4,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى إدخال وصف للمشكلة الطارئة';
+                            }
+                            return null;
+                          },
+                          icon: Icons.description,
+                          iconColor: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'أرفق صورة للمشكلة (مهم للتدخل السريع)',
+                          style: TextStyle(fontSize: 16),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: pickImage,
+                          child: Container(
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: selectedImage == null
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.camera_alt_rounded,
+                                          color: Colors.grey[400], size: 40),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'انقر لالتقاط صورة للمشكلة',
+                                        style: TextStyle(color: Colors.grey[600]),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '(مطلوب للبلاغات الطارئة)',
+                                        style: TextStyle(
+                                            color: Colors.red, fontSize: 12),
+                                      ),
+                                    ],
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.file(
+                                      File(selectedImage!.path),
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        if (selectedImage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  selectedImage = null;
+                                });
+                              },
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              label: const Text(
+                                'إزالة الصورة',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  side: BorderSide(color: Colors.grey[300]!),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text(
+                                  'إلغاء',
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  if (formKey.currentState!.validate()) {
+                                    if (selectedImage == null) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content:
+                                              Text('يرجى التقاط صورة للمشكلة الطارئة'),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    _submitEmergencyReport(
+                                      emergencyType!,
+                                      descriptionController.text,
+                                      locationController.text,
+                                    );
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.warning, color: Colors.white),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'إرسال البلاغ الطارئ',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.red.withOpacity(0.2)),
+                          ),
+                          child: const Text(
+                            'ملاحظة: سيتم إرسال البلاغ الطارئ إلى فريق الطوارئ الكهربائي للمعالجة الفورية',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _submitEmergencyReport(
+    String emergencyType,
+    String description,
+    String location,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.circle,
+                    color: Colors.red.withOpacity(0.1),
+                    size: 100,
+                  ),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.red,
+                    size: 60,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'تم إرسال البلاغ الطارئ',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'شكراً لك على إبلاغنا بالمشكلة الطارئة. تم إرسال بلاغك إلى فريق الطوارئ الكهربائي للمعالجة الفورية.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withOpacity(0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('نوع الطارئ: $emergencyType',
+                        textAlign: TextAlign.right),
+                    const SizedBox(height: 8),
+                    Text('الموقع: $location', textAlign: TextAlign.right),
+                    const SizedBox(height: 8),
+                    Text(
+                      'رقم المرجع الطارئ: #EMG-${DateTime.now().millisecondsSinceEpoch}',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('حسناً', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showServiceProblemReport() {
     final formKey = GlobalKey<FormState>();
     final problemController = TextEditingController();
     String? selectedProblemType;
     List<XFile> attachedImages = [];
 
-    // تحديد أنواع المشاكل واللون حسب الخدمة
-    List<String> problemTypes;
-    IconData serviceIcon;
-    Color serviceColor;
+    // أنواع المشاكل لخدمة الكهرباء فقط
+    List<String> problemTypes = [
+      'انقطاع التيار الكهربائي',
+      'مشكلة في العدادات',
+      'مشكلة في الفولتية',
+      'أضواء شارع معطلة',
+      'أخرى',
+    ];
+    IconData serviceIcon = Icons.bolt;
+    Color serviceColor = Colors.amber;
 
-    if (widget.serviceTitle.contains('الماء')) {
-      problemTypes = [
-        'انقطاع الماء',
-        'مشكلة في عدادات الماء',
-        'جودة المياه',
-        'أخرى',
-      ];
-      serviceIcon = Icons.water_drop;
-      serviceColor = Colors.blue;
-    } else if (widget.serviceTitle.contains('الكهرباء')) {
-      problemTypes = [
-        'انقطاع التيار الكهربائي',
-        'مشكلة في العدادات',
-        'مشكلة في الفولتية',
-        'أخرى',
-      ];
-      serviceIcon = Icons.bolt;
-      serviceColor = Colors.amber;
-    } else if (widget.serviceTitle.contains('النفايات')) {
-      problemTypes = [
-        'عدم جمع النفايات',
-        'تسرب من الحاويات',
-        'روائح كريهة',
-        'حاويات تالفة',
-        'أخرى',
-      ];
-      serviceIcon = Icons.delete_outline;
-      serviceColor = Colors.green;
-    } else {
-      problemTypes = ['مشكلة عامة', 'أخرى'];
-      serviceIcon = Icons.help_outline;
-      serviceColor = Colors.grey;
-    }
     Future<void> takePhoto() async {
       try {
         final ImagePicker picker = ImagePicker();
@@ -323,14 +751,14 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: serviceColor, // استخدام لون الخدمة
+                              color: serviceColor,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         const SizedBox(height: 20),
                         _buildDropdownFormField(
-                          label: 'نوع المشكلة',
+                          label: 'نوع المشكلة الكهربائية',
                           value: selectedProblemType,
                           items: problemTypes,
                           onChanged: (value) {
@@ -344,8 +772,8 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                             }
                             return null;
                           },
-                          icon: serviceIcon, // استخدام أيقونة الخدمة
-                          iconColor: serviceColor, // تمرير لون الخدمة
+                          icon: serviceIcon,
+                          iconColor: serviceColor,
                         ),
                         const SizedBox(height: 16),
                         _buildTextFormField(
@@ -359,7 +787,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                             return null;
                           },
                           icon: Icons.description,
-                          iconColor: serviceColor, // تمرير لون الخدمة
+                          iconColor: serviceColor,
                         ),
                         const SizedBox(height: 16),
                         _buildImageAttachmentSection(
@@ -374,7 +802,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                         ),
                         const SizedBox(height: 24),
                         _buildSubmitButton(
-                          color: serviceColor, // استخدام لون الخدمة
+                          color: serviceColor,
                           text: 'إرسال البلاغ',
                           onPressed: () {
                             if (formKey.currentState!.validate()) {
@@ -389,7 +817,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                               _submitProblemReport(
                                 'مشكلة في ${widget.serviceTitle}',
                                 reportDetails,
-                                serviceColor, // تمرير لون الخدمة
+                                serviceColor,
                               );
                             }
                           },
@@ -413,7 +841,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
     required Function(String?) onChanged,
     required String? Function(String?) validator,
     required IconData icon,
-    Color iconColor = Colors.grey, // إضافة معامل جديد للون الأيقونة
+    Color iconColor = Colors.grey,
   }) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
@@ -432,7 +860,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
           horizontal: 16,
           vertical: 12,
         ),
-        prefixIcon: Icon(icon, color: iconColor), // استخدام اللون المحدد
+        prefixIcon: Icon(icon, color: iconColor),
       ),
       value: value,
       items: items.map((type) {
@@ -456,7 +884,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
     int maxLines = 1,
     required String? Function(String?) validator,
     required IconData icon,
-    Color iconColor = Colors.grey, // إضافة معامل جديد للون الأيقونة
+    Color iconColor = Colors.grey,
   }) {
     return TextFormField(
       controller: controller,
@@ -476,7 +904,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
           horizontal: 16,
           vertical: 16,
         ),
-        prefixIcon: Icon(icon, color: iconColor), // استخدام اللون المحدد
+        prefixIcon: Icon(icon, color: iconColor),
       ),
       maxLines: maxLines,
       validator: validator,
@@ -627,7 +1055,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
     List<XFile> attachedImages = [];
 
     final List<String> employeeTypes = [
-      'موظف الصيانة',
+      'فني كهرباء',
       'موظف الفواتير',
       'موظف استقبال البلاغات',
       'آخر',
@@ -920,7 +1348,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                               _submitProblemReport(
                                 'تقصير موظفين',
                                 reportDetails,
-                                Colors.red, // لون الخدمة
+                                Colors.blue,
                               );
                             }
                           },
@@ -1126,7 +1554,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                               _submitProblemReport(
                                 'مشكلة في التطبيق',
                                 reportDetails,
-                                Colors.red, // لون الخدمة
+                                Colors.red,
                               );
                             }
                           },
@@ -1162,7 +1590,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
                 Icons.check_circle,
                 color: serviceColor,
                 size: 60,
-              ), // استخدام لون الخدمة
+              ),
               const SizedBox(height: 16),
               Text(
                 'تم إرسال البلاغ بنجاح',
@@ -1201,7 +1629,7 @@ class _ElectricityProblemReportScreenState extends State<ElectricityProblemRepor
               const SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: serviceColor, // استخدام لون الخدمة
+                  backgroundColor: serviceColor,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

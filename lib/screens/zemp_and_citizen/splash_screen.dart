@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mang_mu/screens/mainscren.dart';
+import 'package:mang_mu/screens/zemp_and_citizen/mainscren.dart';
 
 class SplashScreen extends StatefulWidget {
   static const String screenRoute = '/splash';

@@ -10,8 +10,8 @@ import 'package:mang_mu/screens/employee/Shared%20Services/eregesyer_screen.dart
 import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/welcome_screen.dart';
 import 'package:mang_mu/screens/employee/Shared%20Services/esignin_screen.dart';
 
-import 'package:mang_mu/screens/mainscren.dart';
-import 'package:mang_mu/screens/splash_screen.dart';
+import 'package:mang_mu/screens/zemp_and_citizen/mainscren.dart';
+import 'package:mang_mu/screens/zemp_and_citizen/splash_screen.dart';
 import 'package:mang_mu/language/app_localizations.dart';
 // أضف استيراد شاشة المحاسب
 import 'package:mang_mu/providers/language_provider.dart';

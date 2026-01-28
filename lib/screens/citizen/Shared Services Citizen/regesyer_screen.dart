@@ -4,9 +4,6 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/user_main_screen.dart';
-import 'package:mang_mu/widgets/my_buttn.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'dart:ui';
 
 class RegesyerScreen extends StatefulWidget {
   static const String screenRoot = 'Regesyer_screen';
@@ -22,11 +19,20 @@ class _RegesyerScreenState extends State<RegesyerScreen>
   bool _isLoading = false;
   File? _frontIdentityImage;
   File? _backIdentityImage;
+  File? _selfieImage;
+  bool _isCapturingSelfie = false;
   final ImagePicker _picker = ImagePicker();
+
   final TextEditingController _accountController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _idNumberController = TextEditingController();
+  final TextEditingController _houseNumberController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+
+  final TextEditingController _phoneController =
+      TextEditingController(); // جديد: حقل رقم الموبايل
+
   int _currentStep = 0;
   final _formKey = GlobalKey<FormState>();
 
@@ -34,57 +40,130 @@ class _RegesyerScreenState extends State<RegesyerScreen>
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
-  int _currentBackground = 0;
-  final List<String> _backgrounds = [
-    'assets/bg1.svg',
-    'assets/bg2.svg',
-    'assets/bg3.svg',
+  late AnimationController _flashController;
+  late Animation<double> _flashAnimation;
+
+  final Color _primaryColor = const Color(0xFF0D47A1);
+  final Color _secondaryColor = const Color(0xFF1976D2);
+  final Color _accentColor = const Color(0xFF64B5F6);
+  final Color _backgroundColor = const Color(0xFFF8F9FA);
+  final Color _textColor = const Color(0xFF212121);
+  final Color _textSecondaryColor = const Color(0xFF757575);
+  final Color _successColor = const Color(0xFF2E7D32);
+  final Color _warningColor = const Color(0xFFF57C00);
+  final Color _errorColor = const Color(0xFFD32F2F);
+  final Color _borderColor = const Color(0xFFE0E0E0);
+  final Color _locationColor = const Color(0xFF4CAF50);
+  final Color _phoneColor = const Color(0xFF2196F3); // لون خاص بحقل الموبايل
+
+  // قائمة المناطق
+  final List<String> _regions = [
+    'حي القادسية',
+    'حي النصر',
+    'حي الحرية',
+    'حي البصرة',
+    'حي الصحة',
+    'حي الجامعة',
+    'حي العمال',
+    'محلة البو عبيد',
+    'محلة البو غرغور (الغرغور)',
+    'محلة البو محمد عيسى',
+    'محلة البو ناصر',
+    'محلة البو شهيل',
+    'محلة الحسينية',
+    'محلة السادة',
+    'محلة البو عبود',
+    'محلة البو حمد',
+    'المنطقة المركزية (السوق الكبير)',
+    'منطقة السدة',
+    'محلة البو شهب',
+    'محلة البو نجم',
+    'محلة البو درويش',
+    'حي الزهور',
+    'حي الأمل',
+    'منطقة القضاء (حول مركز الناحية)',
+    'شارع المستشفى',
+    'الشنافية',
+    'أبو حمزة (البو حمزة)',
+    'الكرادة',
+    'الدلمج (ومشروع الدلمج الزراعي)',
+    'الخضر',
+    'أبو جميجمة',
+    'النصرية الصغيرة',
+    'البدعة',
+    'الجرن',
+    'الهرامة',
+    'الجعافرة',
+    'الطاهرية',
+    'الطليعة',
+    'كريزة',
+    'الخرابة',
+    'الشحيمية',
+    'الطرف',
+    'النهير',
+    'المجر الكبير',
+    'المجر الصغير',
+    'السلام',
+    'أبو عطيوي (البو عطيوي)',
+    'الزوية',
+    'أبو حلوفة (البو حلوفة)',
+    'الشارع',
+    'المنصورية',
+    'البرك',
+    'الحدادة',
+    'الهرم',
+    'الهرية',
+    'الزيدية',
+    'الرفاعية',
+    'المكورة',
+    'الرشيدية',
+    'السودان',
+    'العلوة',
+    'المالحية',
+    'أبو صخير (البو صخير)',
+    'الشحنة',
+    'الجديدة',
+    'العكيكة',
+    'أبو غريب (البو غريب) - محلي',
+    'السلمان',
   ];
-  bool _isProfileOpen = false;
-  late AnimationController _profileController;
-  late Animation<double> _profileAnimation;
 
   @override
   void initState() {
     super.initState();
+
+    print('InitState called');
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1000),
     );
 
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOutQuint),
-    );
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _scaleAnimation = Tween<double>(
-      begin: 0.95,
+      begin: 0.9,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _profileController = AnimationController(
+    _flashController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: Duration(milliseconds: 300),
     );
 
-    _profileAnimation = CurvedAnimation(
-      parent: _profileController,
-      curve: Curves.easeInOut,
+    _flashAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _flashController, curve: Curves.easeInOut),
     );
 
     _controller.forward();
-
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted) {
-        setState(() {
-          _currentBackground = (_currentBackground + 1) % _backgrounds.length;
-        });
-      }
-    });
   }
 
   @override
@@ -93,63 +172,178 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     _codeController.dispose();
     _fullNameController.dispose();
     _idNumberController.dispose();
+    _houseNumberController.dispose();
+    _locationController.dispose();
+    _phoneController.dispose(); // جديد
     _controller.dispose();
-    _profileController.dispose();
+    _flashController.dispose();
     super.dispose();
   }
 
-  void _toggleProfile() {
-    setState(() {
-      _isProfileOpen = !_isProfileOpen;
-      if (_isProfileOpen) {
-        _profileController.forward();
-      } else {
-        _profileController.reverse();
-      }
-    });
-  }
+  // حذف جميع دوال GPS والموقع
 
   Future<void> _pickImage(bool isFront) async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 90,
-    );
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 90,
+      );
 
-    if (image != null) {
+      if (image != null && mounted) {
+        setState(() {
+          if (isFront) {
+            _frontIdentityImage = File(image.path);
+          } else {
+            _backIdentityImage = File(image.path);
+          }
+        });
+      }
+    } catch (e) {
+      print('خطأ في اختيار الصورة: $e');
+    }
+  }
+
+  void _removeImage(bool isFront) {
+    if (mounted) {
       setState(() {
         if (isFront) {
-          _frontIdentityImage = File(image.path);
+          _frontIdentityImage = null;
         } else {
-          _backIdentityImage = File(image.path);
+          _backIdentityImage = null;
         }
       });
     }
   }
 
-  void _removeImage(bool isFront) {
-    setState(() {
-      if (isFront) {
-        _frontIdentityImage = null;
-      } else {
-        _backIdentityImage = null;
+  Future<void> _captureSelfie() async {
+    if (mounted) {
+      setState(() => _isCapturingSelfie = true);
+    }
+
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.front,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 90,
+      );
+
+      if (mounted) {
+        setState(() => _isCapturingSelfie = false);
       }
-    });
+
+      if (image != null) {
+        _flashController.forward(from: 0);
+        await Future.delayed(Duration(milliseconds: 300));
+        _flashController.reverse();
+
+        if (mounted) {
+          setState(() {
+            _selfieImage = File(image.path);
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCapturingSelfie = false);
+      }
+      print('خطأ في التقاط السيلفي: $e');
+    }
+  }
+
+  void _removeSelfie() {
+    if (mounted) {
+      setState(() {
+        _selfieImage = null;
+      });
+    }
+  }
+
+  void _showRegionSelectionDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'اختر المنطقة',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryColor,
+                        fontFamily: 'Tajawal',
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _regions.length,
+                  itemBuilder: (context, index) {
+                    final region = _regions[index];
+                    return ListTile(
+                      title: Text(
+                        region,
+                        style: TextStyle(fontFamily: 'Tajawal', fontSize: 14),
+                      ),
+                      trailing: _locationController.text == region
+                          ? Icon(Icons.check, color: _primaryColor)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          _locationController.text = region;
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<bool> _createAccount() async {
-    User? user;
-
     try {
-      print('بدء إنشاء الحساب في Supabase...');
+      print('بدء إنشاء الحساب...');
 
       final email = _accountController.text.trim();
       final password = _codeController.text.trim();
       final fullName = _fullNameController.text.trim();
       final idNumber = _idNumberController.text.trim();
+      final houseNumber = _houseNumberController.text.trim();
+      final location = _locationController.text.trim();
+      final phone = _phoneController.text.trim(); // جديد
 
-      // التحقق من صحة البيانات
+      if (phone.isEmpty) {
+        // جديد
+        _showError('الرجاء إدخال رقم الموبايل');
+        return false;
+      }
       if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
         _showError('البريد الإلكتروني غير صحيح');
         return false;
@@ -160,25 +354,25 @@ class _RegesyerScreenState extends State<RegesyerScreen>
         return false;
       }
 
-      // 1. إنشاء المستخدم في مصادقة Supabase
-      print('إنشاء مستخدم في مصادقة Supabase...');
+      if (location.isEmpty) {
+        _showError('الرجاء اختيار المنطقة');
+        return false;
+      }
+
       final AuthResponse authResponse = await Supabase.instance.client.auth
           .signUp(email: email, password: password);
 
-      user = authResponse.user;
+      final user = authResponse.user;
       if (user == null) {
         _showError('فشل في إنشاء المستخدم');
         return false;
       }
 
-      print('تم إنشاء المستخدم: ${user.id}');
-
-      // الانتظار قليلاً لضمان توفر الجلسة
       await Future.delayed(Duration(milliseconds: 500));
 
-      // 2. رفع الصور إلى تخزين Supabase
       String frontImageUrl = '';
       String backImageUrl = '';
+      String selfieImageUrl = '';
 
       if (_frontIdentityImage != null) {
         try {
@@ -187,10 +381,8 @@ class _RegesyerScreenState extends State<RegesyerScreen>
             'front',
             user.id,
           );
-          print('تم رفع الصورة الأمامية بنجاح');
         } catch (e) {
           print('خطأ في رفع الصورة الأمامية: $e');
-          _showError('فشل في رفع صورة الهوية الأمامية. يرجى المحاولة مرة أخرى');
           return false;
         }
       }
@@ -202,92 +394,50 @@ class _RegesyerScreenState extends State<RegesyerScreen>
             'back',
             user.id,
           );
-          print('تم رفع الصورة الخلفية بنجاح');
         } catch (e) {
           print('خطأ في رفع الصورة الخلفية: $e');
-          _showError('فشل في رفع صورة الهوية الخلفية. يرجى المحاولة مرة أخرى');
           return false;
         }
       }
 
-      // 3. حفظ البيانات في جدول profiles
-      try {
-        final insertData = {
-          'id': user.id,
-          'full_name': fullName,
-          'id_number': idNumber,
-          'email': email,
-          'front_id_image': frontImageUrl,
-          'back_id_image': backImageUrl,
-          'user_type': 'citizen',
-          'status': 'under_review',
-          'created_at': DateTime.now().toIso8601String(),
-        };
-
-        await Supabase.instance.client
-            .from('profiles')
-            .insert(insertData);
-        print('تم حفظ بيانات المستخدم في جدول profiles بنجاح');
-      } catch (e) {
-        print('خطأ في حفظ البيانات في جدول profiles: $e');
-        _showError('فشل في حفظ البيانات. يرجى المحاولة مرة أخرى');
-        return false;
+      if (_selfieImage != null) {
+        try {
+          selfieImageUrl = await _uploadImageToSupabase(
+            _selfieImage!,
+            'selfie',
+            user.id,
+          );
+        } catch (e) {
+          print('خطأ في رفع صورة السيلفي: $e');
+          return false;
+        }
       }
 
-      print('تم إنشاء الحساب بنجاح!');
-      
+      // إضافة الحقول الجديدة
+      final insertData = {
+        'id': user.id,
+        'full_name': fullName,
+        'id_number': idNumber,
+        'email': email,
+        'phone': phone, // جديد
+        'house_number': houseNumber,
+        'location': location,
+        'front_id_image': frontImageUrl,
+        'back_id_image': backImageUrl,
+        'selfie_image': selfieImageUrl,
+        'user_type': 'citizen',
+        'status': 'under_review',
+        'created_at': DateTime.now().toIso8601String(),
+      };
+
+      await Supabase.instance.client.from('profiles').insert(insertData);
+
       _navigateToNextScreen();
       return true;
-
-    } on AuthException catch (e) {
-      print('Supabase Auth Error: ${e.message}');
-      _handleSupabaseError(e);
+    } catch (e) {
+      print('خطأ عام: $e');
+      _showError('حدث خطأ: $e');
       return false;
-    } catch (e) {
-      print('General Error: $e');
-      _showError('حدث خطأ غير متوقع: ${e.toString()}');
-
-      // التحقق من البيانات فقط إذا تم إنشاء المستخدم
-      if (user != null) {
-        await _checkUserData(user.id);
-      }
-
-      return false;
-    }
-  }
-
-  Future<void> _checkUserData(String userId) async {
-    try {
-      final data = await Supabase.instance.client
-          .from('profiles')
-          .select()
-          .eq('id', userId);
-      
-      if (data != null && data.isNotEmpty) {
-        print('بيانات المستخدم في الجدول: $data');
-      } else {
-        print('المستخدم غير موجود في جدول profiles');
-      }
-    } catch (e) {
-      print('خطأ في التحقق من البيانات: $e');
-    }
-
-    // التحقق من الصور في التخزين
-    try {
-      final storageObjects = await Supabase.instance.client.storage
-          .from('employee_documents')
-          .list();
-
-      print('الملفات في التخزين: ${storageObjects.length} ملف');
-
-      // عرض الملفات الخاصة بهذا المستخدم
-      final userFiles = storageObjects
-          .where((file) => file.name.contains(userId))
-          .toList();
-
-      print('ملفات المستخدم: ${userFiles.map((f) => f.name).toList()}');
-    } catch (e) {
-      print('خطأ في التحقق من التخزين: $e');
     }
   }
 
@@ -297,52 +447,37 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     String userId,
   ) async {
     try {
-      print('بدء رفع الصورة إلى Supabase...');
-
-      // استخدام مفتاح service_role للرفع دون الحاجة لجلسة مستخدم
       final supabaseAdmin = SupabaseClient(
         'https://xuwxgjiewdlzzpgzvpxb.supabase.co',
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1d3hnamlld2RsenpwZ3p2cHhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Mzc5MTIsImV4cCI6MjA3MjQxMzkxMn0.i1CD1NxOM7XDoViqSmyb4ECT7uKZFJPFbzjorscInRY',
       );
 
-      // إنشاء مسار في مجلد المستخدم
-      final String fileName = '$userId/${DateTime.now().millisecondsSinceEpoch}_$fileType.jpg';
-
-      // قراءة ملف الصورة كبايتس
+      final String fileName =
+          '$userId/${DateTime.now().millisecondsSinceEpoch}_$fileType.jpg';
       final bytes = await image.readAsBytes();
 
-      // رفع الملف باستخدام service_role
-      final response = await supabaseAdmin.storage
+      await supabaseAdmin.storage
           .from('employee_documents')
           .uploadBinary(
-            fileName, 
-            bytes, 
-            fileOptions: FileOptions(
-              contentType: 'image/jpeg',
-              upsert: false,
-            ),
+            fileName,
+            bytes,
+            fileOptions: FileOptions(contentType: 'image/jpeg', upsert: false),
           );
 
-      // الحصول على رابط التحميل العام
       final String publicUrl = supabaseAdmin.storage
           .from('employee_documents')
           .getPublicUrl(fileName);
 
-      print('تم رفع الصورة بنجاح: $publicUrl');
-      
-      // إغلاق الاتصال
       await supabaseAdmin.dispose();
-      
+
       return publicUrl;
     } catch (e) {
-      print('Error uploading image to Supabase: $e');
       throw Exception('فشل في رفع الصورة: $e');
     }
   }
 
   void _navigateToNextScreen() {
     if (mounted) {
-      // استخدام Navigator.pushNamed مباشرة
       Navigator.pushNamedAndRemoveUntil(
         context,
         UserMainScreen.screenRoot,
@@ -360,641 +495,986 @@ class _RegesyerScreenState extends State<RegesyerScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message, style: TextStyle(fontFamily: 'Tajawal')),
-          backgroundColor: Colors.red,
+          backgroundColor: _errorColor,
           duration: Duration(seconds: 3),
         ),
       );
     }
   }
 
-  void _handleSupabaseError(AuthException e) {
-    String errorMessage = 'حدث خطأ أثناء إنشاء الحساب';
-
-    switch (e.message) {
-      case 'User already registered':
-        errorMessage = 'الحساب موجود مسبقاً';
-        break;
-      case 'Invalid email':
-        errorMessage = 'البريد الإلكتروني غير صحيح';
-        break;
-      case 'Email not confirmed':
-        errorMessage = 'البريد الإلكتروني لم يتم تأكيده';
-        break;
-      default:
-        errorMessage = 'خطأ في المصادقة: ${e.message}';
+  void _showSuccess(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message, style: TextStyle(fontFamily: 'Tajawal')),
+          backgroundColor: _successColor,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
-
-    _showError(errorMessage);
   }
 
-  
-
-
   Widget _buildImagePreview(File? image, bool isFront) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          height: 150,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: const Color.fromARGB(255, 17, 126, 117).withOpacity(0.3),
-            border: Border.all(
-              color: const Color.fromARGB(255, 17, 126, 117),
-              width: 2,
+    return Container(
+      height: 140,
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: _primaryColor.withOpacity(0.1),
+        border: Border.all(color: _primaryColor, width: 1.5),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (image != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                image,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            )
+          else
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.photo_camera, size: 40, color: _textSecondaryColor),
+                SizedBox(height: 8),
+                Text(
+                  isFront ? 'الصورة الأمامية' : 'الصورة الخلفية',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _textSecondaryColor,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ],
             ),
-            image: image != null
-                ? DecorationImage(image: FileImage(image), fit: BoxFit.cover)
-                : null,
-          ),
-          child: image == null
-              ? const Icon(Icons.photo_camera, size: 50, color: Colors.white70)
-              : null,
-        ),
-        if (image != null)
-          Positioned(
-            top: 5,
-            left: 5,
-            child: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _removeImage(isFront),
+
+          if (image != null)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: GestureDetector(
+                onTap: () => _removeImage(isFront),
+                child: Container(
+                  padding: EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.close, size: 16, color: _errorColor),
+                ),
+              ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelfiePreview() {
+    return Container(
+      height: 220,
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: _primaryColor.withOpacity(0.05),
+        border: Border.all(color: _primaryColor, width: 2),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (_selfieImage != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                _selfieImage!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            )
+          else
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _primaryColor.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.face,
+                    size: 40,
+                    color: _primaryColor.withOpacity(0.5),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'لم يتم التقاط صورة سيلفي بعد',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _textSecondaryColor,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ],
+            ),
+
+          AnimatedBuilder(
+            animation: _flashAnimation,
+            builder: (context, child) {
+              return Container(
+                height: 220,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withOpacity(_flashAnimation.value * 0.7),
+                ),
+              );
+            },
           ),
-      ],
+
+          if (_selfieImage != null)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: _removeSelfie,
+                child: Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.close, size: 18, color: _errorColor),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildStepIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final List<String> stepTitles = [
+      'البيانات',
+      'الحساب',
+      'الهوية',
+      'السيلفي',
+      'المراجعة',
+    ];
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(5, (index) {
+              return Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentStep >= index
+                      ? _primaryColor
+                      : Colors.grey[300],
+                  border: Border.all(
+                    color: _currentStep >= index
+                        ? _primaryColor
+                        : const Color.fromARGB(255, 189, 189, 189),
+                    width: 2,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    (index + 1).toString(),
+                    style: TextStyle(
+                      color: _currentStep >= index
+                          ? Colors.white
+                          : Colors.grey[600],
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: stepTitles.map((title) {
+              final index = stepTitles.indexOf(title);
+              return Container(
+                width: 60,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _currentStep >= index
+                        ? _primaryColor
+                        : Colors.grey[600],
+                    fontFamily: 'Tajawal',
+                    fontWeight: _currentStep >= index
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildStepCircle(1, _currentStep >= 0),
-        _buildStepLine(),
-        _buildStepCircle(2, _currentStep >= 1),
-        _buildStepLine(),
-        _buildStepCircle(3, _currentStep >= 2),
-        _buildStepLine(),
-        _buildStepCircle(4, _currentStep >= 3),
+        Text(
+          'تحديد الموقع',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: _textColor,
+            fontFamily: 'Tajawal',
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _borderColor),
+            color: Colors.white,
+          ),
+          child: InkWell(
+            onTap: () => _showRegionSelectionDialog(),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _locationController.text.isEmpty
+                                ? 'انقر لاختيار المنطقة'
+                                : _locationController.text,
+                            style: TextStyle(
+                              fontFamily: 'Tajawal',
+                              color: _locationController.text.isEmpty
+                                  ? _textSecondaryColor
+                                  : _textColor,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_drop_down,
+                          color: _locationController.text.isEmpty
+                              ? _textSecondaryColor
+                              : _primaryColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 8),
+        if (_locationController.text.isNotEmpty)
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: _locationColor.withOpacity(0.1),
+              border: Border.all(color: _locationColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: _locationColor, size: 16),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _locationController.text,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _textColor,
+                      fontFamily: 'Tajawal',
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _locationController.clear();
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _errorColor.withOpacity(0.1),
+                    ),
+                    child: Icon(Icons.close, size: 16, color: _errorColor),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
 
-  Widget _buildStepCircle(int step, bool isActive) {
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isActive
-            ? const Color.fromARGB(255, 17, 126, 117)
-            : Colors.grey[400],
-      ),
-      child: Center(
-        child: Text(
-          step.toString(),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepLine() {
-    return Container(width: 50, height: 2, color: Colors.grey[300]);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
+    print('Build called - Current step: $_currentStep');
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // الخلفية المتدرجة مع SVG
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 1000),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            child: Container(
-              key: ValueKey(_currentBackground),
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topRight,
-                  radius: 1.5,
-                  colors: isDarkMode
-                      ? [const Color(0xFF0A0E21), const Color(0xFF1D1E33)]
-                      : [const Color(0xFFF5F7FA), const Color(0xFFE4E7EB)],
-                ),
-              ),
-              child: Stack(
+      backgroundColor: _backgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // الشعار والعنوان
+            Container(
+              margin: EdgeInsets.only(top: 20, bottom: 10),
+              child: Column(
                 children: [
-                  Positioned.fill(
-                    child: SvgPicture.asset(
-                      _backgrounds[_currentBackground],
-                      fit: BoxFit.cover,
-                      color: isDarkMode
-                          ? Colors.white.withOpacity(0.03)
-                          : Colors.black.withOpacity(0.03),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: _primaryColor,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _primaryColor.withOpacity(0.2),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.person_add,
+                        color: Colors.white,
+                        size: 32,
+                      ),
                     ),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          theme.scaffoldBackgroundColor.withOpacity(0.7),
-                        ],
-                      ),
+                  SizedBox(height: 12),
+                  Text(
+                    'إنشاء حساب جديد',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Tajawal',
+                      color: _primaryColor,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'املأ البيانات التالية',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'Tajawal',
+                      color: _textSecondaryColor,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
 
-          // تأثير ضبابي
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-            child: Container(color: Colors.transparent),
-          ),
+            // مؤشر الخطوات
+            _buildStepIndicator(),
 
-          // المحتوى الرئيسي
-          SafeArea(
-            child: Center(
+            // المحتوى الرئيسي
+            Expanded(
               child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: size.width > 800 ? size.width * 0.15 : 24,
-                    vertical: 20,
-                  ),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Form(
+                  key: _formKey,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _opacityAnimation,
-                          child: ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: Container(
-                              padding: const EdgeInsets.all(20),
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Color.fromARGB(255, 8, 93, 99),
-                                    Color.fromARGB(255, 1, 17, 27),
+                      if (_currentStep == 0) ...[
+                        _buildTextField(
+                          controller: _fullNameController,
+                          label: 'الاسم الرباعي',
+                          icon: Icons.person_outline,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'الرجاء إدخال الاسم الرباعي';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _idNumberController,
+                          label: 'رقم الهوية',
+                          icon: Icons.credit_card_outlined,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'الرجاء إدخال رقم الهوية';
+                            }
+                            if (value.length != 10) {
+                              return 'رقم الهوية يجب أن يكون 10 أرقام';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _houseNumberController,
+                          label: 'رقم الدار/المنزل',
+                          icon: Icons.home_outlined,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'الرجاء إدخال رقم الدار';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _phoneController,
+                          label: 'رقم الموبايل',
+                          icon: Icons.phone_android_outlined,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'الرجاء إدخال رقم الموبايل';
+                            }
+                            if (value.length < 10 || value.length > 15) {
+                              return 'رقم الموبايل غير صحيح';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        _buildLocationField(),
+                        SizedBox(height: 24),
+                        _buildAuthButton(
+                          icon: Icons.arrow_forward,
+                          label: 'التالي',
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              if (_locationController.text.isEmpty) {
+                                _showError('الرجاء اختيار المنطقة');
+                              } else {
+                                setState(() => _currentStep = 1);
+                              }
+                            }
+                          },
+                        ),
+                      ] else if (_currentStep == 1) ...[
+                        _buildTextField(
+                          controller: _accountController,
+                          label: 'البريد الإلكتروني',
+                          icon: Icons.email_outlined,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'الرجاء إدخال البريد الإلكتروني';
+                            }
+                            if (!RegExp(
+                              r'^[^@]+@[^@]+\.[^@]+',
+                            ).hasMatch(value)) {
+                              return 'البريد الإلكتروني غير صحيح';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _codeController,
+                          label: 'كلمة المرور',
+                          icon: Icons.lock_outline,
+                          obscureText: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'الرجاء إدخال كلمة المرور';
+                            }
+                            if (value.length < 6) {
+                              return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildAuthButton(
+                                icon: Icons.arrow_back,
+                                label: 'السابق',
+                                isSecondary: true,
+                                onPressed: () =>
+                                    setState(() => _currentStep = 0),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: _buildAuthButton(
+                                icon: Icons.arrow_forward,
+                                label: 'التالي',
+                                onPressed: () {
+                                  if (_formKey.currentState!.validate()) {
+                                    setState(() => _currentStep = 2);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else if (_currentStep == 2) ...[
+                        Text(
+                          'رفع صور الهوية',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: _textColor,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'يرجى رفع صورتين للهوية (أمامية وخلفية)',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _textSecondaryColor,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 20),
+
+                        Text(
+                          'الصورة الأمامية',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _textColor,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        _buildImagePreview(_frontIdentityImage, true),
+                        SizedBox(height: 12),
+                        _buildAuthButton(
+                          icon: Icons.camera_alt,
+                          label: 'اختر الصورة الأمامية',
+                          onPressed: () => _pickImage(true),
+                        ),
+
+                        SizedBox(height: 24),
+
+                        Text(
+                          'الصورة الخلفية',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _textColor,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        _buildImagePreview(_backIdentityImage, false),
+                        SizedBox(height: 12),
+                        _buildAuthButton(
+                          icon: Icons.camera_alt,
+                          label: 'اختر الصورة الخلفية',
+                          onPressed: () => _pickImage(false),
+                        ),
+
+                        SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildAuthButton(
+                                icon: Icons.arrow_back,
+                                label: 'السابق',
+                                isSecondary: true,
+                                onPressed: () =>
+                                    setState(() => _currentStep = 1),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: _buildAuthButton(
+                                icon: Icons.arrow_forward,
+                                label: 'التالي',
+                                onPressed: () {
+                                  if (_frontIdentityImage == null ||
+                                      _backIdentityImage == null) {
+                                    _showError(
+                                      'الرجاء رفع صور الهوية الأمامية والخلفية',
+                                    );
+                                  } else {
+                                    setState(() => _currentStep = 3);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else if (_currentStep == 3) ...[
+                        Text(
+                          'التقاط صورة سيلفي',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: _primaryColor,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'يرجى التقاط صورة سيلفي واضحة',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _textSecondaryColor,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 20),
+
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: _accentColor.withOpacity(0.1),
+                            border: Border.all(
+                              color: _accentColor.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: _warningColor,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'تأكد من وضوح الوجه والإضاءة الجيدة',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _textColor,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 20),
+                        _buildSelfiePreview(),
+                        SizedBox(height: 20),
+
+                        _isCapturingSelfie
+                            ? Center(
+                                child: Column(
+                                  children: [
+                                    CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        _primaryColor,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'جارٍ التقاط الصورة...',
+                                      style: TextStyle(
+                                        fontFamily: 'Tajawal',
+                                        color: _textSecondaryColor,
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isDarkMode
-                                        ? const Color.fromARGB(
-                                            255,
-                                            185,
-                                            37,
-                                            37,
-                                          ).withOpacity(0.4)
-                                        : Colors.grey.withOpacity(0.2),
-                                    blurRadius: 30,
-                                    spreadRadius: 5,
-                                    offset: const Offset(0, 20),
-                                  ),
-                                ],
-                                border: Border.all(
-                                  color: isDarkMode
-                                      ? Colors.blueGrey.withOpacity(0.2)
-                                      : Colors.grey.withOpacity(0.1),
-                                  width: 1,
-                                ),
+                              )
+                            : _buildAuthButton(
+                                icon: Icons.camera_alt,
+                                label: 'التقاط صورة سيلفي',
+                                onPressed: _captureSelfie,
                               ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 100,
-                                    height: 100,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Image.asset(
-                                      'images/lbbb.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 15),
-                                  AnimatedDefaultTextStyle(
-                                    duration: const Duration(milliseconds: 300),
-                                    style: theme.textTheme.headlineMedium!
-                                        .copyWith(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w800,
-                                          fontFamily: 'Tajawal',
-                                          color: Colors.white,
-                                          shadows: [
-                                            Shadow(
-                                              color: theme.primaryColor
-                                                  .withOpacity(0.3),
-                                              blurRadius: 12,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
-                                        ),
-                                    child: const Text('تسجيل حساب مواطن جديد'),
-                                  ),
-                                ],
+
+                        SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildAuthButton(
+                                icon: Icons.arrow_back,
+                                label: 'السابق',
+                                isSecondary: true,
+                                onPressed: () =>
+                                    setState(() => _currentStep = 2),
                               ),
                             ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: _buildAuthButton(
+                                icon: _selfieImage != null
+                                    ? Icons.check
+                                    : Icons.skip_next,
+                                label: _selfieImage != null ? 'التالي' : 'تخطي',
+                                onPressed: () {
+                                  setState(() => _currentStep = 4);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else if (_currentStep == 4) ...[
+                        Text(
+                          'مراجعة المعلومات',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: _textColor,
+                            fontFamily: 'Tajawal',
                           ),
                         ),
-                      ),
+                        SizedBox(height: 8),
+                        Text(
+                          'راجع المعلومات قبل إنشاء الحساب',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _textSecondaryColor,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 20),
 
-                      _buildStepIndicator(),
+                        Container(
+                          height: 420,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            border: Border.all(color: _borderColor),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: ListView(
+                            padding: EdgeInsets.all(16),
+                            children: [
+                              _buildReviewItem(
+                                'الاسم الرباعي',
+                                _fullNameController.text,
+                                Icons.person,
+                              ),
+                              SizedBox(height: 12),
+                              _buildReviewItem(
+                                'رقم الهوية',
+                                _idNumberController.text,
+                                Icons.credit_card,
+                              ),
+                              SizedBox(height: 12),
+                              _buildReviewItem(
+                                'رقم الدار/المنزل',
+                                _houseNumberController.text,
+                                Icons.home,
+                              ),
+                              SizedBox(height: 12),
+                              // --- جديد: حقل رقم الموبايل ---
+                              _buildReviewItem(
+                                'رقم الموبايل',
+                                _phoneController.text,
+                                Icons.phone_android,
+                              ),
+                              SizedBox(height: 12),
+                              // --- نهاية الجديد --
+                              SizedBox(height: 12),
+                              _buildReviewItem(
+                                'المنطقة',
+                                _locationController.text,
+                                Icons.location_on,
+                              ),
+                              SizedBox(height: 12),
+                              _buildReviewItem(
+                                'البريد الإلكتروني',
+                                _accountController.text,
+                                Icons.email,
+                              ),
+                              SizedBox(height: 12),
+                              _buildReviewItem(
+                                'كلمة المرور',
+                                '••••••••',
+                                Icons.lock,
+                              ),
+                              SizedBox(height: 12),
+                              _buildReviewStatus(
+                                'صورة الهوية الأمامية',
+                                _frontIdentityImage != null,
+                                Icons.photo_camera_front,
+                              ),
+                              SizedBox(height: 12),
+                              _buildReviewStatus(
+                                'صورة الهوية الخلفية',
+                                _backIdentityImage != null,
+                                Icons.photo_camera_back,
+                              ),
+                              SizedBox(height: 12),
+                              _buildReviewStatus(
+                                'صورة السيلفي',
+                                _selfieImage != null,
+                                Icons.face,
+                              ),
+                            ],
+                          ),
+                        ),
 
-                      const SizedBox(height: 30),
-
-                      SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _opacityAnimation,
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              children: [
-                                if (_currentStep == 0) ...[
-                                  _buildTextField(
-                                    controller: _fullNameController,
-                                    label: 'الاسم الرباعي',
-                                    icon: Icons.person_outline,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'الرجاء إدخال الاسم الرباعي';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _buildTextField(
-                                    controller: _idNumberController,
-                                    label: 'رقم الهوية',
-                                    icon: Icons.credit_card_outlined,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'الرجاء إدخال رقم الهوية';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 30),
-                                  _buildEnhancedAuthButton(
-                                    context,
-                                    icon: Icons.arrow_forward,
-                                    label: 'التالي',
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color.fromARGB(255, 17, 126, 117),
-                                        Color.fromARGB(255, 16, 78, 88),
-                                      ],
-                                    ),
-                                    onPressed: () {
-                                      if (_formKey.currentState!.validate()) {
-                                        setState(() => _currentStep = 1);
-                                      }
-                                    },
-                                  ),
-                                ] else if (_currentStep == 1) ...[
-                                  _buildTextField(
-                                    controller: _accountController,
-                                    label: 'الحساب',
-                                    icon: Icons.account_circle_outlined,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'الرجاء إدخال الحساب';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _buildTextField(
-                                    controller: _codeController,
-                                    label: 'الرمز السري',
-                                    icon: Icons.lock_outline,
-                                    obscureText: true,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'الرجاء إدخال الرمز السري';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 30),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildEnhancedAuthButton(
-                                          context,
-                                          icon: Icons.arrow_back,
-                                          label: 'السابق',
-                                          gradient: const LinearGradient(
-                                            colors: [Colors.grey, Colors.grey],
-                                          ),
-                                          onPressed: () =>
-                                              setState(() => _currentStep = 0),
-                                        ),
+                        SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildAuthButton(
+                                icon: Icons.arrow_back,
+                                label: 'السابق',
+                                isSecondary: true,
+                                onPressed: () =>
+                                    setState(() => _currentStep = 3),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: _isLoading
+                                  ? Container(
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: _primaryColor.withOpacity(0.1),
                                       ),
-                                      const SizedBox(width: 20),
-                                      Expanded(
-                                        child: _buildEnhancedAuthButton(
-                                          context,
-                                          icon: Icons.arrow_forward,
-                                          label: 'التالي',
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color.fromARGB(255, 17, 126, 117),
-                                              Color.fromARGB(255, 16, 78, 88),
-                                            ],
-                                          ),
-                                          onPressed: () {
-                                            if (_formKey.currentState!
-                                                .validate()) {
-                                              setState(() => _currentStep = 2);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ] else if (_currentStep == 2) ...[
-                                  Text(
-                                    'صورة الهوية من الأمام',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'Tajawal',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildImagePreview(_frontIdentityImage, true),
-                                  const SizedBox(height: 20),
-                                  _buildEnhancedAuthButton(
-                                    context,
-                                    icon: Icons.camera_alt,
-                                    label: 'اختر صورة الهوية من الأمام',
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color.fromARGB(255, 17, 126, 117),
-                                        Color.fromARGB(255, 16, 78, 88),
-                                      ],
-                                    ),
-                                    onPressed: () => _pickImage(true),
-                                  ),
-                                  const SizedBox(height: 30),
-                                  Text(
-                                    'صورة الهوية من الخلف',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'Tajawal',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildImagePreview(_backIdentityImage, false),
-                                  const SizedBox(height: 20),
-                                  _buildEnhancedAuthButton(
-                                    context,
-                                    icon: Icons.camera_alt,
-                                    label: 'اختر صورة الهوية من الخلف',
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color.fromARGB(255, 17, 126, 117),
-                                        Color.fromARGB(255, 16, 78, 88),
-                                      ],
-                                    ),
-                                    onPressed: () => _pickImage(false),
-                                  ),
-                                  const SizedBox(height: 30),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildEnhancedAuthButton(
-                                          context,
-                                          icon: Icons.arrow_back,
-                                          label: 'السابق',
-                                          gradient: const LinearGradient(
-                                            colors: [Colors.grey, Colors.grey],
-                                          ),
-                                          onPressed: () =>
-                                              setState(() => _currentStep = 1),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 20),
-                                      Expanded(
-                                        child: _buildEnhancedAuthButton(
-                                          context,
-                                          icon: Icons.arrow_forward,
-                                          label: 'التالي',
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color.fromARGB(255, 17, 126, 117),
-                                              Color.fromARGB(255, 16, 78, 88),
-                                            ],
-                                          ),
-                                          onPressed: () {
-                                            if (_frontIdentityImage == null ||
-                                                _backIdentityImage == null) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'الرجاء تحميل صور الهوية',
-                                                    style: TextStyle(
-                                                      fontFamily: 'Tajawal',
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            } else {
-                                              setState(() => _currentStep = 3);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ] else if (_currentStep == 3) ...[
-                                  Text(
-                                    'مراجعة المعلومات',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'Tajawal',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 30),
-                                  _buildReviewCard(),
-                                  const SizedBox(height: 30),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildEnhancedAuthButton(
-                                          context,
-                                          icon: Icons.arrow_back,
-                                          label: 'السابق',
-                                          gradient: const LinearGradient(
-                                            colors: [Colors.grey, Colors.grey],
-                                          ),
-                                          onPressed: () =>
-                                              setState(() => _currentStep = 2),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: _isLoading
-                                            ? Center(
-                                                child: CircularProgressIndicator(
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(
-                                                        const Color.fromARGB(
-                                                          255,
-                                                          17,
-                                                          126,
-                                                          117,
-                                                        ),
-                                                      ),
-                                                ),
-                                              )
-                                            : _buildEnhancedAuthButton(
-                                                context,
-                                                icon: Icons.check,
-                                                label: 'إنشاء الحساب',
-                                                gradient: const LinearGradient(
-                                                  colors: [
-                                                    Color.fromARGB(
-                                                      255,
-                                                      17,
-                                                      126,
-                                                      117,
-                                                    ),
-                                                    Color.fromARGB(
-                                                      255,
-                                                      16,
-                                                      78,
-                                                      88,
-                                                    ),
-                                                  ],
-                                                ),
-                                                onPressed: () async {
-                                                  if (_formKey.currentState!
-                                                      .validate()) {
-                                                    setState(
-                                                      () => _isLoading = true,
-                                                    );
-
-                                                    try {
-                                                      await _createAccount();
-                                                    } finally {
-                                                      if (mounted) {
-                                                        setState(
-                                                          () => _isLoading =
-                                                              false,
-                                                        );
-                                                      }
-                                                    }
-                                                  }
-                                                },
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                _primaryColor,
                                               ),
+                                        ),
                                       ),
-                                    ],
-                                  ),
-                                ],
-                                const SizedBox(height: 30),
-                              ],
+                                    )
+                                  : _buildAuthButton(
+                                      icon: Icons.check,
+                                      label: 'إنشاء الحساب',
+                                      onPressed: () async {
+                                        if (_formKey.currentState!.validate()) {
+                                          setState(() => _isLoading = true);
+                                          try {
+                                            final success =
+                                                await _createAccount();
+                                            if (!success && mounted) {
+                                              setState(
+                                                () => _isLoading = false,
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (mounted) {
+                                              setState(
+                                                () => _isLoading = false,
+                                              );
+                                            }
+                                            _showError('حدث خطأ: $e');
+                                          }
+                                        }
+                                      },
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'لديك حساب بالفعل؟',
+                            style: TextStyle(
+                              fontFamily: 'Tajawal',
+                              color: _textSecondaryColor,
+                              fontSize: 12,
                             ),
                           ),
-                        ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'تسجيل الدخول',
+                              style: TextStyle(
+                                color: _primaryColor,
+                                fontFamily: 'Tajawal',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+                      SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
-
-          // تذييل الصفحة
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      theme.scaffoldBackgroundColor.withOpacity(0.7),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'بلدية المدينة الذكية © ${DateTime.now().year}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 14,
-                        color: theme.textTheme.bodyLarge?.color?.withOpacity(
-                          0.7,
-                        ),
-                        fontFamily: 'Tajawal',
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // مؤشر التحميل
-          if (_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    const Color.fromARGB(255, 17, 126, 117),
-                  ),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1008,183 +1488,178 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        textAlign: TextAlign.right,
-        style: TextStyle(color: Colors.white, fontFamily: 'Tajawal'),
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        validator: validator,
-        decoration: InputDecoration(
-          hintText: label,
-          hintStyle: TextStyle(color: Colors.white70, fontFamily: 'Tajawal'),
-          prefixIcon: Icon(icon, color: Colors.white70),
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 18,
-            horizontal: 20,
-          ),
-          filled: true,
-          fillColor: const Color.fromARGB(255, 17, 126, 117).withOpacity(0.7),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.white, width: 1.5),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 1.5),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 1.5),
-          ),
+    return TextFormField(
+      controller: controller,
+      textAlign: TextAlign.right,
+      style: TextStyle(fontFamily: 'Tajawal', color: _textColor, fontSize: 14),
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: TextStyle(
+          fontFamily: 'Tajawal',
+          color: _textSecondaryColor,
+          fontSize: 14,
+        ),
+        prefixIcon: Icon(icon, color: _textSecondaryColor, size: 20),
+        contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: _borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: _borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: _primaryColor, width: 2),
         ),
       ),
     );
   }
 
-  Widget _buildReviewCard() {
+  Widget _buildReviewItem(String label, String value, IconData icon) {
     return Container(
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color.fromARGB(255, 17, 126, 117).withOpacity(0.8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
+        color: _backgroundColor,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildReviewRow('الاسم الرباعي', _fullNameController.text),
-            const Divider(height: 30, color: Colors.white30),
-            _buildReviewRow('رقم الهوية', _idNumberController.text),
-            const Divider(height: 30, color: Colors.white30),
-            _buildReviewRow('الحساب', _accountController.text),
-            const Divider(height: 30, color: Colors.white30),
-            _buildReviewRow('الرمز السري', '••••••••'),
-            const Divider(height: 30, color: Colors.white30),
-            _buildReviewRow(
-              'صورة الهوية من الأمام',
-              _frontIdentityImage != null ? 'تم التحميل' : 'غير محملة',
-              isUploaded: _frontIdentityImage != null,
-            ),
-            const Divider(height: 30, color: Colors.white30),
-            _buildReviewRow(
-              'صورة الهوية من الخلف',
-              _backIdentityImage != null ? 'تم التحميل' : 'غير محملة',
-              isUploaded: _backIdentityImage != null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReviewRow(
-    String label,
-    String value, {
-    bool isUploaded = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontFamily: 'Tajawal',
-          ),
-        ),
-        Row(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                color: isUploaded ? Colors.white : Colors.white70,
-                fontFamily: 'Tajawal',
-              ),
-            ),
-            if (isUploaded)
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEnhancedAuthButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Gradient gradient,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: gradient.colors.first.withOpacity(0.3),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onPressed,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: gradient,
+              shape: BoxShape.circle,
+              color: _primaryColor.withOpacity(0.1),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Icon(icon, size: 18, color: _primaryColor),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: Colors.white, size: 24),
-                const SizedBox(width: 8),
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _textSecondaryColor,
                     fontFamily: 'Tajawal',
-                    fontSize: 16,
                   ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  value.isNotEmpty ? value : 'غير محدد',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: value.isNotEmpty ? _textColor : _textSecondaryColor,
+                    fontFamily: 'Tajawal',
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewStatus(String label, bool isCompleted, IconData icon) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: _backgroundColor,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _primaryColor.withOpacity(0.1),
+                ),
+                child: Icon(icon, size: 18, color: _primaryColor),
+              ),
+              SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _textColor,
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+            ],
+          ),
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isCompleted
+                  ? _successColor.withOpacity(0.1)
+                  : _errorColor.withOpacity(0.1),
+            ),
+            child: Icon(
+              isCompleted ? Icons.check : Icons.close,
+              size: 14,
+              color: isCompleted ? _successColor : _errorColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuthButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    bool isSecondary = false,
+  }) {
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSecondary ? Colors.grey[200] : _primaryColor,
+          foregroundColor: isSecondary ? _textColor : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          elevation: 2,
+          shadowColor: Colors.black.withOpacity(0.1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18),
+            SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Tajawal',
+              ),
+            ),
+          ],
         ),
       ),
     );

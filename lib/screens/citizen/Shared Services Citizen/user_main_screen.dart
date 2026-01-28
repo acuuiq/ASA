@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/payment_screen.dart';
+import 'payment_screen.dart';
 import 'points_and_gifts_screen.dart';
 import '../Waste/waste_schedule_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
 import 'signin_screen.dart';
+import 'points_service.dart';
 
 import '../Electricity/monthly_consumption_electricity.dart'; // أضف هذا
 import '../Water/monthly_consumption_water.dart'; // أضف هذا
@@ -19,13 +20,13 @@ import '../Water/water_problem_report_screen.dart';
 import '../Electricity/electricity_problem_report_screen.dart';
 import '../Waste/waste_problem_report_screen.dart';
 // استيراد ملفات الطوارئ الجديدة
-import '../Water/water_emergency_screen.dart';
+import '../service_delete/water_emergency_screen.dart';
 import '../Electricity/electricity_emergency_screen.dart';
-import '../Waste/waste_emergency_screen.dart';
+import '../service_delete/waste_emergency_screen.dart';
 // استيراد الملفات الجديدة:
-import '../Electricity/electricity_paid_services.dart';
-import '../Water/water_paid_services.dart';
-import '../Waste/waste_paid_services.dart';
+import '../service_delete/electricity_paid_services.dart';
+import '../service_delete/water_paid_services.dart';
+import '../service_delete/waste_paid_services.dart';
 
 class UserMainScreen extends StatefulWidget {
   static const String screenRoot = 'user_main';
@@ -38,6 +39,8 @@ class UserMainScreen extends StatefulWidget {
 
 class _UserMainScreenState extends State<UserMainScreen>
     with SingleTickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   late TabController _tabController;
   int _currentIndex = 0;
   bool _showSuccessMessage = false;
@@ -216,12 +219,13 @@ class _UserMainScreenState extends State<UserMainScreen>
           'premium': false,
           'hasEarlyPaymentDiscount': true,
         },
-        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
         {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
         {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
         {'name': 'معلومات الفواتير', 'icon': 'tax', 'premium': false},
         {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+      /*
         {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+        */
       ],
     },
     {
@@ -236,12 +240,14 @@ class _UserMainScreenState extends State<UserMainScreen>
           'premium': false,
           'hasEarlyPaymentDiscount': true,
         },
-        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
         {'name': 'الاستهلاك الشهري', 'icon': 'consumption', 'premium': false},
         {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
         {'name': 'معلومات الفواتير', 'icon': 'tax', 'premium': false},
         {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+      /*
+
         {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+      */
       ],
     },
     {
@@ -256,14 +262,15 @@ class _UserMainScreenState extends State<UserMainScreen>
           'premium': false,
           'hasEarlyPaymentDiscount': true,
         },
-        {'name': 'أمر طارئ', 'icon': 'emergency', 'premium': false},
 
         {'name': 'جدول النظافة', 'icon': 'schedule', 'premium': false},
         {'name': 'الإبلاغ عن مشكلة', 'icon': 'problem', 'premium': false},
-        // إضافة خدمة 'أمر طارئ' للنفايات
         {'name': 'معلومات الفواتير', 'icon': 'tax', 'premium': false},
         {'name': 'الهدايا والعروض', 'icon': 'offers', 'premium': false},
+   /*
+
         {'name': 'خدمات مميزة', 'icon': 'premium', 'premium': true},
+   */
       ],
     },
   ];
@@ -793,7 +800,6 @@ class _UserMainScreenState extends State<UserMainScreen>
       );
     }
 
-    // إذا كان الحساب معتمداً، عرض الواجهة الكاملة
     final currentService = _services[_currentIndex];
     final serviceColor = currentService['color'] as Color;
     final serviceGradient = currentService['gradient'] as List<Color>;
@@ -801,7 +807,9 @@ class _UserMainScreenState extends State<UserMainScreen>
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
+        key: _scaffoldKey, // ← هذا السطر الجديد
         backgroundColor: _backgroundColor,
+        drawer: _buildProfileDrawer(), // ← وهذا السطر الجديد
         appBar: AppBar(
           toolbarHeight: 70,
           backgroundColor: _primaryColor,
@@ -832,10 +840,7 @@ class _UserMainScreenState extends State<UserMainScreen>
             ],
           ),
           leading: _buildProfileButton(serviceColor),
-          actions: [
-            _buildNotificationButton(),
-            _buildEventsButton(), // أضف زر الأحداث هنا
-          ],
+          actions: [_buildNotificationButton(), _buildEventsButton()],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(50),
             child: Container(
@@ -866,7 +871,6 @@ class _UserMainScreenState extends State<UserMainScreen>
             ),
           ),
         ),
-
         body: Stack(
           children: [
             TabBarView(
@@ -897,7 +901,6 @@ class _UserMainScreenState extends State<UserMainScreen>
               }).toList(),
             ),
 
-            // رسالة النجاح
             if (_showSuccessMessage)
               Positioned(
                 top: 0,
@@ -958,24 +961,28 @@ class _UserMainScreenState extends State<UserMainScreen>
     );
   }
 
+  Widget _buildProfileDrawer() {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.85, // عرض الدراور
+      child: ProfileScreen(
+        userProfile: _userProfile,
+        onSignOut: _signOut,
+        primaryColor: _primaryColor,
+        textColor: _textColor,
+        textSecondaryColor: _textSecondaryColor,
+        errorColor: _errorColor,
+        onClose: () => Navigator.pop(context),
+      ),
+    );
+  }
+
   // دالة لبناء زر الملف الشخصي
   Widget _buildProfileButton(Color serviceColor) {
     return IconButton(
-      icon: Icon(Icons.person, color: Colors.white, size: 24),
+      icon: Icon(Icons.menu, color: Colors.white, size: 24),
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProfileScreen(
-              userProfile: _userProfile,
-              onSignOut: _signOut,
-              primaryColor: _primaryColor,
-              textColor: _textColor,
-              textSecondaryColor: _textSecondaryColor,
-              errorColor: _errorColor,
-            ),
-          ),
-        );
+        _scaffoldKey.currentState
+            ?.openDrawer(); // استخدم المفتاح بدلاً من Scaffold.of
       },
       tooltip: 'الملف الشخصي',
     );
@@ -1196,7 +1203,9 @@ class _UserMainScreenState extends State<UserMainScreen>
           ),
         );
       }
-    } else if (serviceName.contains('أمر طارئ')) {
+    } 
+    /*
+    else if (serviceName.contains('أمر طارئ')) {
       // توجيه إلى شاشة الطوارئ الجديدة حسب نوع الخدمة
       if (serviceTitle.contains('الماء')) {
         Navigator.push(
@@ -1210,7 +1219,8 @@ class _UserMainScreenState extends State<UserMainScreen>
             ),
           ),
         );
-      } else if (serviceTitle.contains('الكهرباء')) {
+      }
+       else if (serviceTitle.contains('الكهرباء')) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1235,34 +1245,31 @@ class _UserMainScreenState extends State<UserMainScreen>
           ),
         );
       }
-    } else if (serviceName.contains('خدمات مميزة')) {
+    } */
+    /*
+    else if (serviceName.contains('خدمات مميزة')) {
       // توجيه إلى شاشة الخدمات المدفوعة الجديدة حسب نوع الخدمة
       if (serviceTitle.contains('الماء')) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) =>
-                const WaterPaidServices(), // استخدام الكونستركتور بدون معطيات
-          ),
+          MaterialPageRoute(builder: (context) => const WaterPaidServices()),
         );
       } else if (serviceTitle.contains('الكهرباء')) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                const ElectricityPaidServices(), // استخدام الكونستركتور بدون معطيات
+            builder: (context) => const ElectricityPaidServices(),
           ),
         );
       } else if (serviceTitle.contains('النفايات')) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) =>
-                const WastePaidServices(), // استخدام الكونستركتور بدون معطيات
-          ),
+          MaterialPageRoute(builder: (context) => const WastePaidServices()),
         );
       }
-    } else if (serviceName.contains('الاستهلاك الشهري')) {
+    } 
+    */
+    else if (serviceName.contains('الاستهلاك الشهري')) {
       // توجيه إلى شاشة الاستهلاك الشهري المناسبة حسب نوع الخدمة
       if (serviceTitle.contains('الماء')) {
         Navigator.push(

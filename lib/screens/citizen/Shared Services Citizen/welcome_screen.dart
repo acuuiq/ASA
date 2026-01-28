@@ -2,7 +2,7 @@ import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/signin_scree
 import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/regesyer_screen.dart';
 import 'package:mang_mu/widgets/my_buttn.dart';
 import 'package:flutter/material.dart';
-import 'package:mang_mu/screens/mainscren.dart';
+import 'package:mang_mu/screens/zemp_and_citizen/mainscren.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
 
@@ -14,50 +14,50 @@ class WecomeScreen extends StatefulWidget {
   State<WecomeScreen> createState() => _WecomeScreenState();
 }
 
-class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderStateMixin {
+class _WecomeScreenState extends State<WecomeScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
-  bool _isHovering = false;
-  int _currentBackground = 0;
-  final List<String> _backgrounds = [
-    'assets/bg1.svg',
-    'assets/bg2.svg',
-    'assets/bg3.svg',
-  ];
+
+  // الألوان الجديدة المطابقة لشاشة تسجيل الدخول
+  final Color _primaryColor = const Color(0xFF0D47A1);
+  final Color _secondaryColor = const Color(0xFF1976D2);
+  final Color _accentColor = const Color(0xFF64B5F6);
+  final Color _backgroundColor = const Color(0xFFF8F9FA);
+  final Color _cardColor = Colors.white;
+  final Color _textColor = const Color(0xFF212121);
+  final Color _textSecondaryColor = const Color(0xFF757575);
+  final Color _successColor = const Color(0xFF2E7D32);
+  final Color _warningColor = const Color(0xFFF57C00);
+  final Color _errorColor = const Color(0xFFD32F2F);
+  final Color _borderColor = const Color(0xFFE0E0E0);
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1000),
     );
 
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOutQuint),
-    );
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _scaleAnimation = Tween<double>(
-      begin: 0.95,
+      begin: 0.9,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
-
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted) {
-        setState(() {
-          _currentBackground = (_currentBackground + 1) % _backgrounds.length;
-        });
-      }
-    });
   }
 
   @override
@@ -68,8 +68,6 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
 
     return WillPopScope(
@@ -78,57 +76,18 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
         return false;
       },
       child: Scaffold(
+        backgroundColor: _backgroundColor,
         body: Stack(
           children: [
-            // الخلفية المتدرجة مع SVG
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 1000),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: Container(
-                key: ValueKey(_currentBackground),
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment.topRight,
-                    radius: 1.5,
-                    colors: isDarkMode
-                        ? [const Color(0xFF0A0E21), const Color(0xFF1D1E33)]
-                        : [const Color(0xFFF5F7FA), const Color(0xFFE4E7EB)],
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: SvgPicture.asset(
-                        _backgrounds[_currentBackground],
-                        fit: BoxFit.cover,
-                        color: isDarkMode
-                            ? Colors.white.withOpacity(0.03)
-                            : Colors.black.withOpacity(0.03),
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            theme.scaffoldBackgroundColor.withOpacity(0.7),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+            // خلفية بسيطة مع تدرج لوني
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [_primaryColor.withOpacity(0.1), _backgroundColor],
                 ),
               ),
-            ),
-
-            // تأثير ضبابي
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-              child: Container(color: Colors.transparent),
             ),
 
             // المحتوى الرئيسي
@@ -137,111 +96,69 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
                 child: SingleChildScrollView(
                   child: Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: size.width > 800 ? size.width * 0.15 : 24,
+                      horizontal: size.width > 800 ? size.width * 0.2 : 24,
                       vertical: 40,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // الشعار والعنوان
                         SlideTransition(
                           position: _slideAnimation,
                           child: FadeTransition(
                             opacity: _opacityAnimation,
                             child: ScaleTransition(
                               scale: _scaleAnimation,
-                              child: MouseRegion(
-                                onEnter: (_) => setState(() => _isHovering = true),
-                                onExit: (_) => setState(() => _isHovering = false),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 500),
-                                  padding: const EdgeInsets.all(20),
-                                  margin: const EdgeInsets.only(bottom: 30),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(24),
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color.fromARGB(255, 8, 93, 99),
-                                        Color.fromARGB(255, 1, 17, 27),
-                                      ],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: isDarkMode
-                                            ? const Color.fromARGB(255, 185, 37, 37).withOpacity(0.4)
-                                            : Colors.grey.withOpacity(0.2),
-                                        blurRadius: 30,
-                                        spreadRadius: 5,
-                                        offset: const Offset(0, 20),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 40),
+                                child: Column(
+                                  children: [
+                                    // الشعار
+                                    Container(
+                                      width: 120,
+                                      height: 120,
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: _primaryColor,
+                                        borderRadius: BorderRadius.circular(25),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: _primaryColor.withOpacity(
+                                              0.3,
+                                            ),
+                                            blurRadius: 15,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                    border: Border.all(
-                                      color: isDarkMode
-                                          ? Colors.blueGrey.withOpacity(0.2)
-                                          : Colors.grey.withOpacity(0.1),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Transform(
-                                        transform: Matrix4.identity()
-                                          ..setEntry(3, 2, 0.001)
-                                          ..rotateX(_isHovering ? 0.1 : 0.0)
-                                          ..rotateY(_isHovering ? 0.05 : 0.0),
-                                        alignment: Alignment.center,
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              width: 200,
-                                              height: 150,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: Image.asset(
-                                                'images/lbbb.png', 
-                                                fit: BoxFit.contain,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 15),
-                                            AnimatedDefaultTextStyle(
-                                              duration: const Duration(milliseconds: 300),
-                                              style: theme.textTheme.headlineMedium!.copyWith(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.w800,
-                                                fontFamily: 'Tajawal',
-                                                color: Colors.white,
-                                                shadows: [
-                                                  Shadow(
-                                                    color: theme.primaryColor.withOpacity(0.3),
-                                                    blurRadius: 12,
-                                                    offset: const Offset(0, 4),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: const Text('واجهة دخول المواطنين'),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            AnimatedOpacity(
-                                              duration: const Duration(milliseconds: 500),
-                                              opacity: _isHovering ? 1 : 0.8,
-                                              child: Text(
-                                                'من أجل حياة أفضل',
-                                                style: theme.textTheme.titleMedium!.copyWith(
-                                                  color: Colors.white,
-                                                  fontFamily: 'Tajawal',
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                      child: Image.asset(
+                                        'images/lbbb.png',
+                                        fit: BoxFit.contain,
+                                        color: Colors.white,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 25),
+                                    // العنوان
+                                    Text(
+                                      'واجهة دخول المواطنين',
+                                      style: TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Tajawal',
+                                        color: _primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'من أجل حياة أفضل',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontFamily: 'Tajawal',
+                                        color: _textSecondaryColor,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -255,36 +172,147 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
                             opacity: _opacityAnimation,
                             child: Column(
                               children: [
-                                _buildEnhancedAuthButton(
-                                  context,
-                                  icon: Icons.login,
-                                  label: 'تسجيل الدخول',
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color.fromARGB(255, 17, 126, 117),
-                                      Color.fromARGB(255, 16, 78, 88),
-                                    ],
+                                // زر تسجيل الدخول
+                                Container(
+                                  width: double.infinity,
+                                  height: 56,
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        SigninScreen.screenroot,
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 3,
+                                      shadowColor: _primaryColor.withOpacity(
+                                        0.3,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.login, size: 20),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'تسجيل الدخول',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Tajawal',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  onPressed: () {
-                                    Navigator.pushNamed(context, SigninScreen.screenroot);
-                                  },
                                 ),
-                                const SizedBox(height: 20),
-                                _buildEnhancedAuthButton(
-                                  context,
-                                  icon: Icons.person_add,
-                                  label: 'إنشاء حساب جديد',
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color.fromARGB(255, 17, 126, 117),
-                                      Color.fromARGB(255, 16, 78, 88),
-                                    ],
+
+                                // زر إنشاء حساب جديد
+                                Container(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        RegesyerScreen.screenRoot,
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _cardColor,
+                                      foregroundColor: _primaryColor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: BorderSide(
+                                          color: _primaryColor,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      elevation: 1,
+                                      shadowColor: _primaryColor.withOpacity(
+                                        0.1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.person_add, size: 20),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'إنشاء حساب جديد',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Tajawal',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  onPressed: () {
-                                    Navigator.pushNamed(context, RegesyerScreen.screenRoot);
-                                  },
                                 ),
                               ],
+                            ),
+                          ),
+                        ),
+
+                        // معلومات إضافية
+                        const SizedBox(height: 40),
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
+                            child: Card(
+                              elevation: 1,
+                              margin: const EdgeInsets.only(bottom: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: _borderColor, width: 1),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          color: _primaryColor,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'معلومات سريعة',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Tajawal',
+                                            color: _primaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'يمكنك تسجيل الدخول إذا كان لديك حساب، أو إنشاء حساب جديد للوصول إلى جميع خدمات البلدية',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'Tajawal',
+                                        color: _textSecondaryColor,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -296,100 +324,44 @@ class _WecomeScreenState extends State<WecomeScreen> with SingleTickerProviderSt
             ),
 
             // تذييل الصفحة
+            // تذييل الصفحة
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
               child: SafeArea(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        theme.scaffoldBackgroundColor.withOpacity(0.7),
-                      ],
-                    ),
+                    color: _cardColor,
+                    border: Border.all(color: _borderColor, width: 1),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'بلدية المدينة الذكية © ${DateTime.now().year}',
-                        style: theme.textTheme.bodySmall?.copyWith(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
+                          color: _textSecondaryColor,
                           fontFamily: 'Tajawal',
                         ),
                       ),
                       const SizedBox(height: 4),
+                      Text(
+                        'جميع الحقوق محفوظة',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _textSecondaryColor.withOpacity(0.7),
+                          fontFamily: 'Tajawal',
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEnhancedAuthButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Gradient gradient,
-    required VoidCallback onPressed,
-  }) {
-    return AnimatedScale(
-      duration: const Duration(milliseconds: 300),
-      scale: _isHovering ? 1.03 : 1.0,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: gradient.colors.first.withOpacity(0.3),
-              blurRadius: _isHovering ? 20 : 12,
-              spreadRadius: _isHovering ? 2 : 1,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onPressed,
-            onHover: (hovering) => setState(() {}),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: gradient,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: Colors.white, size: 26),
-                  const SizedBox(width: 12),
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Tajawal',
-                          fontSize: 18,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
     );

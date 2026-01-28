@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ElectricityConsumptionScreen extends StatelessWidget {
   const ElectricityConsumptionScreen({super.key});
@@ -44,7 +44,7 @@ class ElectricityConsumptionScreen extends StatelessWidget {
             
             const SizedBox(height: 20),
             
-            // مخطط الاستهلاك الأسبوعي
+            // مخطط الاستهلاك الأسبوعي باستخدام syncfusion
             _buildWeeklyChart(dailyData),
             
             const SizedBox(height: 20),
@@ -128,8 +128,7 @@ class ElectricityConsumptionScreen extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildWeeklyChart(List<Map<String, dynamic>> data) {
+Widget _buildWeeklyChart(List<Map<String, dynamic>> data) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -148,72 +147,81 @@ class ElectricityConsumptionScreen extends StatelessWidget {
             const SizedBox(height: 10),
             SizedBox(
               height: 200,
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: 35,
-                  barTouchData: BarTouchData(
-                    enabled: true,
-                    touchTooltipData: BarTouchTooltipData(
-                      tooltipBgColor: const Color(0xFFFF9800),
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        return BarTooltipItem(
-                          '${rod.toY.toInt()} ك.و/س',
-                          const TextStyle(color: Colors.white),
-                        );
-                      },
+              child: SfCartesianChart(
+                plotAreaBorderWidth: 0,
+                primaryXAxis: CategoryAxis(
+                  majorGridLines: const MajorGridLines(width: 0),
+                  labelRotation: 0,
+                  labelStyle: const TextStyle(fontSize: 10),
+                  title: AxisTitle(text: ''),
+                ),
+                primaryYAxis: NumericAxis(
+                  majorGridLines: const MajorGridLines(width: 1, color: Colors.grey),
+                  labelStyle: const TextStyle(fontSize: 10),
+                  title: AxisTitle(text: 'ك.و/س'),
+                ),
+                series: <CartesianSeries>[
+                  BarSeries<Map<String, dynamic>, String>(
+                    dataSource: data,
+                    xValueMapper: (item, _) => item['day'],
+                    yValueMapper: (item, _) => item['consumption'],
+                    color: const Color(0xFFFF9800),
+                    width: 0.6,
+                    spacing: 0.2,
+                    borderRadius: BorderRadius.circular(4),
+                    dataLabelSettings: const DataLabelSettings(
+                      isVisible: true,
+                      labelAlignment: ChartDataLabelAlignment.top,
+                      textStyle: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white, // هنا تم تغيير اللون إلى الأبيض
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              data[value.toInt()]['day'],
-                              style: const TextStyle(fontSize: 10),
+                ],
+                tooltipBehavior: TooltipBehavior(
+                  enable: true,
+                  builder: (dynamic data, dynamic point, dynamic series, int pointIndex, int seriesIndex) {
+                    final item = data[pointIndex];
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${item['day']}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
                             ),
-                          );
-                        },
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${item['consumption']} ك.و/س',
+                            style: const TextStyle(
+                              color: Color(0xFFFF9800),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${NumberFormat('#,###').format(item['cost'])} دينار',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: const TextStyle(fontSize: 10),
-                          );
-                        },
-                      ),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  barGroups: data.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return BarChartGroupData(
-                      x: index,
-                      barRods: [
-                        BarChartRodData(
-                          toY: item['consumption'].toDouble(),
-                          color: const Color(0xFFFF9800),
-                          width: 16,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ],
                     );
-                  }).toList(),
+                  },
                 ),
               ),
             ),
@@ -222,7 +230,6 @@ class ElectricityConsumptionScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildStatisticsSection(int average, int monthlyTotal, int monthlyCost) {
     return Card(
       elevation: 3,

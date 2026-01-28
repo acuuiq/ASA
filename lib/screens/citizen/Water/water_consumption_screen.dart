@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 class WaterConsumptionScreen extends StatelessWidget {
   const WaterConsumptionScreen({super.key});
@@ -41,22 +41,22 @@ class WaterConsumptionScreen extends StatelessWidget {
           children: [
             // بطاقة ملخص الاستهلاك الحالي
             _buildSummaryCard(context, currentConsumption, currentCost),
-            
+
             const SizedBox(height: 20),
-            
-            // مخطط الاستهلاك الأسبوعي
+
+            // مخطط الاستهلاك الأسبوعي باستخدام syncfusion
             _buildWeeklyChart(dailyData),
-            
+
             const SizedBox(height: 20),
-            
+
             // إحصائيات إضافية
             _buildStatisticsSection(dailyAverage, monthlyTotal, monthlyCost),
-            
+
             const SizedBox(height: 20),
-            
+
             // نصائح لتوفير الماء
             _buildTipsSection(),
-            
+
             const SizedBox(height: 40),
           ],
         ),
@@ -101,10 +101,7 @@ class WaterConsumptionScreen extends StatelessWidget {
               const SizedBox(height: 5),
               Text(
                 '${NumberFormat('#,###').format(cost)} دينار',
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 18, color: Colors.white70),
               ),
               const SizedBox(height: 15),
               LinearProgressIndicator(
@@ -117,10 +114,7 @@ class WaterConsumptionScreen extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 '${(consumption / 500 * 100).toStringAsFixed(1)}% من الحد اليومي',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
               ),
             ],
           ),
@@ -140,80 +134,82 @@ class WaterConsumptionScreen extends StatelessWidget {
           children: [
             const Text(
               'الاستهلاك الأسبوعي',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             SizedBox(
               height: 200,
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: 350,
-                  barTouchData: BarTouchData(
-                    enabled: true,
-                    touchTooltipData: BarTouchTooltipData(
-                      tooltipBgColor: const Color(0xFF2196F3),
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        return BarTooltipItem(
-                          '${rod.toY.toInt()} لتر',
-                          const TextStyle(color: Colors.white),
-                        );
-                      },
+              child: SfCartesianChart(
+                plotAreaBorderWidth: 0,
+                primaryXAxis: CategoryAxis(
+                  majorGridLines: const MajorGridLines(width: 0),
+                  labelRotation: 0,
+                  labelStyle: const TextStyle(fontSize: 10),
+                  title: AxisTitle(text: ''),
+                ),
+                primaryYAxis: NumericAxis(
+                  majorGridLines: const MajorGridLines(width: 1, color: Colors.grey),
+                  labelStyle: const TextStyle(fontSize: 10),
+                  title: AxisTitle(text: 'لتر'),
+                ),
+                series: <CartesianSeries>[
+                  BarSeries<Map<String, dynamic>, String>(
+                    dataSource: data,
+                    xValueMapper: (item, _) => item['day'],
+                    yValueMapper: (item, _) => item['consumption'],
+                    color: const Color(0xFF2196F3),
+                    width: 0.6,
+                    spacing: 0.2,
+                    borderRadius: BorderRadius.circular(4),
+                    dataLabelSettings: const DataLabelSettings(
+                      isVisible: true,
+                      labelAlignment: ChartDataLabelAlignment.top,
+                      textStyle: TextStyle(fontSize: 10),
                     ),
                   ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              data[value.toInt()]['day'],
-                              style: const TextStyle(fontSize: 10),
+                ],
+                tooltipBehavior: TooltipBehavior(
+                  enable: true,
+                  builder: (dynamic data, dynamic point, dynamic series, int pointIndex, int seriesIndex) {
+                    final item = data[pointIndex];
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${item['day']}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
                             ),
-                          );
-                        },
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${item['consumption']} لتر',
+                            style: const TextStyle(
+                              color: Color(0xFF2196F3),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${NumberFormat('#,###').format(item['cost'])} دينار',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: const TextStyle(fontSize: 10),
-                          );
-                        },
-                      ),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  barGroups: data.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return BarChartGroupData(
-                      x: index,
-                      barRods: [
-                        BarChartRodData(
-                          toY: item['consumption'].toDouble(),
-                          color: const Color(0xFF2196F3),
-                          width: 16,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ],
                     );
-                  }).toList(),
+                  },
                 ),
               ),
             ),
@@ -223,7 +219,11 @@ class WaterConsumptionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatisticsSection(int average, int monthlyTotal, int monthlyCost) {
+  Widget _buildStatisticsSection(
+    int average,
+    int monthlyTotal,
+    int monthlyCost,
+  ) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -234,10 +234,7 @@ class WaterConsumptionScreen extends StatelessWidget {
           children: [
             const Text(
               'الإحصائيات',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
             _buildStatItem(
@@ -279,12 +276,7 @@ class WaterConsumptionScreen extends StatelessWidget {
         children: [
           Icon(icon, color: const Color(0xFF2196F3), size: 20),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 16))),
           Text(
             value,
             style: TextStyle(
@@ -318,28 +310,28 @@ class WaterConsumptionScreen extends StatelessWidget {
           children: [
             const Text(
               'نصائح لتوفير الماء',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            ...tips.map((tip) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.lightbulb_outline, color: const Color(0xFF2196F3), size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          tip,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
+            ...tips.map(
+              (tip) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline,
+                      color: const Color(0xFF2196F3),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(tip, style: const TextStyle(fontSize: 14)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'dart:ui';
 
 class MonthlyConsumptionElectricityScreen extends StatefulWidget {
-
   final Color serviceColor;
   final List<Color> serviceGradient;
   final String serviceTitle;
@@ -22,7 +21,7 @@ class MonthlyConsumptionElectricityScreen extends StatefulWidget {
 class _MonthlyConsumptionElectricityScreenState extends State<MonthlyConsumptionElectricityScreen> {
   int? _selectedMonthIndex;
 
-  // بيانات الاستهلاك السنوي
+  // بيانات الاستهلاك السنوي (نفس بيانات الماء)
   final List<Map<String, dynamic>> fullYearData = [
     {'month': 'يناير', 'value': 420, 'target': 380, 'trend': Icons.arrow_upward, 'color': Colors.purple, 'weeks': [95, 110, 105, 100]},
     {'month': 'فبراير', 'value': 400, 'target': 380, 'trend': Icons.arrow_downward, 'color': Colors.blue, 'weeks': [90, 105, 100, 105]},
@@ -92,11 +91,72 @@ class _MonthlyConsumptionElectricityScreenState extends State<MonthlyConsumption
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // بطاقة ملخص الاستهلاك مع تأثير زجاجي
-          
+            Container(
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: [
+                    widget.serviceColor.withOpacity(0.9),
+                    widget.serviceColor.withOpacity(0.7),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.serviceColor.withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'الاستهلاك الحالي',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$currentConsumption $unit',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        isIncrease ? Icons.arrow_upward : Icons.arrow_downward,
+                        color: isIncrease ? Colors.greenAccent : Colors.redAccent,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${isIncrease ? '+' : '-'}$percentageChange% عن الشهر الماضي',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isIncrease ? Colors.greenAccent : Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 24),
 
-            // بطاقة الرسم البياني الشريطي
+            // بطاقة الرسم البياني الشريطي باستخدام syncfusion
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -107,7 +167,8 @@ class _MonthlyConsumptionElectricityScreenState extends State<MonthlyConsumption
                     color: shadowColor,
                     blurRadius: 15,
                     spreadRadius: 1,
-                    offset: const Offset(0, 6),),
+                    offset: const Offset(0, 6),
+                  ),
                 ],
               ),
               child: Column(
@@ -124,116 +185,98 @@ class _MonthlyConsumptionElectricityScreenState extends State<MonthlyConsumption
                   const SizedBox(height: 20),
                   SizedBox(
                     height: 300,
-                    child: BarChart(
-                      BarChartData(
-                        alignment: BarChartAlignment.spaceAround,
-                        maxY: 500,
-                        barTouchData: BarTouchData(
-                          enabled: true,
-                          touchTooltipData: BarTouchTooltipData(
-                            tooltipBgColor: Colors.black.withOpacity(0.7),
-                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                              return BarTooltipItem(
-                                '${lastSixMonthsData[groupIndex]['month']}\n',
-                                const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: '${rod.toY.toInt()} $unit',
-                                    style: TextStyle(
-                                      color: lastSixMonthsData[groupIndex]['color'],
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          touchCallback: (event, response) {
-                            if (response != null && response.spot != null) {
-                              setState(() {
-                                _selectedMonthIndex = response.spot!.touchedBarGroupIndex;
-                              });
-                            }
-                          },
-                        ),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (double value, TitleMeta meta) {
-                                final index = value.toInt();
-                                if (index >= 0 && index < lastSixMonthsData.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                      lastSixMonthsData[index]['month'],
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: textColor,
-                                        fontWeight: _selectedMonthIndex == index 
-                                            ? FontWeight.bold 
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return const SizedBox();
-                              },
-                            ),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 40,
-                              getTitlesWidget: (double value, TitleMeta meta) {
-                                return Text(
-                                  '${value.toInt()}',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: textColor,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        borderData: FlBorderData(
-                          show: true,
-                          border: Border.all(
-                            color: dividerColor,
-                            width: 1,
-                          ),
-                        ),
-                        barGroups: lastSixMonthsData.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final monthData = entry.value;
-                          
-                          return BarChartGroupData(
-                            x: index,
-                            barRods: [
-                              BarChartRodData(
-                                toY: monthData['value'].toDouble(),
-                                width: 22,
-                                color: monthData['color'],
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(6),
-                                  topRight: Radius.circular(6),
-                                ),
-                              ),
-                            ],
-                          );
-                        }).toList(),
+                    child: SfCartesianChart(
+                      plotAreaBorderWidth: 0,
+                      primaryXAxis: CategoryAxis(
+                        majorGridLines: const MajorGridLines(width: 0),
+                        axisLine: AxisLine(width: 1, color: dividerColor),
+                        labelRotation: 0,
+                        labelStyle: TextStyle(color: textColor, fontSize: 12),
+                        title: AxisTitle(text: ''),
                       ),
+                      primaryYAxis: NumericAxis(
+                        majorGridLines: MajorGridLines(
+                          width: 1,
+                          color: dividerColor.withOpacity(0.5),
+                        ),
+                        axisLine: AxisLine(width: 1, color: dividerColor),
+                        labelStyle: TextStyle(color: textColor, fontSize: 10),
+                        title: AxisTitle(text: ''),
+                      ),
+                      series: <CartesianSeries>[
+                        BarSeries<Map<String, dynamic>, String>(
+                          dataSource: lastSixMonthsData,
+                          xValueMapper: (data, _) => data['month'],
+                          yValueMapper: (data, _) => data['value'],
+                          pointColorMapper: (data, _) => data['color'],
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(6),
+                            topRight: Radius.circular(6),
+                          ),
+                          width: 0.6,
+                          spacing: 0.2,
+                          dataLabelSettings: DataLabelSettings(
+                            isVisible: true,
+                            textStyle: TextStyle(
+                              color: textColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                      tooltipBehavior: TooltipBehavior(
+                        enable: true,
+                        builder: (dynamic data, dynamic point, dynamic series, int pointIndex, int seriesIndex) {
+                          final monthData = lastSixMonthsData[pointIndex];
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.8),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  monthData['month'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${monthData['value']} $unit',
+                                  style: TextStyle(
+                                    color: monthData['color'],
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      onDataLabelTapped: (DataLabelTapDetails details) {
+                        setState(() {
+                        });
+                      },
+                      onChartTouchInteractionUp: (ChartTouchInteractionArgs args) {
+                        if (args.position != null) {
+                          // يمكنك إضافة منطق للتفاعل مع اللمس هنا
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -251,7 +294,7 @@ class _MonthlyConsumptionElectricityScreenState extends State<MonthlyConsumption
                           });
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: _selectedMonthIndex == index
                                 ? monthData['color'].withOpacity(0.3)
@@ -370,7 +413,7 @@ class _MonthlyConsumptionElectricityScreenState extends State<MonthlyConsumption
                                       ),
                                     ),
                                     FractionallySizedBox(
-                                      widthFactor: weekValue / 150, // 150 هو القيمة القصوى المتوقعة للأسبوع
+                                      widthFactor: weekValue / 150,
                                       child: Container(
                                         height: 24,
                                         decoration: BoxDecoration(

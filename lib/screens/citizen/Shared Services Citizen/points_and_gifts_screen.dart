@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/payment_screen.dart';
+import 'payment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/payment_screen.dart';
+import 'payment_screen.dart';
 import 'points_service.dart'; // استيراد خدمة النقاط
 import 'dart:async'; // أضف هذا في الأعلى
+import 'payment_process_screen.dart';
+
 class PointsAndGiftsScreen extends StatefulWidget {
   static const String screen = 'pointandgift_screen';
   final Color serviceColor;
