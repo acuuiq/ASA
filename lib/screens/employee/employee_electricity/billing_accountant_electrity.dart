@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mang_mu/screens/employee/Shared Services/esignin_screen.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'dart:typed_data';
 
 class BillingAccountantScreen extends StatefulWidget {
   static const String screenRoute = '/billing-accountant';
@@ -20,6 +25,11 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   int _currentCitizenTab = 0;
   int _currentPaymentTab = 0;
   String _billFilter = 'الكل';
+  String _selectedReportType = 'يومي';
+  List<DateTime> _selectedDates = [];
+  String? _selectedWeek;
+  String? _selectedMonth;
+  
   // إضافة متغيرات البحث
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -29,33 +39,17 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   final TextEditingController _transferSearchController = TextEditingController();
   String _selectedPaymentMethodFilter = 'الكل'; // فلتر طريقة الدفع
 
-    // متغيرات التقارير الجديدة
-  String _selectedReportType = 'اليومي';
-  List<DateTime> _selectedDates = [];
-  String? _selectedWeek;
-  String? _selectedMonth;
-  List<Map<String, dynamic>> _filteredReports = [];
-
   // الألوان الحكومية (أخضر وذهبي وبني)
   final Color _primaryColor = Color.fromARGB(255, 46, 30, 169); // أخضر حكومي
   final Color _secondaryColor = Color(0xFFD4AF37); // ذهبي
   final Color _accentColor = Color(0xFF8D6E63); // بني
-  final Color _backgroundColor = Color(0xFFF5F5F5); // خلفية فاتحة
-  final Color _textColor = Color(0xFF212121);
-  final Color _textSecondaryColor = Color(0xFF757575);
   final Color _successColor = Color(0xFF2E7D32);
   final Color _warningColor = Color(0xFFF57C00);
   final Color _errorColor = Color(0xFFD32F2F);
-  final Color _borderColor = Color(0xFFE0E0E0);
-  final Color _cardColor = Color(0xFFFFFFFF);
 
-  // ألوان الوضع الداكن
+  // ألوان الوضع المظلم
   final Color _darkPrimaryColor = Color(0xFF1B5E20);
-  final Color _darkBackgroundColor = Color(0xFF121212);
-  final Color _darkCardColor = Color(0xFF1E1E1E);
-  final Color _darkTextColor = Color(0xFFFFFFFF);
-  final Color _darkTextSecondaryColor = Color(0xFFB0B0B0);
-
+  
   String _formatCurrency(dynamic amount) {
     double numericAmount = 0.0;
     if (amount is int) {
@@ -68,6 +62,37 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     
     return '${NumberFormat('#,##0').format(numericAmount)} ';
   }
+
+  // ألوان ديناميكية تعتمد على الوضع المظلم
+  Color _backgroundColor(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? Color(0xFF121212) : Color(0xFFF0F8FF);
+  }
+  
+  Color _cardColor(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? Color(0xFF1E1E1E) : Colors.white;
+  }
+  
+  Color _textColor(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? Colors.white : Color(0xFF212121);
+  }
+  
+  Color _textSecondaryColor(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? Colors.white70 : Color(0xFF757575);
+  }
+  
+  Color _borderColor(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? Color(0xFF333333) : Color(0xFFE0E0E0);
+  }
+
+  // قوائم التقارير
+  final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
+  final List<String> _weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
+  final List<String> _months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
   // بيانات المواطنين
   final List<Map<String, dynamic>> citizens = [
@@ -147,50 +172,20 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
       'currentReading': '3480',
       'billingDate': DateTime.now().subtract(Duration(days: 7)),
     },
-  ];
-
-  // بيانات التقارير
-  final List<Map<String, dynamic>> reports = [
     {
-      'id': 'REP-2024-001',
-      'title': 'تقرير الإيرادات الشهري',
-      'type': 'مالي',
-      'period': 'يناير 2024',
-      'generatedDate': DateTime.now().subtract(Duration(days: 2)),
-      'totalRevenue': 2500000,
-      'totalBills': 150,
-      'paidBills': 120,
-      'status': 'مكتمل',
-      'date': '2024-01-15',
-      'time': '10:30 ص',
-    },
-    {
-      'id': 'REP-2024-002',
-      'title': 'تقرير الاستهلاك',
-      'type': 'فني',
-      'period': 'الربع الأول 2024',
-      'generatedDate': DateTime.now().subtract(Duration(days: 5)),
-      'totalConsumption': '45000 ك.و.س',
-      'averageConsumption': '300 ك.و.س/عميل',
-      'status': 'قيد المعالجة',
-      'date': '2024-01-20',
-      'time': '02:15 م',
-    },
-    {
-      'id': 'REP-2024-003',
-      'title': 'تقرير المدفوعات المتأخرة',
-      'type': 'متابعة',
-      'period': 'الشهر الحالي',
-      'generatedDate': DateTime.now().subtract(Duration(days: 1)),
-      'overdueAmount': 450000,
-      'overdueBills': 15,
-      'status': 'لم يتم المعالجة',
-      'date': '2024-01-25',
-      'time': '09:45 ص',
+      'id': 'INV-2024-004',
+      'citizenId': 'CIT-2024-001',
+      'citizenName': 'أحمد محمد',
+      'amount': 195.50,
+      'amountIQD': 95795,
+      'dueDate': DateTime.now().subtract(Duration(days: 1)),
+      'status': 'paid',
+      'consumption': '260 ك.و.س',
+      'previousReading': '1500',
+      'currentReading': '1760',
+      'billingDate': DateTime.now().subtract(Duration(days: 30)),
     },
   ];
-
-
 
    // بيانات طرق الدفع  
   final List<Map<String, dynamic>> paymentMethods = [
@@ -584,113 +579,10 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
     ).toList();
   }
 
-    // ========== دوال التقارير الجديدة ==========
-
-  void _filterReports() {
-    setState(() {
-      if (_selectedReportType == 'اليومي') {
-        if (_selectedDates.isNotEmpty) {
-          _filteredReports = reports.where((report) {
-            final reportDate = DateTime.parse(report['date']);
-            return _selectedDates.any((selectedDate) =>
-              reportDate.year == selectedDate.year &&
-              reportDate.month == selectedDate.month &&
-              reportDate.day == selectedDate.day);
-          }).toList();
-        } else {
-          _filteredReports = reports;
-        }
-      }
-      else if (_selectedReportType == 'الأسبوعي' && _selectedWeek != null) {
-        _filteredReports = reports;
-      }
-      else if (_selectedReportType == 'الشهري' && _selectedMonth != null) {
-        _filteredReports = reports;
-      }
-      else {
-        _filteredReports = reports;
-      }
-    });
-  }
-
-  void _showMultiDatePicker() async {
-    final List<DateTime>? picked = await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return MultiDatePickerDialog(
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2023),
-          lastDate: DateTime.now(),
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedDates = picked;
-        _filterReports();
-      });
-    }
-  }
-
-  String _getFilterTitle() {
-    switch (_selectedReportType) {
-      case 'اليومي':
-        return _selectedDates.isNotEmpty 
-            ? '${_selectedDates.length} يوم مختار'
-            : 'جميع الأيام';
-      case 'الأسبوعي':
-        return _selectedWeek ?? 'جميع الأسابيع';
-      case 'الشهري':
-        return _selectedMonth ?? 'جميع الأشهر';
-      default:
-        return 'الكل';
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'لم يتم المعالجة':
-        return _errorColor;
-      case 'قيد المعالجة':
-        return _warningColor;
-      case 'مكتمل':
-        return _successColor;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _getReportTypeIcon(String type) {
-    switch (type) {
-      case 'مالي':
-        return Icons.attach_money_rounded;
-      case 'فني':
-        return Icons.engineering_rounded;
-      case 'متابعة':
-        return Icons.track_changes_rounded;
-      default:
-        return Icons.description_rounded;
-    }
-  }
-
-  Color _getReportTypeColor(String type) {
-    switch (type) {
-      case 'مالي':
-        return _successColor;
-      case 'فني':
-        return _primaryColor;
-      case 'متابعة':
-        return _warningColor;
-      default:
-        return _accentColor;
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 4, vsync: this); // ⬅️ تغيير من 3 إلى 4
     _tabController.addListener(() {
       setState(() {});
     });
@@ -787,7 +679,7 @@ Widget build(BuildContext context) {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(left:0, right:0), // تقليل الهوامش الجانبية
+            padding: const EdgeInsets.only(left:0, right:0),
             child: TabBar(
               controller: _tabController,
               indicator: BoxDecoration(
@@ -805,8 +697,8 @@ Widget build(BuildContext context) {
                 fontWeight: FontWeight.normal,
                 fontSize: 12,
               ),
-              padding: EdgeInsets.zero, // إزالة الباددنج الداخلي
-              labelPadding: EdgeInsets.symmetric(horizontal:5), // تباعد مناسب بين التبويبات
+              padding: EdgeInsets.zero,
+              labelPadding: EdgeInsets.symmetric(horizontal:5),
               tabs: [
                 Tab(
                   icon: Icon(Icons.people_alt_rounded, size: 22),
@@ -816,8 +708,8 @@ Widget build(BuildContext context) {
                   icon: Icon(Icons.receipt_long_rounded, size: 22),
                   text: 'الفواتير',
                 ),
-                Tab(
-                  icon: Icon(Icons.analytics_rounded, size: 22),
+                Tab( // ⬅️ تبويب التقارير الجديد
+                  icon: Icon(Icons.summarize_rounded, size: 22),
                   text: 'التقارير',
                 ),
                 Tab(
@@ -831,24 +723,23 @@ Widget build(BuildContext context) {
       ),
     ),
       body: Container(
-        width: double.infinity, // ⬅️ التصحيح هنا
-       height: double.infinity, // ⬅️ التصحيح هنا
+        width: double.infinity,
+       height: double.infinity,
         decoration: BoxDecoration(
           gradient: isDarkMode 
               ? LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [_darkBackgroundColor, Color(0xFF1A1A1A)],
+                  colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
                 )
               : LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [_backgroundColor, Color(0xFFE8F5E8)],
+                  colors: [Color(0xFFF5F5F5), Color(0xFFE8F5E8)],
                 ),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // تحديد حجم الشاشة بناءً على حجم الجهاز
             final screenWidth = constraints.maxWidth;
             final screenHeight = constraints.maxHeight;
             
@@ -857,7 +748,7 @@ Widget build(BuildContext context) {
               children: [
                 _buildCitizensView(isDarkMode, screenWidth, screenHeight),
                 _buildBillsView(isDarkMode, screenWidth, screenHeight),
-                _buildReportsView(isDarkMode, screenWidth, screenHeight),
+                _buildReportsView(isDarkMode, screenWidth, screenHeight), // ⬅️ شاشة التقارير الجديدة
                 _buildPaymentMethodsView(isDarkMode, screenWidth, screenHeight),
               ],
             );
@@ -887,7 +778,7 @@ Widget build(BuildContext context) {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: isDarkMode ? _darkTextColor : _primaryColor,
+                  color: isDarkMode ? _textColor(context) : _primaryColor,
                 ),
               ),
             ),
@@ -922,7 +813,7 @@ Widget build(BuildContext context) {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: isDarkMode ? _darkTextColor : _primaryColor,
+                color: isDarkMode ? _textColor(context) : _primaryColor,
               ),
             ),
             SizedBox(height: 16),
@@ -936,431 +827,44 @@ Widget build(BuildContext context) {
     );
   }
 
+  // ⬅️ شاشة التقارير الجديدة (مشابهة للمراقب)
   Widget _buildReportsView(bool isDarkMode, double screenWidth, double screenHeight) {
-  return SingleChildScrollView(
-    padding: EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // بطاقة العنوان الرئيسية
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [_primaryColor, _secondaryColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: _primaryColor.withOpacity(0.3),
-                blurRadius: 15,
-                offset: Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Container(
-                width: 60,
-                height: 60,
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(15),
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.analytics, size: 30, color: Colors.white),
+                child: Icon(Icons.summarize_rounded, color: _primaryColor, size: 24),
               ),
-              SizedBox(height: 16),
+              const SizedBox(width: 8),
               Text(
-                'نظام التقارير المتقدم',
+                'نظام التقارير المالية',
                 style: TextStyle(
                   fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'تصفية وعرض التقارير حسب الفترة الزمنية',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),
-        ),
-
-        SizedBox(height: 20),
-
-        // بطاقة الفلترة الزمنية
-        Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDarkMode ? _darkCardColor : _cardColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.filter_alt, color: _primaryColor),
-                  SizedBox(width: 8),
-                  Text(
-                    'الفلترة الزمنية',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDarkMode ? _darkTextColor : _textColor,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-
-              // أزرار نوع التقرير
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildReportTypeButton('اليومي', Icons.today, _primaryColor, isDarkMode),
-                    SizedBox(width: 8),
-                    _buildReportTypeButton('الأسبوعي', Icons.calendar_view_week, _secondaryColor, isDarkMode),
-                    SizedBox(width: 8),
-                    _buildReportTypeButton('الشهري', Icons.calendar_today, _accentColor, isDarkMode),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              // واجهة الفلترة حسب النوع المختار
-              _buildDateFilterInterface(isDarkMode),
-            ],
-          ),
-        ),
-
-        SizedBox(height: 20),
-
-        // بطاقة الإحصائيات
-        _buildStatisticsCard(isDarkMode),
-
-        SizedBox(height: 20),
-
-        // قائمة التقارير المفلترة
-        _buildFilteredReportsList(isDarkMode),
-
-        SizedBox(height: 20),
-      ],
-    ),
-  );
- }
- Widget _buildReportTypeButton(String title, IconData icon, Color color, bool isDarkMode) {
-  bool isSelected = _selectedReportType == title;
-  return ElevatedButton(
-    onPressed: () {
-      setState(() {
-        _selectedReportType = title;
-        _selectedDates = [];
-        _selectedWeek = null;
-        _selectedMonth = null;
-        _filterReports();
-      });
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: isSelected ? color : (isDarkMode ? _darkCardColor : _cardColor),
-      foregroundColor: isSelected ? Colors.white : color,
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isSelected ? color : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
-          width: 2,
-        ),
+          const SizedBox(height: 20),
+          _buildReportTypeFilter(isDarkMode),
+          const SizedBox(height: 20),
+          _buildReportOptions(isDarkMode),
+          const SizedBox(height: 20),
+          _buildGenerateReportButton(isDarkMode),
+        ],
       ),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18),
-        SizedBox(width: 6),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
- }
- Widget _buildDateFilterInterface(bool isDarkMode) {
-  switch (_selectedReportType) {
-    case 'اليومي':
-      return _buildDailyFilter(isDarkMode);
-    case 'الأسبوعي':
-      return _buildWeeklyFilter(isDarkMode);
-    case 'الشهري':
-      return _buildMonthlyFilter(isDarkMode);
-    default:
-      return _buildDailyFilter(isDarkMode);
+    );
   }
-} 
-Widget _buildDailyFilter(bool isDarkMode) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'اختر التاريخ:',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: isDarkMode ? _darkTextColor : _textColor,
-        ),
-      ),
-      SizedBox(height: 12),
-      
-      Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
-        ),
-        child: ListTile(
-          leading: Icon(Icons.calendar_today, color: _primaryColor),
-          title: Text(
-            _selectedDates.isNotEmpty 
-                ? '${_selectedDates.length} يوم مختار'
-                : 'اختر التاريخ',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-            ),
-          ),
-          trailing: Icon(Icons.arrow_drop_down),
-          onTap: _showMultiDatePicker,
-        ),
-      ),
-      
-      if (_selectedDates.isNotEmpty) ...[
-        SizedBox(height: 12),
-        Container(
-          height: 120,
-          decoration: BoxDecoration(
-            color: isDarkMode ? Colors.black12 : Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _primaryColor.withOpacity(0.3)),
-          ),
-          child: ListView.builder(
-            padding: EdgeInsets.all(8),
-            itemCount: _selectedDates.length,
-            itemBuilder: (context, index) {
-              final date = _selectedDates[index];
-              return ListTile(
-                leading: Icon(Icons.event, color: _primaryColor),
-                title: Text(
-                  DateFormat('yyyy-MM-dd').format(date),
-                  style: TextStyle(
-                    color: isDarkMode ? _darkTextColor : _textColor,
-                  ),
-                ),
-                trailing: IconButton(
-                  icon: Icon(Icons.close, color: _errorColor, size: 18),
-                  onPressed: () {
-                    setState(() {
-                      _selectedDates.removeAt(index);
-                      _filterReports();
-                    });
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-      
-      SizedBox(height: 12),
-      if (_selectedDates.isNotEmpty)
-        ElevatedButton(
-          onPressed: _filterReports,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _primaryColor,
-            foregroundColor: Colors.white,
-            minimumSize: Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: Text(
-            'عرض التقارير للفترة المختارة',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-    ],
-  );
-}
-
-Widget _buildWeeklyFilter(bool isDarkMode) {
-  List<String> weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
-  
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'اختر الأسبوع:',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: isDarkMode ? _darkTextColor : _textColor,
-        ),
-      ),
-      SizedBox(height: 12),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: weeks.map((week) {
-          bool isSelected = _selectedWeek == week;
-          return FilterChip(
-            label: Text(week),
-            selected: isSelected,
-            onSelected: (selected) {
-              setState(() {
-                _selectedWeek = selected ? week : null;
-                _filterReports();
-              });
-            },
-            selectedColor: _secondaryColor,
-            checkmarkColor: Colors.white,
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
-            ),
-          );
-        }).toList(),
-      ),
-    ],
-  );
-}
-
-Widget _buildMonthlyFilter(bool isDarkMode) {
-  List<String> months = [
-    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-  ];
-  
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'اختر الشهر:',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: isDarkMode ? _darkTextColor : _textColor,
-        ),
-      ),
-      SizedBox(height: 12),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: months.map((month) {
-          bool isSelected = _selectedMonth == month;
-          return FilterChip(
-            label: Text(month),
-            selected: isSelected,
-            onSelected: (selected) {
-              setState(() {
-                _selectedMonth = selected ? month : null;
-                _filterReports();
-              });
-            },
-            selectedColor: _accentColor,
-            checkmarkColor: Colors.white,
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
-            ),
-          );
-        }).toList(),
-      ),
-    ],
-  );
-}
-Widget _buildStatisticsCard(bool isDarkMode) {
-  return Container(
-    padding: EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkCardColor : _cardColor,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 20,
-          offset: Offset(0, 8),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.bar_chart, color: _primaryColor),
-            SizedBox(width: 8),
-            Text(
-              'الإحصائيات',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: isDarkMode ? _darkTextColor : _textColor,
-              ),
-            ),
-            Spacer(),
-            Text(
-              _getFilterTitle(),
-              style: TextStyle(
-                fontSize: 12,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 20),
-        
-        GridView.count(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.3,
-          children: [
-            _buildStatItem('إجمالي التقارير', _filteredReports.length.toString(), 
-                Icons.description, _primaryColor, isDarkMode),
-            _buildStatItem('لم تتم المعالجة', 
-                _filteredReports.where((r) => r['status'] == 'لم يتم المعالجة').length.toString(),
-                Icons.pending_actions, _errorColor, isDarkMode),
-            _buildStatItem('قيد المعالجة', 
-                _filteredReports.where((r) => r['status'] == 'قيد المعالجة').length.toString(),
-                Icons.hourglass_bottom, _warningColor, isDarkMode),
-            _buildStatItem('مكتمل', 
-                _filteredReports.where((r) => r['status'] == 'مكتمل').length.toString(),
-                Icons.check_circle, _successColor, isDarkMode),
-          ],
-        ),
-      ],
-    ),
-  );
-}
 
   Widget _buildPaymentMethodsView(bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
@@ -1378,7 +882,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: isDarkMode ? _darkTextColor : _primaryColor,
+                color: isDarkMode ? _textColor(context) : _primaryColor,
               ), 
             ),
             SizedBox(height: 16),
@@ -1396,13 +900,13 @@ Widget _buildStatisticsCard(bool isDarkMode) {
         children: [
           Icon(Icons.search_off_rounded, 
                size: 64, 
-               color: _textSecondaryColor),
+               color: _textSecondaryColor(context)),
           SizedBox(height: 16),
           Text(
             'لا توجد نتائج للبحث',
             style: TextStyle(
               fontSize: 18,
-              color: _textSecondaryColor,
+              color: _textSecondaryColor(context),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1411,7 +915,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
             'لم نتمكن من العثور على أي مواطن يطابق "$_searchQuery"',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: _textSecondaryColor,
+              color: _textSecondaryColor(context),
             ),
           ),
           SizedBox(height: 16),
@@ -1435,13 +939,13 @@ Widget _buildStatisticsCard(bool isDarkMode) {
         children: [
           Icon(Icons.receipt_long_outlined, 
                size: 64, 
-               color: _textSecondaryColor),
+               color: _textSecondaryColor(context)),
           SizedBox(height: 16),
           Text(
             'لا توجد فواتير',
             style: TextStyle(
               fontSize: 18,
-              color: _textSecondaryColor,
+              color: _textSecondaryColor(context),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1450,7 +954,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
             'لا توجد فواتير تطابق التصفية المختارة',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: _textSecondaryColor,
+              color: _textSecondaryColor(context),
             ),
           ),
         ],
@@ -1462,11 +966,12 @@ Widget _buildStatisticsCard(bool isDarkMode) {
     int paidBills = bills.where((bill) => bill['status'] == 'paid').length;
     int unpaidBills = bills.where((bill) => bill['status'] == 'unpaid').length;
     int overdueBills = bills.where((bill) => bill['status'] == 'overdue').length;
+    double totalRevenue = bills.fold(0.0, (sum, bill) => sum + (bill['amountIQD'] ?? 0));
     
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
+        color: _cardColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -1475,76 +980,28 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           ),
         ],
         border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildBillStat('إجمالي الفواتير', bills.length.toString(), Icons.receipt_rounded, _primaryColor),
-            _buildBillStat('مدفوعة', paidBills.toString(), Icons.check_circle_rounded, _successColor),
-            _buildBillStat('غير مدفوعة', unpaidBills.toString(), Icons.pending_rounded, _warningColor),
-            _buildBillStat('متأخرة', overdueBills.toString(), Icons.warning_rounded, _errorColor),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReportsSummaryCard(bool isDarkMode) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
+          color: _borderColor(context),
           width: 1,
         ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: _primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.analytics_rounded, color: _primaryColor, size: 28),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'ملخص التقارير',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? _darkTextColor : _primaryColor,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildReportStat('مالية', '2', _primaryColor),
-                _buildReportStat('فنية', '1', _accentColor),
-                _buildReportStat('متابعة', '1', _secondaryColor),
+                _buildBillStat('إجمالي الفواتير', bills.length.toString(), Icons.receipt_rounded, _primaryColor),
+                _buildBillStat('إجمالي الإيرادات', _formatCurrency(totalRevenue), Icons.attach_money_rounded, _successColor),
+              ],
+            ),
+            SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildBillStat('مدفوعة', paidBills.toString(), Icons.check_circle_rounded, _successColor),
+                _buildBillStat('غير مدفوعة', unpaidBills.toString(), Icons.pending_rounded, _warningColor),
+                _buildBillStat('متأخرة', overdueBills.toString(), Icons.warning_rounded, _errorColor),
               ],
             ),
           ],
@@ -1560,7 +1017,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
+        color: _cardColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -1569,7 +1026,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           ),
         ],
         border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
+          color: _borderColor(context),
           width: 1,
         ),
       ),
@@ -1592,7 +1049,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
       margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
+        color: _cardColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -1601,7 +1058,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           ),
         ],
         border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
+          color: _borderColor(context),
           width: 1,
         ),
       ),
@@ -1622,7 +1079,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 16,
-            color: isDarkMode ? _darkTextColor : _textColor,
+            color: _textColor(context),
           ),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
@@ -1635,7 +1092,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
               'الرقم الوطني: ${citizen['nationalId']}',
               style: TextStyle(
                 fontSize: 12,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                color: _textSecondaryColor(context),
               ),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
@@ -1645,7 +1102,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
               'رقم العداد: ${citizen['meterNumber']}',
               style: TextStyle(
                 fontSize: 12,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                color: _textSecondaryColor(context),
               ),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
@@ -1689,7 +1146,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
       margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
+        color: _cardColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -1698,7 +1155,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           ),
         ],
         border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
+          color: _borderColor(context),
           width: 1,
         ),
       ),
@@ -1718,7 +1175,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 16,
-            color: isDarkMode ? _darkTextColor : _textColor,
+            color: _textColor(context),
           ),
         ),
         subtitle: Column(
@@ -1729,7 +1186,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
               bill['citizenName'],
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                color: _textSecondaryColor(context),
               ),
             ),
             SizedBox(height: 2),
@@ -1737,7 +1194,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
               '${_formatCurrency(bill['amountIQD'])} - ${bill['consumption']}',
               style: TextStyle(
                 fontSize: 12,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                color: _textSecondaryColor(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1766,135 +1223,6 @@ Widget _buildStatisticsCard(bool isDarkMode) {
     );
   }
 
-  Widget _buildReportCard(Map<String, dynamic> report, bool isDarkMode) {
-  Color statusColor = _getStatusColor(report['status']);
-  
-  return Container(
-    margin: EdgeInsets.only(bottom: 12),
-    padding: EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: isDarkMode ? Colors.white10 : _cardColor,
-      borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: _getReportTypeColor(report['type']).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            _getReportTypeIcon(report['type']),
-            color: _getReportTypeColor(report['type']),
-            size: 24,
-          ),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                report['title'],
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                '${report['type']} - ${report['period']}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-                ),
-              ),
-              SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
-                  SizedBox(width: 4),
-                  Text(
-                    report['date'],
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Icon(Icons.access_time, size: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
-                  SizedBox(width: 4),
-                  Text(
-                    report['time'],
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            report['status'],
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: statusColor,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
- }
- Widget _buildEmptyState(bool isDarkMode) {
-  return Container(
-    padding: EdgeInsets.all(40),
-    child: Column(
-      children: [
-        Icon(Icons.inbox, size: 60, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
-        SizedBox(height: 16),
-        Text(
-          'لا توجد تقارير',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'لم يتم العثور على تقارير تطابق معايير البحث الحالية',
-          style: TextStyle(
-            fontSize: 14,
-            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    ),
-  );
-}
-
   Widget _buildPaymentMethodCard(Map<String, dynamic> method, bool isDarkMode) {
     bool isActive = method['status'] == 'active';
     
@@ -1902,7 +1230,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
       margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
+        color: _cardColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -1911,7 +1239,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           ),
         ],
         border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
+          color: _borderColor(context),
           width: 1,
         ),
       ),
@@ -1931,14 +1259,14 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 16,
-            color: isDarkMode ? _darkTextColor : _textColor,
+            color: _textColor(context),
           ),
         ),
         subtitle: Text(
           method['description'],
           style: TextStyle(
             fontSize: 14,
-            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+            color: _textSecondaryColor(context),
           ),
         ),
         trailing: Container(
@@ -1989,29 +1317,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           title,
           style: TextStyle(
             fontSize: 10,
-            color: _textSecondaryColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReportStat(String title, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: color,
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            color: _textSecondaryColor,
+            color: _textSecondaryColor(context),
           ),
         ),
       ],
@@ -2043,7 +1349,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           title,
           style: TextStyle(
             fontSize: 10,
-            color: _textSecondaryColor,
+            color: _textSecondaryColor(context),
           ),
         ),
       ],
@@ -2054,7 +1360,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: isDarkMode ? _darkCardColor : _cardColor,
+        color: _cardColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -2063,7 +1369,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
           ),
         ],
         border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
+          color: _borderColor(context),
           width: 1,
         ),
       ),
@@ -2073,10 +1379,10 @@ Widget _buildStatisticsCard(bool isDarkMode) {
         textAlign: TextAlign.right,
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: Icon(Icons.search_rounded, color: _textSecondaryColor),
+          prefixIcon: Icon(Icons.search_rounded, color: _textSecondaryColor(context)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear_rounded, color: _textSecondaryColor),
+                  icon: Icon(Icons.clear_rounded, color: _textSecondaryColor(context)),
                   onPressed: _clearSearch,
                 )
               : null,
@@ -2087,156 +1393,1307 @@ Widget _buildStatisticsCard(bool isDarkMode) {
     );
   }
 
-  // شريط البحث للتحويلات
-  Widget _buildTransferSearchBar(bool isDarkMode, String hintText) {
+  // ⬅️ دوال التقارير الجديدة (مشابهة للمراقب)
+  Widget _buildReportTypeFilter(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: isDarkMode ? _darkCardColor : _cardColor,
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(
-          color: isDarkMode ? Colors.grey[700]! : _borderColor,
-          width: 1,
-        ),
       ),
-      child: TextField(
-        controller: _transferSearchController,
-        onChanged: _updateTransferSearchQuery,
-        textAlign: TextAlign.right,
-        decoration: InputDecoration(
-          hintText: hintText,
-          prefixIcon: Icon(Icons.search_rounded, color: _textSecondaryColor),
-          suffixIcon: _transferSearchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear_rounded, color: _textSecondaryColor),
-                  onPressed: _clearTransferSearch,
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-      ),
-    );
-  }
-
-  // صف أزرار التصفية للتحويلات
-  Widget _buildTransferFilterRow(bool isDarkMode) {
-    List<String> paymentMethodsNames = ['الكل'] + paymentMethods.map((method) => method['name'] as String).toList();
-    
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: paymentMethodsNames.map((method) {
-          return _buildTransferFilterChip(method, isDarkMode);
-        }).toList(),
-      ),
-    );
-  }
-
-  // زر التصفية للتحويلات
-  Widget _buildTransferFilterChip(String method, bool isDarkMode) {
-    bool isSelected = _selectedPaymentMethodFilter == method;
-    return Container(
-      margin: EdgeInsets.only(left: 8),
-      child: GestureDetector(
-        onTap: () => _changePaymentMethodFilter(method),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected ? _primaryColor : (isDarkMode ? _darkCardColor : _cardColor),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? _primaryColor : (isDarkMode ? Colors.grey[700]! : _borderColor),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'نوع التقرير',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _textColor(context),
+              ),
             ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _reportTypes.map((type) {
+                  final isSelected = _selectedReportType == type;
+                  return Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(type),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedReportType = type;
+                          _selectedDates.clear();
+                          _selectedWeek = null;
+                          _selectedMonth = null;
+                        });
+                      },
+                      selectedColor: _primaryColor.withOpacity(0.2),
+                      checkmarkColor: _primaryColor,
+                      labelStyle: TextStyle(
+                        color: isSelected ? _primaryColor : _textColor(context),
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(color: isSelected ? _primaryColor : _borderColor(context)),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportOptions(bool isDarkMode) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
-          child: Row(
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'خيارات التقرير',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _textColor(context),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_selectedReportType == 'يومي') _buildDailyOptions(),
+            if (_selectedReportType == 'أسبوعي') _buildWeeklyOptions(),
+            if (_selectedReportType == 'شهري') _buildMonthlyOptions(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyOptions() {
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ElevatedButton(
+        onPressed: _showMultiDatePicker,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _primaryColor,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.calendar_today),
+            SizedBox(width: 8),
+            Text('فتح التقويم واختيار التواريخ'),
+          ],
+        ),
+      ),
+      const SizedBox(height: 16),
+      
+      if (_selectedDates.isNotEmpty) ...[
+        // بطاقة ملخص التواريخ
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _primaryColor.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _primaryColor.withOpacity(0.3)),
+          ),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (method != 'الكل')
-                Icon(
-                  paymentMethods.firstWhere(
-                    (m) => m['name'] == method,
-                    orElse: () => {'icon': Icons.payment_rounded}
-                  )['icon'],
-                  size: 14,
-                  color: isSelected ? Colors.white : _primaryColor,
-                ),
-              if (method != 'الكل') SizedBox(width: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: _successColor),
+                  SizedBox(width: 8),
+                  Text(
+                    'تم اختيار ${_selectedDates.length} يوم',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _primaryColor,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
               Text(
-                method,
+                'من ${DateFormat('yyyy-MM-dd').format(_selectedDates.reduce((a, b) => a.isBefore(b) ? a : b))} '
+                'إلى ${DateFormat('yyyy-MM-dd').format(_selectedDates.reduce((a, b) => a.isAfter(b) ? a : b))}',
                 style: TextStyle(
-                  color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+                  color: _textSecondaryColor(context),
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // إحصائيات مصغرة للتحويلات
-  Widget _buildTransferMiniStat(String title, String value, Color color) {
-    return Column(
-      children: [
+        SizedBox(height: 16),
+        
+        // عرض التواريخ المختارة
         Text(
-          value,
+          'التواريخ المحددة:',
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: color,
+            fontWeight: FontWeight.bold,
+            color: _textColor(context),
           ),
         ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 10,
-            color: _textSecondaryColor,
+        SizedBox(height: 8),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: 120),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _selectedDates.map((date) {
+                return Chip(
+                  backgroundColor: _primaryColor,
+                  label: Text(
+                    DateFormat('yyyy-MM-dd').format(date),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  deleteIcon: Icon(Icons.close, color: Colors.white, size: 16),
+                  onDeleted: () {
+                    setState(() {
+                      _selectedDates.remove(date);
+                    });
+                  },
+                );
+              }).toList(),
+            ),
           ),
+        ),
+      ] else ...[
+        // حالة عدم اختيار أي تواريخ
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _backgroundColor(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor(context)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.calendar_today_outlined, color: _textSecondaryColor(context), size: 48),
+              SizedBox(height: 12),
+              Text(
+                'لم يتم اختيار أي تواريخ',
+                style: TextStyle(
+                  color: _textSecondaryColor(context),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'انقر على الزر أعلاه لفتح التقويم\nواختيار التواريخ المطلوبة للتقرير',
+                style: TextStyle(
+                  color: _textSecondaryColor(context),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
+  Widget _buildWeeklyOptions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'اختر الأسبوع',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: _textColor(context),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _weeks.map((week) {
+            final isSelected = _selectedWeek == week;
+            return FilterChip(
+              label: Text(
+                week,
+                style: TextStyle(fontSize: 12),
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedWeek = selected ? week : null;
+                });
+              },
+              selectedColor: _primaryColor.withOpacity(0.2),
+              checkmarkColor: _primaryColor,
+              labelStyle: TextStyle(
+                color: isSelected ? _primaryColor : _textColor(context),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: isSelected ? _primaryColor : _borderColor(context)),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
   }
 
-  // رسالة عدم وجود تحويلات
-  Widget _buildNoTransfersMessageForMethod(bool isDarkMode, String methodName) {
-  return Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildMonthlyOptions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.payment_rounded, 
-             size: 64, 
-             color: _textSecondaryColor),
-        SizedBox(height: 16),
         Text(
-          'لا توجد تحويلات',
+          'اختر الشهر',
           style: TextStyle(
-            fontSize: 18,
-            color: _textSecondaryColor,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
+            color: _textColor(context),
           ),
         ),
-        SizedBox(height: 8),
-        Text(
-          'لم يتم العثور على أي تحويلات لطريقة الدفع\n$methodName',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: _textSecondaryColor,
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _months.map((month) {
+            final isSelected = _selectedMonth == month;
+            return FilterChip(
+              label: Text(
+                month,
+                style: TextStyle(fontSize: 12),
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedMonth = selected ? month : null;
+                });
+              },
+              selectedColor: _primaryColor.withOpacity(0.2),
+              checkmarkColor: _primaryColor,
+              labelStyle: TextStyle(
+                color: isSelected ? _primaryColor : _textColor(context),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: isSelected ? _primaryColor : _borderColor(context)),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenerateReportButton(bool isDarkMode) {
+    bool isFormValid = false;
+    
+    switch (_selectedReportType) {
+      case 'يومي':
+        isFormValid = _selectedDates.isNotEmpty;
+        break;
+      case 'أسبوعي':
+        isFormValid = _selectedWeek != null;
+        break;
+      case 'شهري':
+        isFormValid = _selectedMonth != null;
+        break;
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: isFormValid ? _generateReport : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isFormValid ? _primaryColor : _textSecondaryColor(context),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          elevation: 2,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.summarize),
+            const SizedBox(width: 8),
+            Text(
+              'إنشاء التقرير ${_selectedReportType == 'يومي' && _selectedDates.isNotEmpty ? '(${_selectedDates.length} يوم)' : ''}',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+   void _showMultiDatePicker() {
+  // إنشاء قائمة مؤقتة للتواريخ المختارة
+  List<DateTime> tempSelectedDates = List.from(_selectedDates);
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      // متغير لحفظ اليوم المحدد حالياً في التقويم
+      DateTime focusedDay = DateTime.now();
+      
+      return Dialog(
+        backgroundColor: _cardColor(context),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // العنوان
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _primaryColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'اختر التواريخ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    Spacer(),
+                    if (tempSelectedDates.isNotEmpty)
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${tempSelectedDates.length} يوم',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // التقويم
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _borderColor(context)),
+                          ),
+                          child: TableCalendar(
+                            firstDay: DateTime.utc(2020, 1, 1),
+                            lastDay: DateTime.utc(2030, 12, 31),
+                            focusedDay: focusedDay,
+                            
+                            // تحديد أيام محددة
+                            selectedDayPredicate: (day) {
+                              return tempSelectedDates.any((selectedDate) {
+                                return isSameDay(selectedDate, day);
+                              });
+                            },
+                            
+                            // عند اختيار يوم
+                            onDaySelected: (selectedDay, focused) {
+                              focusedDay = focused;
+                              
+                              // إزالة أو إضافة اليوم المحدد
+                              if (tempSelectedDates.any((date) => isSameDay(date, selectedDay))) {
+                                tempSelectedDates.removeWhere((date) => isSameDay(date, selectedDay));
+                              } else {
+                                tempSelectedDates.add(DateTime(selectedDay.year, selectedDay.month, selectedDay.day));
+                              }
+                              
+                              // ترتيب التواريخ
+                              tempSelectedDates.sort((a, b) => a.compareTo(b));
+                              
+                              // إعادة بناء الواجهة
+                              (context as Element).markNeedsBuild();
+                            },
+                            
+                            // تخصيص المظهر
+                            calendarStyle: CalendarStyle(
+  // الحد الأدنى من الإعدادات
+  defaultTextStyle: TextStyle(color: _textColor(context)),
+  todayTextStyle: TextStyle(
+    color: _textColor(context),
+    fontWeight: FontWeight.bold,
+  ),
+  selectedTextStyle: TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+  ),
+  todayDecoration: BoxDecoration(
+    color: _accentColor.withOpacity(0.3),
+    shape: BoxShape.circle, // إذا أردت دوائر
+  ),
+  selectedDecoration: BoxDecoration(
+    color: _primaryColor,
+    shape: BoxShape.circle, // إذا أردت دوائر
+  ),
+),
+                            
+                            // رأس التقويم
+                            headerStyle: HeaderStyle(
+                              formatButtonVisible: false,
+                              titleCentered: true,
+                              titleTextStyle: TextStyle(
+                                color: _primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              leftChevronIcon: Icon(Icons.chevron_left, color: _primaryColor),
+                              rightChevronIcon: Icon(Icons.chevron_right, color: _primaryColor),
+                              headerPadding: EdgeInsets.symmetric(vertical: 8),
+                              headerMargin: EdgeInsets.only(bottom: 8),
+                            ),
+                            
+                            // أيام الأسبوع
+                            daysOfWeekStyle: DaysOfWeekStyle(
+                              weekdayStyle: TextStyle(
+                                color: _textColor(context),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              weekendStyle: TextStyle(
+                                color: _errorColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            
+                            daysOfWeekHeight: 30,
+                            weekendDays: [DateTime.friday, DateTime.saturday],
+                          ),
+                        ),
+                        
+                        SizedBox(height: 20),
+                        
+                        // قسم التواريخ المختارة
+                        if (tempSelectedDates.isNotEmpty)
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: _backgroundColor(context),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _borderColor(context)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.date_range_rounded, color: _primaryColor, size: 20),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'التواريخ المختارة',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: _primaryColor,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 12),
+                                
+                                // عرض التواريخ
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: tempSelectedDates.map((date) {
+                                    return Chip(
+                                      backgroundColor: _primaryColor,
+                                      label: Text(
+                                        DateFormat('yyyy-MM-dd').format(date),
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      deleteIcon: Icon(Icons.close, color: Colors.white, size: 16),
+                                      onDeleted: () {
+                                        tempSelectedDates.remove(date);
+                                        (context as Element).markNeedsBuild();
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                                
+                                SizedBox(height: 12),
+                                
+                                // نطاق التواريخ
+                                if (tempSelectedDates.length > 1)
+                                  Text(
+                                    'من ${DateFormat('yyyy-MM-dd').format(tempSelectedDates.first)} '
+                                    'إلى ${DateFormat('yyyy-MM-dd').format(tempSelectedDates.last)} '
+                                    '(${tempSelectedDates.length} يوم)',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: _textSecondaryColor(context),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        
+                        // رسالة عند عدم اختيار تواريخ
+                        if (tempSelectedDates.isEmpty)
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: _backgroundColor(context),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _borderColor(context)),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(Icons.touch_app_rounded, 
+                                     size: 40, 
+                                     color: _textSecondaryColor(context)),
+                                SizedBox(height: 12),
+                                Text(
+                                  'انقر على الأيام في التقويم',
+                                  style: TextStyle(
+                                    color: _textColor(context),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'اختر الأيام المطلوبة للتقرير',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: _textSecondaryColor(context),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              
+              // الأزرار
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: _borderColor(context))),
+                  color: _cardColor(context),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _errorColor,
+                          side: BorderSide(color: _errorColor),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text('إلغاء'),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _selectedDates = List.from(tempSelectedDates);
+                          });
+                          Navigator.pop(context);
+                          _showSuccessSnackbar('تم اختيار ${_selectedDates.length} يوم');
+                        },
+                        child: Text('تم الاختيار'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+// دالة مساعدة للتحقق من تطابق اليوم
+bool isSameDay(DateTime? a, DateTime? b) {
+  if (a == null || b == null) return false;
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+Widget _buildCalendar() {
+  // يمكنك إزالة هذه الدالة أو تركها فارغة لأننا نستخدم التقويم داخل الـ Dialog فقط
+  return Container(
+    padding: EdgeInsets.all(16),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.calendar_today, size: 48, color: _primaryColor),
+        SizedBox(height: 16),
+        Text(
+          'انقر على الزر أعلاه لفتح التقويم',
+          style: TextStyle(color: _textSecondaryColor(context)),
+          textAlign: TextAlign.center,
         ),
       ],
     ),
   );
 }
 
+
+  Widget _buildMonthCalendar(DateTime month, List<DateTime> tempSelectedDates, StateSetter setStateDialog) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _borderColor(context)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            DateFormat('MMMM yyyy').format(month),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _primaryColor,
+            ),
+          ),
+          SizedBox(height: 8),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
+            ),
+            itemCount: 35, // 5 أسابيع
+            itemBuilder: (context, index) {
+              DateTime day = DateTime(month.year, month.month, 1).add(Duration(days: index - DateTime(month.year, month.month, 1).weekday));
+              bool isSelected = tempSelectedDates.any((d) => 
+                  d.year == day.year && d.month == day.month && d.day == day.day);
+              bool isCurrentMonth = day.month == month.month;
+              
+              if (!isCurrentMonth) return SizedBox.shrink();
+              
+              return GestureDetector(
+                onTap: () {
+                  setStateDialog(() {
+                    if (isSelected) {
+                      tempSelectedDates.removeWhere((d) => 
+                          d.year == day.year && d.month == day.month && d.day == day.day);
+                    } else {
+                      tempSelectedDates.add(DateTime(day.year, day.month, day.day));
+                    }
+                    tempSelectedDates.sort((a, b) => a.compareTo(b));
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected ? _primaryColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isSelected ? _primaryColor : Colors.transparent,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      day.day.toString(),
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : _textColor(context),
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _generateReport() {
+    if (_selectedReportType == 'يومي' && _selectedDates.isEmpty) {
+      _showErrorSnackbar('يرجى اختيار تواريخ أولاً');
+      return;
+    }
+
+    String reportPeriod = '';
+    
+    switch (_selectedReportType) {
+      case 'يومي':
+        if (_selectedDates.isNotEmpty) {
+          final sortedDates = List<DateTime>.from(_selectedDates)..sort();
+          if (_selectedDates.length == 1) {
+            reportPeriod = DateFormat('yyyy-MM-dd').format(_selectedDates.first);
+          } else {
+            reportPeriod = '${DateFormat('yyyy-MM-dd').format(sortedDates.first)} إلى ${DateFormat('yyyy-MM-dd').format(sortedDates.last)}';
+          }
+        }
+        break;
+      case 'أسبوعي':
+        reportPeriod = _selectedWeek ?? 'غير محدد';
+        break;
+      case 'شهري':
+        reportPeriod = _selectedMonth ?? 'غير محدد';
+        break;
+    }
+
+    _showSuccessSnackbar('تم إنشاء التقرير بنجاح');
+    _showGeneratedReport(reportPeriod);
+  }
+
+  void _showGeneratedReport(String period) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Text('التقرير $period', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('نوع التقرير: $_selectedReportType', style: TextStyle(color: _textColor(context))),
+              if (_selectedReportType == 'يومي' && _selectedDates.isNotEmpty)
+                Text('عدد الأيام: ${_selectedDates.length}', style: TextStyle(color: _textColor(context))),
+              if (_selectedWeek != null)
+                Text('الأسبوع: $_selectedWeek', style: TextStyle(color: _textColor(context))),
+              if (_selectedMonth != null)
+                Text('الشهر: $_selectedMonth', style: TextStyle(color: _textColor(context))),
+              const SizedBox(height: 16),
+              Text('ملخص التقرير المالي:', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
+              Text('- إجمالي الفواتير: ${bills.length}', style: TextStyle(color: _textColor(context))),
+              Text('- إجمالي الإيرادات: ${_formatCurrency(bills.fold(0.0, (sum, bill) => sum + (bill['amountIQD'] ?? 0)))}', style: TextStyle(color: _textColor(context))),
+              Text('- الفواتير المدفوعة: ${bills.where((b) => b['status'] == 'paid').length}', style: TextStyle(color: _textColor(context))),
+              Text('- الفواتير غير المدفوعة: ${bills.where((b) => b['status'] == 'unpaid').length}', style: TextStyle(color: _textColor(context))),
+              Text('- الفواتير المتأخرة: ${bills.where((b) => b['status'] == 'overdue').length}', style: TextStyle(color: _textColor(context))),
+              Text('- عدد المواطنين: ${citizens.length}', style: TextStyle(color: _textColor(context))),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إغلاق', style: TextStyle(color: _textSecondaryColor(context))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _generatePdfReport(period);
+            },
+            child: const Text('تصدير PDF'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ⬅️ دوال PDF للتقارير المالية
+  Future<void> _generatePdfReport(String period) async {
+    try {
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return [
+              _buildPdfHeader(period),
+              pw.SizedBox(height: 20),
+              _buildPdfFinancialSummary(),
+              pw.SizedBox(height: 20),
+              _buildPdfBillsDetails(),
+              pw.SizedBox(height: 20),
+              _buildPdfCitizensSummary(),
+              pw.SizedBox(height: 20),
+              _buildPdfPaymentMethodsSummary(),
+            ];
+          },
+        ),
+      );
+
+      final Uint8List pdfBytes = await pdf.save();
+      await _sharePdfFile(pdfBytes, period);
+
+    } catch (e) {
+      _showErrorSnackbar('خطأ في تصدير التقرير: $e');
+    }
+  }
+
+  Future<void> _sharePdfFile(Uint8List pdfBytes, String period) async {
+    try {
+      final fileName = 'تقرير_مالي_الفواتير_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            pdfBytes,
+            name: fileName,
+            mimeType: 'application/pdf',
+          )
+        ],
+        subject: 'تقرير مالي الفواتير - $period',
+        text: 'مرفق التقرير المالي للفواتير للفترة $period',
+      );
+
+      _showSuccessSnackbar('تم تصدير التقرير بنجاح');
+    } catch (e) {
+      _showErrorSnackbar('خطأ في مشاركة الملف: $e');
+    }
+  }
+
+  pw.Widget _buildPdfHeader(String period) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text(
+              'وزارة الكهرباء - العراق',
+              style: pw.TextStyle(
+                fontSize: 24,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.green,
+              ),
+            ),
+            pw.Text(
+              'التقرير المالي للفواتير',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 10),
+        pw.Divider(),
+        pw.SizedBox(height: 10),
+        pw.Row(
+          children: [
+            pw.Text(
+              'نوع التقرير: ',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(_selectedReportType),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          children: [
+            pw.Text(
+              'الفترة: ',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(period),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          children: [
+            pw.Text(
+              'تاريخ الإنشاء: ',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())),
+          ],
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPdfFinancialSummary() {
+    int totalBills = bills.length;
+    int paidBills = bills.where((bill) => bill['status'] == 'paid').length;
+    int unpaidBills = bills.where((bill) => bill['status'] == 'unpaid').length;
+    int overdueBills = bills.where((bill) => bill['status'] == 'overdue').length;
+    double totalRevenue = bills.fold(0.0, (sum, bill) => sum + (bill['amountIQD'] ?? 0));
+    double paidRevenue = bills.where((bill) => bill['status'] == 'paid').fold(0.0, (sum, bill) => sum + (bill['amountIQD'] ?? 0));
+    
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.green),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      padding: const pw.EdgeInsets.all(15),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'ملخص التقرير المالي',
+            style: pw.TextStyle(
+              fontSize: 18,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.green,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text('إجمالي الفواتير:'),
+              pw.Text('$totalBills'),
+            ],
+          ),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text('إجمالي الإيرادات:'),
+              pw.Text('${_formatCurrency(totalRevenue)} دينار'),
+            ],
+          ),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text('الإيرادات المحصلة:'),
+              pw.Text('${_formatCurrency(paidRevenue)} دينار'),
+            ],
+          ),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text('الفواتير المدفوعة:'),
+              pw.Text('$paidBills'),
+            ],
+          ),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text('الفواتير غير المدفوعة:'),
+              pw.Text('$unpaidBills'),
+            ],
+          ),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text('الفواتير المتأخرة:'),
+              pw.Text('$overdueBills'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildPdfBillsDetails() {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'تفاصيل الفواتير',
+          style: pw.TextStyle(
+            fontSize: 18,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.green,
+          ),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey),
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColors.green100),
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('رقم الفاتورة', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('المواطن', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('المبلغ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('الحالة', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('تاريخ الاستحقاق', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+              ],
+            ),
+            ...bills.map((bill) => pw.TableRow(
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(bill['id']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(bill['citizenName']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('${_formatCurrency(bill['amountIQD'])} دينار'),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(
+                    _getBillStatusText(bill['status']),
+                    style: pw.TextStyle(
+                      color: _getPdfBillStatusColor(bill['status']),
+                    ),
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(DateFormat('yyyy-MM-dd').format(bill['dueDate'])),
+                ),
+              ],
+            )).toList(),
+          ],
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPdfCitizensSummary() {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'ملخص المواطنين',
+          style: pw.TextStyle(
+            fontSize: 18,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.green,
+          ),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey),
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColors.green100),
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('اسم المواطن', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('رقم العداد', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('نوع الاشتراك', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('رقم الهاتف', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+              ],
+            ),
+            ...citizens.map((citizen) => pw.TableRow(
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(citizen['name']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(citizen['meterNumber']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(citizen['subscriptionType']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(citizen['phone']),
+                ),
+              ],
+            )).toList(),
+          ],
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPdfPaymentMethodsSummary() {
+    int activeMethods = paymentMethods.where((method) => method['status'] == 'active').length;
+    int inactiveMethods = paymentMethods.where((method) => method['status'] == 'inactive').length;
+    
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'طرق الدفع المتاحة',
+          style: pw.TextStyle(
+            fontSize: 18,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.green,
+          ),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey),
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColors.green100),
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('اسم طريقة الدفع', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('النوع', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('الحالة', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+              ],
+            ),
+            ...paymentMethods.map((method) => pw.TableRow(
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(method['name']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(method['type']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(
+                    method['status'] == 'active' ? 'نشط' : 'غير نشط',
+                    style: pw.TextStyle(
+                      color: method['status'] == 'active' ? PdfColors.green : PdfColors.red,
+                    ),
+                  ),
+                ),
+              ],
+            )).toList(),
+          ],
+        ),
+        pw.SizedBox(height: 10),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('إجمالي طرق الدفع:'),
+            pw.Text('${paymentMethods.length}'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('الطرق النشطة:'),
+            pw.Text('$activeMethods'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('الطرق غير النشطة:'),
+            pw.Text('$inactiveMethods'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  PdfColor _getPdfBillStatusColor(String status) {
+    switch (status) {
+      case 'paid':
+        return PdfColors.green;
+      case 'unpaid':
+        return PdfColors.orange;
+      case 'overdue':
+        return PdfColors.red;
+      default:
+        return PdfColors.grey;
+    }
+  }
 
   Widget _buildBillsFilterRow(bool isDarkMode) {
     return SingleChildScrollView(
@@ -2266,16 +2723,16 @@ Widget _buildStatisticsCard(bool isDarkMode) {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _primaryColor : (isDarkMode ? _darkCardColor : _cardColor),
+          color: isSelected ? _primaryColor : _cardColor(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? _primaryColor : (isDarkMode ? Colors.grey[700]! : _borderColor),
+            color: isSelected ? _primaryColor : _borderColor(context),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+            color: isSelected ? Colors.white : _textColor(context),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -2293,7 +2750,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
       case 'overdue':
         return _errorColor;
       default:
-        return _textSecondaryColor;
+        return _textSecondaryColor(context);
     }
   }
 
@@ -2310,7 +2767,7 @@ Widget _buildStatisticsCard(bool isDarkMode) {
     }
   }
 
-  // بناء القائمة المنسدلة - محدثة لتكون مطابقة للصورة
+  // بناء القائمة المنسدلة
 Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
   return Drawer(
     child: Container(
@@ -2325,7 +2782,7 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
       ),
       child: Column(
         children: [
-          // رأس الملف الشخصي - مطابق للصورة
+          // رأس الملف الشخصي
           Container(
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -2339,7 +2796,6 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
             ),
             child: Column(
               children: [
-                // الصورة الرمزية
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: Colors.white.withOpacity(0.2),
@@ -2350,7 +2806,6 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
                   ),
                 ),
                 SizedBox(height: 16),
-                // الاسم والوظيفة
                 Text(
                   "محاسب الفواتير",
                   style: TextStyle(
@@ -2370,7 +2825,6 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 8),
-                // المنطقة
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
@@ -2389,7 +2843,7 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
             ),
           ),
 
-          // القائمة الرئيسية - مطابقة للصورة
+          // القائمة الرئيسية
           Expanded(
             child: Container(
               color: isDarkMode ? Color(0xFF0D1B0E) : Color(0xFFE8F5E9),
@@ -2434,7 +2888,7 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
 
                   SizedBox(height: 40),
                   
-                  // معلومات النسخة - في الأسفل
+                  // معلومات النسخة
                   Container(
                     padding: EdgeInsets.all(16),
                     child: Column(
@@ -2475,7 +2929,6 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
   );
 }
 
-// دالة مساعدة لبناء عناصر القائمة - مطابقة للتصميم في الصورة
 Widget _buildDrawerMenuItem({
   required IconData icon,
   required String title,
@@ -2532,7 +2985,7 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      backgroundColor: _cardColor(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [
@@ -2544,17 +2997,17 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
       content: Text(
         'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
         style: TextStyle(
-          color: isDarkMode ? _darkTextColor : _textColor,
+          color: _textColor(context),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('إلغاء', style: TextStyle(color: _textSecondaryColor)),
+          child: Text('إلغاء', style: TextStyle(color: _textSecondaryColor(context))),
         ),
         ElevatedButton(
           onPressed: () {
-            Navigator.pop(context); // إغلاق حوار التأكيد
+            Navigator.pop(context);
             Navigator.pushReplacementNamed(context, EsigninScreen.screenroot);
           },
           style: ElevatedButton.styleFrom(
@@ -2569,10 +3022,8 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
 }
  // دوال العرض التفصيلي
   void _showCitizenDetails(Map<String, dynamic> citizen, bool isDarkMode) {
-  // الحصول على فواتير المواطن
   List<Map<String, dynamic>> citizenBills = bills.where((bill) => bill['citizenId'] == citizen['id']).toList();
   
-  // تصنيف الفواتير حسب التبويبات المطلوبة
   List<Map<String, dynamic>> paidBills = citizenBills.where((bill) => bill['status'] == 'paid').toList();
   List<Map<String, dynamic>> unpaidBills = citizenBills.where((bill) => bill['status'] == 'unpaid').toList();
   List<Map<String, dynamic>> completedBills = citizenBills.where((bill) => bill['status'] == 'paid').toList();
@@ -2580,7 +3031,6 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
   List<Map<String, dynamic>> onTimePaymentBills = citizenBills.where((bill) => bill['status'] == 'paid' && bill['paidDate'] != null && _isSameDay(bill['paidDate'], bill['dueDate'])).toList();
   List<Map<String, dynamic>> latePaymentBills = citizenBills.where((bill) => bill['status'] == 'overdue').toList();
 
-  // بيانات الخدمات الإضافية
   List<Map<String, dynamic>> citizenServices = [
     {
       'id': 'SRV-001',
@@ -2602,7 +3052,6 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
     }
   ];
 
-  // إضافة بيانات الدفع للفواتير المدفوعة
   paidBills = paidBills.map((bill) {
     return {
       ...bill,
@@ -2617,13 +3066,12 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
       builder: (context, setState) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.all(0), // ⬅️ هذا مهم
+          insetPadding: EdgeInsets.all(0),
           child: Container(
-            width: MediaQuery.of(context).size.width, // ⬅️ عرض كامل
-            height: MediaQuery.of(context).size.height, // ⬅️ طول كامل
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
             child: Column(
               children: [
-                // الهيدر
                 Container(
                   padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -2654,10 +3102,9 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
                   ),
                 ),
                 
-                // التبويبات
                 Container(
                   height: 50,
-                  color: isDarkMode ? _darkCardColor : _cardColor,
+                  color: _cardColor(context),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
@@ -2673,10 +3120,9 @@ void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
                   ),
                 ),
                 
-                // المحتوى
                 Expanded(
                   child: Container(
-                    color: isDarkMode ? _darkBackgroundColor : _backgroundColor,
+                    color: _backgroundColor(context),
                     child: _buildTabContent(_currentCitizenTab, citizen, citizenBills, paidBills, unpaidBills, completedBills, earlyPaymentBills, onTimePaymentBills, latePaymentBills, citizenServices, isDarkMode, setState),
                   ),
                 ),
@@ -2711,7 +3157,7 @@ Widget _buildTabButton(String title, int tabIndex, StateSetter setState, bool is
       child: Text(
         title,
         style: TextStyle(
-          color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+          color: isSelected ? Colors.white : _textColor(context),
           fontWeight: FontWeight.w600,
           fontSize: 12,
         ),
@@ -2735,21 +3181,21 @@ Widget _buildTabContent(
   StateSetter setState,
 ) {
   switch (tabIndex) {
-    case 0: // المعلومات
+    case 0:
       return _buildInfoTab(citizen, isDarkMode);
-    case 1: // المدفوعة
+    case 1:
       return _buildBillsTab(paidBills, 'الفواتير المدفوعة', _successColor, isDarkMode, true);
-    case 2: // غير المدفوعة
+    case 2:
       return _buildBillsTab(unpaidBills, 'الفواتير غير المدفوعة', _warningColor, isDarkMode, false);
-    case 3: // المكتملة
+    case 3:
       return _buildBillsTab(completedBills, 'الفواتير المكتملة', _successColor, isDarkMode, true);
-    case 4: // الدفع المبكر
+    case 4:
       return _buildBillsTab(earlyPaymentBills, 'الدفع المبكر', _successColor, isDarkMode, true);
-    case 5: // الدفع بالموعد
+    case 5:
       return _buildBillsTab(onTimePaymentBills, 'الدفع بالموعد', _primaryColor, isDarkMode, true);
-    case 6: // المتأخرة
+    case 6:
       return _buildBillsTab(latePaymentBills, 'الفواتير المتأخرة', _errorColor, isDarkMode, false);
-    case 7: // الخدمات
+    case 7:
       return _buildServicesTab(services, isDarkMode);
     default:
       return _buildInfoTab(citizen, isDarkMode);
@@ -2767,7 +3213,7 @@ Widget _buildInfoTab(Map<String, dynamic> citizen, bool isDarkMode) {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: isDarkMode ? _darkTextColor : _primaryColor,
+            color: _primaryColor,
           ),
         ),
         SizedBox(height: 16),
@@ -2787,7 +3233,6 @@ Widget _buildInfoTab(Map<String, dynamic> citizen, bool isDarkMode) {
 Widget _buildBillsTab(List<Map<String, dynamic>> bills, String title, Color color, bool isDarkMode, bool isPaid) {
   return Column(
     children: [
-      // الهيدر
       Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -2810,20 +3255,19 @@ Widget _buildBillsTab(List<Map<String, dynamic>> bills, String title, Color colo
         ),
       ),
       
-      // قائمة الفواتير
       Expanded(
         child: bills.isEmpty
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.receipt_long_outlined, size: 64, color: _textSecondaryColor),
+                    Icon(Icons.receipt_long_outlined, size: 64, color: _textSecondaryColor(context)),
                     SizedBox(height: 16),
                     Text(
                       'لا توجد فواتير',
                       style: TextStyle(
                         fontSize: 16,
-                        color: _textSecondaryColor,
+                        color: _textSecondaryColor(context),
                       ),
                     ),
                   ],
@@ -2844,7 +3288,6 @@ Widget _buildBillsTab(List<Map<String, dynamic>> bills, String title, Color colo
 Widget _buildServicesTab(List<Map<String, dynamic>> services, bool isDarkMode) {
   return Column(
     children: [
-      // الهيدر
       Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -2867,20 +3310,19 @@ Widget _buildServicesTab(List<Map<String, dynamic>> services, bool isDarkMode) {
         ),
       ),
       
-      // قائمة الخدمات
       Expanded(
         child: services.isEmpty
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.build_outlined, size: 64, color: _textSecondaryColor),
+                    Icon(Icons.build_outlined, size: 64, color: _textSecondaryColor(context)),
                     SizedBox(height: 16),
                     Text(
                       'لا توجد خدمات مشتراة',
                       style: TextStyle(
                         fontSize: 16,
-                        color: _textSecondaryColor,
+                        color: _textSecondaryColor(context),
                       ),
                     ),
                   ],
@@ -2904,7 +3346,7 @@ Widget _buildBillItem(Map<String, dynamic> bill, bool isDarkMode, bool isPaid, C
     padding: EdgeInsets.all(16),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(12),
-      color: isDarkMode ? Colors.white10 : _cardColor,
+      color: _cardColor(context),
       border: Border.all(color: color.withOpacity(0.2)),
       boxShadow: [
         BoxShadow(
@@ -2925,7 +3367,7 @@ Widget _buildBillItem(Map<String, dynamic> bill, bool isDarkMode, bool isPaid, C
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: isDarkMode ? _darkTextColor : _textColor,
+                color: _textColor(context),
               ),
             ),
             Container(
@@ -2967,7 +3409,7 @@ Widget _buildServiceItem(Map<String, dynamic> service, bool isDarkMode) {
     padding: EdgeInsets.all(16),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(12),
-      color: isDarkMode ? Colors.white10 : _cardColor,
+      color: _cardColor(context),
       border: Border.all(color: _accentColor.withOpacity(0.2)),
       boxShadow: [
         BoxShadow(
@@ -2988,7 +3430,7 @@ Widget _buildServiceItem(Map<String, dynamic> service, bool isDarkMode) {
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: isDarkMode ? _darkTextColor : _textColor,
+                color: _textColor(context),
               ),
             ),
             Container(
@@ -3030,7 +3472,7 @@ Widget _buildInfoRow(String label, String value, bool isDarkMode) {
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+              color: _textSecondaryColor(context),
             ),
           ),
         ),
@@ -3039,7 +3481,7 @@ Widget _buildInfoRow(String label, String value, bool isDarkMode) {
           child: Text(
             value,
             style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
+              color: _textColor(context),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -3061,7 +3503,7 @@ Widget _buildBillDetailRow(String label, String value, bool isDarkMode) {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+              color: _textSecondaryColor(context),
             ),
           ),
         ),
@@ -3071,7 +3513,7 @@ Widget _buildBillDetailRow(String label, String value, bool isDarkMode) {
             value,
             style: TextStyle(
               fontSize: 12,
-              color: isDarkMode ? _darkTextColor : _textColor,
+              color: _textColor(context),
             ),
           ),
         ),
@@ -3089,7 +3531,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+        backgroundColor: _cardColor(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
@@ -3124,44 +3566,6 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
     );
   }
 
-  void _showReportDetails(Map<String, dynamic> report, bool isDarkMode) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.description_rounded, color: _primaryColor),
-            SizedBox(width: 8),
-            Text('تفاصيل التقرير'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow('العنوان:', report['title']),
-              _buildDetailRow('النوع:', report['type']),
-              _buildDetailRow('الفترة:', report['period']),
-              _buildDetailRow('تاريخ الإنشاء:', DateFormat('yyyy-MM-dd').format(report['generatedDate'])),
-              if (report['totalRevenue'] != null)
-                _buildDetailRow('إجمالي الإيرادات:', _formatCurrency(report['totalRevenue'])),
-              if (report['totalConsumption'] != null)
-                _buildDetailRow('إجمالي الاستهلاك:', report['totalConsumption']),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق', style: TextStyle(color: _primaryColor)),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showPaymentMethodDetails(Map<String, dynamic> method, bool isDarkMode) {
   List<Map<String, dynamic>> methodTransfers = _getTransfersByPaymentMethod(method['id']);
   double totalAmount = _getTotalTransfersAmount(methodTransfers);
@@ -3178,12 +3582,11 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
             decoration: BoxDecoration(
-              color: isDarkMode ? _darkCardColor : _cardColor,
+              color: _cardColor(context),
               borderRadius: BorderRadius.circular(0),
             ),
             child: Column(
               children: [
-                // الهيدر
                 Container(
                   height: 120,
                   decoration: BoxDecoration(
@@ -3197,7 +3600,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                     children: [
                       Positioned(
                         top: MediaQuery.of(context).padding.top + 8,
-                        left: 8,
+                        right: 5,
                         child: IconButton(
                           icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 28),
                           onPressed: () => Navigator.pop(context),
@@ -3231,11 +3634,10 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                    ),
                  ),
  
-                 // التبويبات
                  Container(
                    height: 50,
                    decoration: BoxDecoration(
-                     border: Border(bottom: BorderSide(color: _borderColor)),
+                     border: Border(bottom: BorderSide(color: _borderColor(context))),
                    ),
                    child: Row(
                      children: [
@@ -3247,7 +3649,6 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                    ),
                  ),
  
-                 // المحتوى
                  Expanded(
                    child: _buildPaymentTabContent(_currentPaymentTab, method, methodTransfers, totalAmount, methodBankAccounts, isDarkMode),
                  ),
@@ -3282,7 +3683,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
             child: Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+                color: isSelected ? Colors.white : _textColor(context),
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -3295,13 +3696,13 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
 
   Widget _buildPaymentTabContent(int tabIndex, Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, List<Map<String, dynamic>> bankAccounts, bool isDarkMode) {
     switch (tabIndex) {
-     case 0: // المعلومات
+     case 0:
        return _buildPaymentInfoTab(method, isDarkMode);
-     case 1: // الحسابات البنكية
+     case 1:
        return _buildBankAccountsTab(bankAccounts, method['name'], isDarkMode);
-     case 2: // التحويلات - معدلة لعرض تحويلات الطريقة فقط
+     case 2:
        return _buildPaymentTransfersTab(transfers, isDarkMode, method['name']);
-     case 3: // الإحصائيات
+     case 3:
        return _buildPaymentStatsTab(method, transfers, totalAmount, isDarkMode);
      default:
        return _buildPaymentInfoTab(method, isDarkMode);
@@ -3336,11 +3737,9 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
     );
   }
 
-  // تبويب الحسابات البنكية الجديد
   Widget _buildBankAccountsTab(List<Map<String, dynamic>> accounts, String methodName, bool isDarkMode) {
     return Column(
       children: [
-        // عنوان التبويب
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -3356,14 +3755,14 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: isDarkMode ? _darkTextColor : _primaryColor,
+                  color: _primaryColor,
                 ),
               ),
               Spacer(),
               Text(
                 '${accounts.length} حساب',
                 style: TextStyle(
-                  color: _textSecondaryColor,
+                  color: _textSecondaryColor(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -3371,20 +3770,19 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
           ),
         ),
         
-        // قائمة الحسابات البنكية
         Expanded(
           child: accounts.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.account_balance_outlined, size: 64, color: _textSecondaryColor),
+                      Icon(Icons.account_balance_outlined, size: 64, color: _textSecondaryColor(context)),
                       SizedBox(height: 16),
                       Text(
                         'لا توجد حسابات بنكية',
                         style: TextStyle(
                           fontSize: 18,
-                          color: _textSecondaryColor,
+                          color: _textSecondaryColor(context),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -3393,7 +3791,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                         'لم يتم العثور على حسابات بنكية رسمية\nلطريقة الدفع $methodName',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: _textSecondaryColor,
+                          color: _textSecondaryColor(context),
                         ),
                       ),
                     ],
@@ -3411,14 +3809,13 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
     );
   }
 
-  // عنصر الحساب البنكي
   Widget _buildBankAccountItem(Map<String, dynamic> account, bool isDarkMode) {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? Colors.white10 : _cardColor,
+        color: _cardColor(context),
         border: Border.all(color: _primaryColor.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
@@ -3440,7 +3837,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: isDarkMode ? _darkTextColor : _textColor,
+                    color: _textColor(context),
                   ),
                 ),
               ),
@@ -3483,7 +3880,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                color: _textSecondaryColor(context),
               ),
             ),
           ),
@@ -3493,7 +3890,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
               value,
               style: TextStyle(
                 fontSize: 12,
-                color: isDarkMode ? _darkTextColor : _textColor,
+                color: _textColor(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -3506,7 +3903,6 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   Widget _buildPaymentTransfersTab(List<Map<String, dynamic>> transfers, bool isDarkMode, String methodName) {
   return Column(
     children: [
-      // عنوان التبويب مع اسم طريقة الدفع
       Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -3522,14 +3918,14 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: isDarkMode ? _darkTextColor : _primaryColor,
+                color: _primaryColor,
               ),
             ),
             Spacer(),
             Text(
               '${transfers.length} تحويل',
               style: TextStyle(
-                color: _textSecondaryColor,
+                color: _textSecondaryColor(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -3537,13 +3933,12 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
         ),
       ),
       
-      // إحصائيات سريعة
       if (transfers.isNotEmpty)
         Container(
           padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDarkMode ? Colors.black12 : Colors.grey[50],
-            border: Border(bottom: BorderSide(color: _borderColor)),
+            color: _backgroundColor(context),
+            border: Border(bottom: BorderSide(color: _borderColor(context))),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -3556,7 +3951,6 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
           ),
         ),
       
-      // قائمة التحويلات
       Expanded(
         child: transfers.isEmpty
             ? _buildNoTransfersMessageForMethod(isDarkMode, methodName)
@@ -3574,65 +3968,372 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
   Widget _buildPaymentStatsTab(Map<String, dynamic> method, List<Map<String, dynamic>> transfers, double totalAmount, bool isDarkMode) {
   int completedTransfers = transfers.where((t) => t['status'] == 'مكتمل').length;
   int pendingTransfers = transfers.where((t) => t['status'] == 'معلق').length;
+  int totalTransfers = transfers.length;
   
+  // بيانات شهرية افتراضية للسنوات المختلفة
+  Map<String, Map<String, double>> monthlyData = {
+    '2024': {
+      'يناير': 4500000,
+      'فبراير': 5200000,
+      'مارس': 3800000,
+      'أبريل': 4200000,
+      'مايو': 4800000,
+      'يونيو': 5100000,
+      'يوليو': 4700000,
+      'أغسطس': 5300000,
+      'سبتمبر': 4900000,
+      'أكتوبر': 5500000,
+      'نوفمبر': 5100000,
+      'ديسمبر': 5800000,
+    },
+    '2023': {
+      'يناير': 3200000,
+      'فبراير': 3800000,
+      'مارس': 3500000,
+      'أبريل': 4100000,
+      'مايو': 3900000,
+      'يونيو': 4200000,
+      'يوليو': 4000000,
+      'أغسطس': 4500000,
+      'سبتمبر': 4300000,
+      'أكتوبر': 4700000,
+      'نوفمبر': 4400000,
+      'ديسمبر': 5000000,
+    },
+    '2022': {
+      'يناير': 2800000,
+      'فبراير': 3200000,
+      'مارس': 3000000,
+      'أبريل': 3500000,
+      'مايو': 3300000,
+      'يونيو': 3600000,
+      'يوليو': 3400000,
+      'أغسطس': 3800000,
+      'سبتمبر': 3700000,
+      'أكتوبر': 4000000,
+      'نوفمبر': 3900000,
+      'ديسمبر': 4200000,
+    },
+  };
+  
+  List<String> years = monthlyData.keys.toList()..sort((a, b) => b.compareTo(a)); // تصنيف تنازلي
+  String selectedYear = years.first;
+
   return SingleChildScrollView(
     padding: EdgeInsets.all(16),
     child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // العنوان
+        Text(
+          'نظرة عامة على التحويلات',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: _primaryColor,
+          ),
+        ),
+        SizedBox(height: 16),
+        
+        // بطاقة الإحصائيات الرئيسية
         Container(
           padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isDarkMode ? Colors.black12 : Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _borderColor),
+            color: _backgroundColor(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _borderColor(context)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             children: [
-              Text(
-                'نظرة عامة على التحويلات',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: isDarkMode ? _darkTextColor : _primaryColor,
-                ),
+              // الصف العلوي (إجمالي التحويلات والمبلغ الإجمالي)
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVerticalStatCard(
+                      title: 'إجمالي التحويلات',
+                      value: totalTransfers.toString(),
+                      icon: Icons.list_alt_rounded,
+                      color: _primaryColor,
+                      iconSize: 28,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _buildVerticalStatCard(
+                      title: 'المبلغ الإجمالي',
+                      value: _formatCurrency(totalAmount),
+                      icon: Icons.attach_money_rounded,
+                      color: _successColor,
+                      iconSize: 28,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 20),
-              _buildStatItem('إجمالي التحويلات', transfers.length.toString(), 
-                  Icons.list_alt_rounded, _primaryColor, isDarkMode), // ⬅️ إضافة isDarkMode
-              _buildStatItem('المبلغ الإجمالي', _formatCurrency(totalAmount), 
-                  Icons.attach_money_rounded, _successColor, isDarkMode), // ⬅️ إضافة isDarkMode
-              _buildStatItem('تحويلات مكتملة', completedTransfers.toString(), 
-                  Icons.check_circle_rounded, _successColor, isDarkMode), // ⬅️ إضافة isDarkMode
-              _buildStatItem('تحويلات معلقة', pendingTransfers.toString(), 
-                  Icons.pending_rounded, _warningColor, isDarkMode), // ⬅️ إضافة isDarkMode
+              SizedBox(height: 16),
+              
+              // الصف السفلي (مكتملة ومعلقة)
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVerticalStatCard(
+                      title: 'تحويلات مكتملة',
+                      value: completedTransfers.toString(),
+                      icon: Icons.check_circle_rounded,
+                      color: _successColor,
+                      iconSize: 28,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _buildVerticalStatCard(
+                      title: 'تحويلات معلقة',
+                      value: pendingTransfers.toString(),
+                      icon: Icons.pending_rounded,
+                      color: _warningColor,
+                      iconSize: 28,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
         
-        SizedBox(height: 20),
+        SizedBox(height: 24),
         
+        // التوزيع الشهري حسب السنة
+        StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: _backgroundColor(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _borderColor(context)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // رأس القسم مع فلتر السنة
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'التوزيع الشهري',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: _primaryColor,
+                        ),
+                      ),
+                      
+                      // فلتر السنة
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: _cardColor(context),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _primaryColor.withOpacity(0.3)),
+                        ),
+                        child: DropdownButton<String>(
+                          value: selectedYear,
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                selectedYear = newValue;
+                              });
+                            }
+                          },
+                          items: years.map<DropdownMenuItem<String>>((String year) {
+                            return DropdownMenuItem<String>(
+                              value: year,
+                              child: Text(
+                                'سنة $year',
+                                style: TextStyle(
+                                  color: _textColor(context),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          underline: SizedBox(),
+                          icon: Icon(Icons.arrow_drop_down_rounded, color: _primaryColor, size: 20),
+                          dropdownColor: _cardColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 16),
+                  
+                  // ملخص السنة المختارة
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _primaryColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'إجمالي السنة',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _textSecondaryColor(context),
+                              ),
+                            ),
+                            Text(
+                              _formatCurrency(_calculateYearTotal(monthlyData[selectedYear]!)),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: _primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'المعدل الشهري',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _textSecondaryColor(context),
+                              ),
+                            ),
+                            Text(
+                              _formatCurrency(_calculateMonthlyAverage(monthlyData[selectedYear]!)),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: _successColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  SizedBox(height: 16),
+                  
+                  // قائمة الأشهر
+                  Column(
+                    children: monthlyData[selectedYear]!.entries.map((entry) {
+                      String month = entry.key;
+                      double amount = entry.value;
+                      double maxAmount = monthlyData[selectedYear]!.values.reduce((a, b) => a > b ? a : b);
+                      double percentage = (amount / maxAmount).clamp(0.0, 1.0);
+                      
+                      return _buildMonthlyStatItem(
+                        month: month,
+                        year: selectedYear,
+                        amount: amount,
+                        maxAmount: maxAmount,
+                        percentage: percentage,
+                        isDarkMode: isDarkMode,
+                      );
+                    }).toList(),
+                  ),
+                  
+                  // إجمالي السنوات
+                  SizedBox(height: 20),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _accentColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _accentColor.withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'مقارنة السنوات',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _accentColor,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        ...years.map((year) {
+                          double yearTotal = _calculateYearTotal(monthlyData[year]!);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'سنة $year',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _textColor(context),
+                                  ),
+                                ),
+                                Text(
+                                  _formatCurrency(yearTotal),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _successColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        
+        SizedBox(height: 16),
+        
+        // نص توضيحي
         Container(
-          padding: EdgeInsets.all(20),
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDarkMode ? Colors.black12 : Colors.grey[50],
+            color: _primaryColor.withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _borderColor),
+            border: Border.all(color: _primaryColor.withOpacity(0.2)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                'التوزيع الشهري',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: isDarkMode ? _darkTextColor : _primaryColor,
+              Icon(Icons.info_outline_rounded, color: _primaryColor, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'جميع الإحصائيات تعكس أداء ${method['name']} خلال جميع السنوات',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _textSecondaryColor(context),
+                  ),
                 ),
               ),
-              SizedBox(height: 15),
-              _buildMonthStat('يناير 2024', 4500000, isDarkMode),
-              _buildMonthStat('فبراير 2024', 5200000, isDarkMode),
-              _buildMonthStat('مارس 2024', 3800000, isDarkMode),
             ],
           ),
         ),
@@ -3640,7 +4341,175 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
     ),
   );
 }
+// حساب إجمالي السنة
+double _calculateYearTotal(Map<String, double> monthlyData) {
+  return monthlyData.values.fold(0.0, (sum, amount) => sum + amount);
+}
 
+// حساب المعدل الشهري
+double _calculateMonthlyAverage(Map<String, double> monthlyData) {
+  return _calculateYearTotal(monthlyData) / monthlyData.length;
+}
+
+// بناء عنصر الشهر مع معلومات إضافية
+Widget _buildMonthlyStatItem({
+  required String month,
+  required String year,
+  required double amount,
+  required double maxAmount,
+  required double percentage,
+  required bool isDarkMode,
+}) {
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                '$month $year',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _textColor(context),
+                ),
+              ),
+            ),
+            Text(
+              _formatCurrency(amount),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: _successColor,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        
+        // شريط التقدم
+        Container(
+          height: 8,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: _borderColor(context),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerRight,
+            widthFactor: percentage,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_primaryColor, _secondaryColor],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+        
+        SizedBox(height: 4),
+        
+        // معلومات إضافية
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${(percentage * 100).toStringAsFixed(0)}% من أعلى شهر',
+              style: TextStyle(
+                fontSize: 10,
+                color: _textSecondaryColor(context),
+              ),
+            ),
+            Text(
+              '${_getMonthRank(month, year)} من 12 شهر',
+              style: TextStyle(
+                fontSize: 10,
+                color: _textSecondaryColor(context),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+// تحديد ترتيب الشهر
+String _getMonthRank(String month, String year) {
+  // ترتيب الأشهر العربي
+  Map<String, int> monthOrder = {
+    'يناير': 1, 'فبراير': 2, 'مارس': 3, 'أبريل': 4,
+    'مايو': 5, 'يونيو': 6, 'يوليو': 7, 'أغسطس': 8,
+    'سبتمبر': 9, 'أكتوبر': 10, 'نوفمبر': 11, 'ديسمبر': 12,
+  };
+  
+  int rank = monthOrder[month] ?? 0;
+  return rank.toString();
+}
+Widget _buildVerticalStatCard({
+  required String title,
+  required String value,
+  required IconData icon,
+  required Color color,
+  double iconSize = 24,
+}) {
+  return Container(
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: _cardColor(context),
+      border: Border.all(color: color.withOpacity(0.2)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 4,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Icon(icon, color: color, size: iconSize),
+        ),
+        SizedBox(height: 12),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(height: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: _textSecondaryColor(context),
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildTransferItem(Map<String, dynamic> transfer, bool isDarkMode) {
   Color statusColor = transfer['status'] == 'مكتمل' ? _successColor : _warningColor;
   
@@ -3649,7 +4518,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
     padding: EdgeInsets.all(16),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(12),
-      color: isDarkMode ? Colors.white10 : _cardColor,
+      color: _cardColor(context),
       border: Border.all(color: statusColor.withOpacity(0.2)),
       boxShadow: [
         BoxShadow(
@@ -3670,7 +4539,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: isDarkMode ? _darkTextColor : _textColor,
+                color: _textColor(context),
               ),
             ),
             Container(
@@ -3721,7 +4590,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
           title,
           style: TextStyle(
             fontSize: 10,
-            color: _textSecondaryColor,
+            color: _textSecondaryColor(context),
           ),
         ),
       ],
@@ -3740,7 +4609,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                color: _textSecondaryColor(context),
               ),
             ),
           ),
@@ -3749,7 +4618,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
             child: Text(
               value,
               style: TextStyle(
-                color: isDarkMode ? _darkTextColor : _textColor,
+                color: _textColor(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -3771,7 +4640,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                color: _textSecondaryColor(context),
               ),
             ),
           ),
@@ -3781,7 +4650,7 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
               value,
               style: TextStyle(
                 fontSize: 12,
-                color: isDarkMode ? _darkTextColor : _textColor,
+                color: _textColor(context),
               ),
             ),
           ),
@@ -3789,71 +4658,13 @@ bool _isSameDay(DateTime? date1, DateTime? date2) {
       ),
     );
   }
-  Widget _buildFilteredReportsList(bool isDarkMode) {
-  return Container(
-    padding: EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkCardColor : _cardColor,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 20,
-          offset: Offset(0, 8),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.list_alt, color: _accentColor),
-            SizedBox(width: 8),
-            Text(
-              'التقارير',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: isDarkMode ? _darkTextColor : _textColor,
-              ),
-            ),
-            Spacer(),
-            Chip(
-              label: Text(
-                '${_filteredReports.length} تقرير',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                ),
-              ),
-              backgroundColor: _accentColor,
-            ),
-          ],
-        ),
-        SizedBox(height: 16),
 
-        if (_filteredReports.isEmpty)
-          _buildEmptyState(isDarkMode)
-        else
-          Column(
-            children: _filteredReports.map((report) {
-              return _buildReportCard(report, isDarkMode);
-            }).toList(),
-          ),
-      ],
-    ),
-  );
-}
-
-
-  // تحديث تعريف الدالة لقبول isDarkMode
 Widget _buildStatItem(String title, String value, IconData icon, Color color, bool isDarkMode) {
   return Container(
     padding: EdgeInsets.all(12),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(12),
-      color: isDarkMode ? _darkCardColor : _cardColor,
+      color: _cardColor(context),
       border: Border.all(color: color.withOpacity(0.2)),
     ),
     child: Column(
@@ -3882,7 +4693,7 @@ Widget _buildStatItem(String title, String value, IconData icon, Color color, bo
           title,
           style: TextStyle(
             fontSize: 12,
-            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+            color: _textSecondaryColor(context),
           ),
           textAlign: TextAlign.center,
         ),
@@ -3900,7 +4711,7 @@ Widget _buildStatItem(String title, String value, IconData icon, Color color, bo
           Text(
             month,
             style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
+              color: _textColor(context),
             ),
           ),
           Text(
@@ -3925,7 +4736,7 @@ Widget _buildStatItem(String title, String value, IconData icon, Color color, bo
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: _textSecondaryColor,
+              color: _textSecondaryColor(context),
             ),
           ),
           SizedBox(width: 8),
@@ -3941,6 +4752,58 @@ Widget _buildStatItem(String title, String value, IconData icon, Color color, bo
       ),
     );
   }
+
+  Widget _buildTransferMiniStat(String title, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            color: _textSecondaryColor(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoTransfersMessageForMethod(bool isDarkMode, String methodName) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.payment_rounded, 
+             size: 64, 
+             color: _textSecondaryColor(context)),
+        SizedBox(height: 16),
+        Text(
+          'لا توجد تحويلات',
+          style: TextStyle(
+            fontSize: 18,
+            color: _textSecondaryColor(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'لم يتم العثور على أي تحويلات لطريقة الدفع\n$methodName',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _textSecondaryColor(context),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   void _downloadReport(Map<String, dynamic> report) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -3960,14 +4823,13 @@ void _showSettingsScreen(BuildContext context, bool isDarkMode) {
         primaryColor: _primaryColor,
         secondaryColor: _secondaryColor,
         accentColor: _accentColor,
-        darkCardColor: _darkCardColor,
-        cardColor: _cardColor,
-        darkTextColor: _darkTextColor,
-        textColor: _textColor,
-        darkTextSecondaryColor: _darkTextSecondaryColor,
-        textSecondaryColor: _textSecondaryColor,
+        darkCardColor: Color(0xFF1E1E1E),
+        cardColor: Colors.white,
+        darkTextColor: Colors.white,
+        textColor: Color(0xFF212121),
+        darkTextSecondaryColor: Colors.white70,
+        textSecondaryColor: Color(0xFF757575),
         onSettingsChanged: (settings) {
-          // معالجة تغييرات الإعدادات هنا
           print('الإعدادات المحدثة: $settings');
         },
       ),
@@ -3985,13 +4847,34 @@ void _showHelpSupportScreen(BuildContext context, bool isDarkMode) {
         primaryColor: _primaryColor,
         secondaryColor: _secondaryColor,
         accentColor: _accentColor,
-        darkCardColor: _darkCardColor,
-        cardColor: _cardColor,
-        darkTextColor: _darkTextColor,
-        textColor: _textColor,
-        darkTextSecondaryColor: _darkTextSecondaryColor,
-        textSecondaryColor: _textSecondaryColor,
+        darkCardColor: Color(0xFF1E1E1E),
+        cardColor: Colors.white,
+        darkTextColor: Colors.white,
+        textColor: Color(0xFF212121),
+        darkTextSecondaryColor: Colors.white70,
+        textSecondaryColor: Color(0xFF757575),
       ),
+    ),
+  );
+}
+
+// ⬅️ دوال الرسائل
+void _showSuccessSnackbar(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: _successColor,
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
+
+void _showErrorSnackbar(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: _errorColor,
+      duration: const Duration(seconds: 4),
     ),
   );
 }
@@ -4100,7 +4983,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _language = 'العربية';
                 });
                 
-                // إعادة تعيين الوضع المظلم إلى الوضع الفاتح
                 themeProvider.toggleTheme(false);
                 
                 Navigator.pop(context);
@@ -4199,7 +5081,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SizedBox(height: 24),
                   _buildSettingsSection('المظهر', Icons.palette_rounded, themeProvider),
                   
-                  // زر الوضع المظلم - محدث ليعمل مع ThemeProvider
                   _buildDarkModeSwitch(themeProvider),
                   
                   _buildSettingDropdown(
@@ -4250,8 +5131,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
-  // زر الوضع المظلم المحدث
   Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
@@ -4264,12 +5143,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: Offset(0, 2),
-          ),
+                      ),
         ],
       ),
       child: Row(
         children: [
-          // أيقونة الوضع المظلم
           Container(
             width: 40,
             height: 40,
@@ -4309,7 +5187,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           
-          // زر التبديل
           Switch(
             value: themeProvider.isDarkMode,
             onChanged: (value) {
@@ -4659,7 +5536,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: Column(
         children: [
-          // تبويبات الإشعارات - مطابقة تمامًا للصورة
           Container(
             height: 50,
             decoration: BoxDecoration(
@@ -4676,13 +5552,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ),
 
-          // خط فاصل تحت التبويبات
           Container(
             height: 1,
             color: _borderColor,
           ),
 
-          // قائمة الإشعارات
           Expanded(
             child: _filteredNotifications.isEmpty
                 ? _buildEmptyState()
@@ -4736,7 +5610,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget _buildNotificationCard(Map<String, dynamic> notification) {
     return Column(
       children: [
-        // محتوى الإشعار
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -4745,7 +5618,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // العنوان
               Text(
                 notification['title'],
                 style: TextStyle(
@@ -4755,7 +5627,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               ),
               SizedBox(height: 8),
-              // الوصف
               Text(
                 notification['description'],
                 style: TextStyle(
@@ -4764,7 +5635,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               ),
               SizedBox(height: 8),
-              // الوقت
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -4780,7 +5650,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ],
           ),
         ),
-        // خط فاصل - مطابق للصورة
         Container(
           height: 1,
           color: _borderColor,
@@ -4887,17 +5756,14 @@ class HelpSupportScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // بطاقة جهات الاتصال
               _buildContactCard(context),
 
               SizedBox(height: 24),
 
-              // الأسئلة الشائعة
               _buildSectionTitle('الأسئلة الشائعة'),
               ..._buildFAQItems(),
 
               SizedBox(height: 24),
-              // معلومات التطبيق
               _buildSectionTitle('معلومات التطبيق'),
               _buildAppInfoCard(),
 
@@ -4909,8 +5775,6 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  // بطاقة جهات الاتصال
-  // في شاشة المساعدة والدعم - تحديث بطاقة جهات الاتصال
  Widget _buildContactCard(BuildContext context) {
   return Container(
     padding: EdgeInsets.all(20),
@@ -4959,7 +5823,6 @@ class HelpSupportScreen extends StatelessWidget {
         _buildContactItem(Icons.location_on_rounded, 'العنوان', 'بغداد - وزارة الكهرباء', false, context),
         SizedBox(height: 16),
         
-        // أزرار الاتصال - محدثة مع إضافة زر المراسلة
         Row(
           children: [
             Expanded(
@@ -4994,7 +5857,6 @@ class HelpSupportScreen extends StatelessWidget {
   );
  }
 
- // دالة فتح محادثة الدعم
  void _openSupportChat(BuildContext context) {
   Navigator.push(
     context,
@@ -5015,8 +5877,6 @@ class HelpSupportScreen extends StatelessWidget {
   );
  }
 
-
-  // عنصر جهة اتصال
   Widget _buildContactItem(IconData icon, String title, String value, bool isPhone, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -5052,7 +5912,6 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  // عنوان القسم
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -5067,7 +5926,6 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  // الأسئلة الشائعة
   List<Widget> _buildFAQItems() {
     List<Map<String, String>> faqs = [
       {
@@ -5096,7 +5954,7 @@ class HelpSupportScreen extends StatelessWidget {
       return _buildExpandableItem(faq['question']!, faq['answer']!);
     }).toList();
   }
-  // عنصر قابل للتمديد (للأسئلة الشائعة)
+  
   Widget _buildExpandableItem(String question, String answer) {
     return Container(
       margin: EdgeInsets.only(bottom: 8),
@@ -5129,7 +5987,7 @@ class HelpSupportScreen extends StatelessWidget {
       ),
     );
   }  
-  // بطاقة معلومات التطبيق
+  
   Widget _buildAppInfoCard() {
     return Container(
       padding: EdgeInsets.all(16),
@@ -5149,7 +6007,6 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  // صف معلومات
   Widget _buildInfoRow(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -5174,9 +6031,6 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  // ========== دوال التفاعل ==========
-
-  // الاتصال الهاتفي
   void _makePhoneCall(String phoneNumber, BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -5244,7 +6098,6 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
 
     _messageController.clear();
 
-    // محاكاة رد الدعم بعد ثانيتين
     Future.delayed(Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -5314,7 +6167,6 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
       ),
       body: Column(
         children: [
-          // معلومات الدعم
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -5375,7 +6227,6 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
             ),
           ),
 
-          // قائمة الرسائل
           Expanded(
             child: ListView.builder(
               padding: EdgeInsets.all(16),
@@ -5388,7 +6239,6 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
             ),
           ),
 
-          // حقل إدخال الرسالة
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -5582,8 +6432,8 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context); // إغلاق حوار التأكيد
-              Navigator.pop(context); // العودة للشاشة السابقة
+              Navigator.pop(context);
+              Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('تم إنهاء المحادثة بنجاح'),
@@ -5600,119 +6450,5 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
         ],
       ),
     );
-  }
-}
-class MultiDatePickerDialog extends StatefulWidget {
-  final DateTime initialDate;
-  final DateTime firstDate;
-  final DateTime lastDate;
-
-  const MultiDatePickerDialog({
-    Key? key,
-    required this.initialDate,
-    required this.firstDate,
-    required this.lastDate,
-  }) : super(key: key);
-
-  @override
-  _MultiDatePickerDialogState createState() => _MultiDatePickerDialogState();
-}
-
-class _MultiDatePickerDialogState extends State<MultiDatePickerDialog> {
-  List<DateTime> _selectedDates = [];
-
-  @override
-  Widget build(BuildContext context) {
-    // إنشاء قائمة بالأيام من 1 إلى 30 للشهر الحالي
-    final now = DateTime.now();
-    final currentYear = now.year;
-    final currentMonth = now.month;
-    
-    List<DateTime> days = List.generate(30, (index) {
-      return DateTime(currentYear, currentMonth, index + 1);
-    });
-
-    return AlertDialog(
-      title: Text('اختر التاريخ', textAlign: TextAlign.center),
-      content: Container(
-        width: double.maxFinite,
-        height: 400,
-        child: ListView.builder(
-          itemCount: days.length,
-          itemBuilder: (context, index) {
-            final date = days[index];
-            final isSelected = _selectedDates.any((selectedDate) =>
-                selectedDate.year == date.year &&
-                selectedDate.month == date.month &&
-                selectedDate.day == date.day);
-            
-            return CheckboxListTile(
-              title: Text(
-                '${date.day} ${_getMonthName(date.month)} ${date.year} - ${_getDayName(date.weekday)}',
-                style: TextStyle(
-                  fontSize: 14,
-                ),
-              ),
-              value: isSelected,
-              onChanged: (bool? value) {
-                setState(() {
-                  if (value == true) {
-                    _selectedDates.add(date);
-                  } else {
-                    _selectedDates.removeWhere((selectedDate) =>
-                        selectedDate.year == date.year &&
-                        selectedDate.month == date.month &&
-                        selectedDate.day == date.day);
-                  }
-                });
-              },
-            );
-          },
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('إلغاء'),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, _selectedDates),
-          child: Text('تأكيد'),
-        ),
-      ],
-    );
-  }
-
-  // دالة للحصول على اسم الشهر بالعربية
-  String _getMonthName(int month) {
-    switch (month) {
-      case 1: return 'يناير';
-      case 2: return 'فبراير';
-      case 3: return 'مارس';
-      case 4: return 'أبريل';
-      case 5: return 'مايو';
-      case 6: return 'يونيو';
-      case 7: return 'يوليو';
-      case 8: return 'أغسطس';
-      case 9: return 'سبتمبر';
-      case 10: return 'أكتوبر';
-      case 11: return 'نوفمبر';
-      case 12: return 'ديسمبر';
-      default: return '';
-    }
-  }
-
-  // دالة للحصول على اسم اليوم بالعربية
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1: return 'الاثنين';
-      case 2: return 'الثلاثاء';
-      case 3: return 'الأربعاء';
-      case 4: return 'الخميس';
-      case 5: return 'الجمعة';
-      case 6: return 'السبت';
-      case 7: return 'الأحد';
-      default: return '';
-    }
   }
 }
