@@ -5,35 +5,22 @@ class WastePremiumSpecialistScreen extends StatefulWidget {
   const WastePremiumSpecialistScreen({super.key});
 
   @override
-  State<WastePremiumSpecialistScreen> createState() =>
-      _WastePremiumSpecialistScreenState();
+  State<WastePremiumSpecialistScreen> createState() => _WastePremiumSpecialistScreenState();
 }
 
-class _WastePremiumSpecialistScreenState
-    extends State<WastePremiumSpecialistScreen>
-    with SingleTickerProviderStateMixin {
+class _WastePremiumSpecialistScreenState extends State<WastePremiumSpecialistScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentTabIndex = 0;
-
+  
   // الألوان المخصصة لموظف النفايات المميزة (تم التعديل)
-  final Color _primaryColor = const Color.fromARGB(
-    255,
-    28,
-    195,
-    167,
-  ); // أخضر نيلي داكن
-  final Color _secondaryColor = const Color.fromARGB(
-    255,
-    0,
-    137,
-    89,
-  ); // أخضر نيلي
+  final Color _primaryColor = const Color.fromARGB(255, 28, 195, 167); // أخضر نيلي داكن
+  final Color _secondaryColor = const Color.fromARGB(255, 0, 137, 89); // أخضر نيلي
   final Color _accentColor = const Color(0xFF4DB6AC); // أخضر نيلي فاتح
   final Color _backgroundColor = const Color(0xFFE0F2F1); // أخضر فاتح جداً
   final Color _cardColor = Colors.white;
   final Color _textColor = const Color.fromARGB(255, 38, 53, 56);
   final Color _textSecondaryColor = const Color.fromARGB(255, 120, 156, 140);
-
+  
   // البيانات الوهمية
   final List<Map<String, dynamic>> _premiumRequests = [
     {
@@ -69,7 +56,7 @@ class _WastePremiumSpecialistScreenState
       'priority': 'منخفض',
     },
   ];
-
+  
   final List<Map<String, dynamic>> _services = [
     {
       'title': 'الطلبات المميزة',
@@ -96,6 +83,66 @@ class _WastePremiumSpecialistScreenState
       'color': Color(0xFF66BB6A), // أخضر
     },
   ];
+
+  // ========== نظام التقارير من الكود الأول ==========
+  // بيانات التقارير - محدثة لمجال النفايات
+  final List<Map<String, dynamic>> reports = [
+    {
+      'id': 'REP-2024-001',
+      'title': 'تقرير الإيرادات الشهري للنفايات',
+      'type': 'مالي',
+      'period': 'يناير 2024',
+      'generatedDate': DateTime.now().subtract(Duration(days: 2)),
+      'totalRevenue': 5000000, // الإيراد الكلي
+      'totalBills': 200, // إجمالي الفواتير
+      'paidBills': 180, // الفواتير المدفوعة
+    },
+    {
+      'id': 'REP-2024-002',
+      'title': 'تقرير الفواتير المستلمة',
+      'type': 'مالي',
+      'period': 'يناير 2024', // نفس الفترة
+      'generatedDate': DateTime.now().subtract(Duration(days: 5)),
+      'receivedInvoices': '180 فاتورة', // نفس paidBills من التقرير الأول
+      'totalReceivedAmount': '4,500,000 درهم', // جزء من الإيراد الكلي
+      'averageReceivedAmount': '25,000 درهم/فاتورة'
+    },
+    {
+      'id': 'REP-2024-003',
+      'title': 'تقرير المدفوعات المتأخرة',
+      'type': 'متابعة',
+      'period': 'يناير 2024', // نفس الفترة
+      'generatedDate': DateTime.now().subtract(Duration(days: 1)),
+      'overdueAmount': 500000, // المتبقي ليكمل الإيراد الكلي
+      'overdueBills': 20, // نفس (totalBills - paidBills)
+    },
+  ];
+
+  String _formatCurrency(dynamic amount) {
+    double numericAmount = 0.0;
+    if (amount is int) {
+      numericAmount = amount.toDouble();
+    } else if (amount is double) {
+      numericAmount = amount;
+    } else if (amount is String) {
+      numericAmount = double.tryParse(amount) ?? 0.0;
+    }
+    
+    return '${NumberFormat('#,##0').format(numericAmount)} ';
+  }
+
+  String _getBillStatusText(String status) {
+    switch (status) {
+      case 'paid':
+        return 'مدفوعة';
+      case 'unpaid':
+        return 'غير مدفوعة';
+      case 'overdue':
+        return 'متأخرة';
+      default:
+        return 'غير معروف';
+    }
+  }
 
   @override
   void initState() {
@@ -130,14 +177,8 @@ class _WastePremiumSpecialistScreenState
           controller: _tabController,
           indicatorColor: Colors.white,
           indicatorWeight: 3,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-          unselectedLabelStyle: TextStyle(
-            fontSize: 14,
-            color: Colors.white.withOpacity(0.7),
-          ),
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          unselectedLabelStyle: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)),
           tabs: const [
             Tab(icon: Icon(Icons.dashboard), text: 'لوحة التحكم'),
             Tab(icon: Icon(Icons.list_alt), text: 'الطلبات'),
@@ -172,9 +213,7 @@ class _WastePremiumSpecialistScreenState
           // بطاقة الترحيب
           Card(
             elevation: 6,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -223,49 +262,30 @@ class _WastePremiumSpecialistScreenState
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      _buildStatCard(
-                        'مهمة اليوم',
-                        5,
-                        Icons.today,
-                        Colors.amber,
-                      ),
+                      _buildStatCard('مهمة اليوم', 5, Icons.today, Colors.amber),
                       const SizedBox(width: 12),
-                      _buildStatCard(
-                        'مكتملة',
-                        23,
-                        Icons.check_circle,
-                        Colors.green,
-                      ),
+                      _buildStatCard('مكتملة', 23, Icons.check_circle, Colors.green),
                       const SizedBox(width: 12),
-                      _buildStatCard(
-                        'معلقة',
-                        7,
-                        Icons.pending_actions,
-                        Colors.orange,
-                      ),
+                      _buildStatCard('معلقة', 7, Icons.pending_actions, Colors.orange),
                     ],
                   ),
                 ],
               ),
             ),
           ),
-
+          
           const SizedBox(height: 24),
-
+          
           // الخدمات السريعة
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Text(
               'الخدمات السريعة',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: _textColor,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor),
             ),
           ),
           const SizedBox(height: 16),
-
+          
           // استخدام GridView بمقاسات محسنة
           GridView.builder(
             shrinkWrap: true,
@@ -282,9 +302,9 @@ class _WastePremiumSpecialistScreenState
               return _buildServiceCard(service);
             },
           ),
-
+          
           const SizedBox(height: 24),
-
+          
           // الطلبات الحديثة
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -293,11 +313,7 @@ class _WastePremiumSpecialistScreenState
               children: [
                 Text(
                   'الطلبات الحديثة',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: _textColor,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor),
                 ),
                 TextButton(
                   onPressed: () {
@@ -312,7 +328,7 @@ class _WastePremiumSpecialistScreenState
             ),
           ),
           const SizedBox(height: 12),
-
+          
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -454,10 +470,7 @@ class _WastePremiumSpecialistScreenState
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 0,
-                horizontal: 16,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
             ),
           ),
         ),
@@ -478,7 +491,7 @@ class _WastePremiumSpecialistScreenState
   Widget _buildRequestItem(Map<String, dynamic> request, int index) {
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.info;
-
+    
     if (request['status'] == 'معلق') {
       statusColor = Colors.orange;
       statusIcon = Icons.pending;
@@ -489,7 +502,7 @@ class _WastePremiumSpecialistScreenState
       statusColor = Colors.green;
       statusIcon = Icons.check_circle;
     }
-
+    
     Color priorityColor = Colors.grey;
     if (request['priority'] == 'عالي') {
       priorityColor = Colors.red;
@@ -498,7 +511,7 @@ class _WastePremiumSpecialistScreenState
     } else if (request['priority'] == 'منخفض') {
       priorityColor = Colors.green;
     }
-
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 3,
@@ -516,11 +529,7 @@ class _WastePremiumSpecialistScreenState
         ),
         title: Text(
           request['customer'],
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: _textColor,
-            fontSize: 16,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: _textColor, fontSize: 16),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,11 +539,7 @@ class _WastePremiumSpecialistScreenState
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 16,
-                  color: _textSecondaryColor,
-                ),
+                Icon(Icons.calendar_today, size: 16, color: _textSecondaryColor),
                 const SizedBox(width: 4),
                 Text(
                   DateFormat('yyyy-MM-dd').format(request['date']),
@@ -565,8 +570,8 @@ class _WastePremiumSpecialistScreenState
                       child: Text(
                         request['status'],
                         style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
+                          color: statusColor, 
+                          fontSize: 10, 
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
@@ -612,11 +617,7 @@ class _WastePremiumSpecialistScreenState
         children: [
           Text(
             'تقارير أداء خدمات النفايات المميزة',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: _textColor,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor),
           ),
           const SizedBox(height: 8),
           Text(
@@ -624,26 +625,16 @@ class _WastePremiumSpecialistScreenState
             style: TextStyle(fontSize: 14, color: _textSecondaryColor),
           ),
           const SizedBox(height: 24),
-
+          
           // إحصائيات سريعة
           Row(
             children: [
               Expanded(
-                child: _buildReportStatCard(
-                  'إجمالي الطلبات',
-                  '142',
-                  Icons.request_page,
-                  _primaryColor,
-                ),
+                child: _buildReportStatCard('إجمالي الطلبات', '142', Icons.request_page, _primaryColor),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildReportStatCard(
-                  'طلبات هذا الشهر',
-                  '24',
-                  Icons.calendar_month,
-                  _secondaryColor,
-                ),
+                child: _buildReportStatCard('طلبات هذا الشهر', '24', Icons.calendar_month, _secondaryColor),
               ),
             ],
           ),
@@ -651,78 +642,50 @@ class _WastePremiumSpecialistScreenState
           Row(
             children: [
               Expanded(
-                child: _buildReportStatCard(
-                  'معدل الإنجاز',
-                  '87%',
-                  Icons.trending_up,
-                  Colors.green,
-                ),
+                child: _buildReportStatCard('معدل الإنجاز', '87%', Icons.trending_up, Colors.green),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildReportStatCard(
-                  'رضا العملاء',
-                  '4.8/5',
-                  Icons.star,
-                  Colors.amber,
-                ),
+                child: _buildReportStatCard('رضا العملاء', '4.8/5', Icons.star, Colors.amber),
               ),
             ],
           ),
-
+          
           const SizedBox(height: 24),
-
+          
           // تقارير نوعية
           Text(
             'التقارير النوعية',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _textColor,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _textColor),
           ),
           const SizedBox(height: 12),
-
-          _buildReportItem(
-            'تقرير الأداء الشهري',
-            Icons.description,
-            'يحتوي على إحصائيات الأداء للشهر الحالي',
+          
+          _buildReportItem('تقرير الأداء الشهري', Icons.description, 'يحتوي على إحصائيات الأداء للشهر الحالي'),
+          _buildReportItem('تقرير رضا العملاء', Icons.sentiment_satisfied_alt, 'تحليل لاستبيانات رضا العملاء'),
+          _buildReportItem('تقرير الطلبات المعلقة', Icons.pending_actions, 'الطلبات التي تحتاج لمتابعة'),
+          _buildReportItem('تقرير التكاليف', Icons.attach_money, 'تحليل للتكاليف والإيرادات'),
+          
+          // عرض التقارير من النظام الأول
+          const SizedBox(height: 24),
+          Text(
+            'تقارير النظام المالي للنفايات',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _textColor),
           ),
-          _buildReportItem(
-            'تقرير رضا العملاء',
-            Icons.sentiment_satisfied_alt,
-            'تحليل لاستبيانات رضا العملاء',
-          ),
-          _buildReportItem(
-            'تقرير الطلبات المعلقة',
-            Icons.pending_actions,
-            'الطلبات التي تحتاج لمتابعة',
-          ),
-          _buildReportItem(
-            'تقرير التكاليف',
-            Icons.attach_money,
-            'تحليل للتكاليف والإيرادات',
-          ),
-
+          const SizedBox(height: 12),
+          
+          ...reports.map((report) => _buildReportListItem(report)).toList(),
+          
           const SizedBox(height: 24),
           Center(
             child: ElevatedButton.icon(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               icon: Icon(Icons.add_chart, color: Colors.white),
-              label: const Text(
-                'إنشاء تقرير جديد',
-                style: TextStyle(color: Colors.white),
-              ),
+              label: const Text('إنشاء تقرير جديد', style: TextStyle(color: Colors.white)),
             ),
           ),
           const SizedBox(height: 16),
@@ -730,13 +693,8 @@ class _WastePremiumSpecialistScreenState
       ),
     );
   }
-
-  Widget _buildReportStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  
+  Widget _buildReportStatCard(String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -771,14 +729,17 @@ class _WastePremiumSpecialistScreenState
             const SizedBox(height: 4),
             Text(
               title,
-              style: TextStyle(fontSize: 14, color: _textSecondaryColor),
+              style: TextStyle(
+                fontSize: 14,
+                color: _textSecondaryColor,
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
+  
   Widget _buildReportItem(String title, IconData icon, String description) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -795,20 +756,147 @@ class _WastePremiumSpecialistScreenState
           ),
           child: Icon(icon, color: _primaryColor),
         ),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: _textColor)),
+        subtitle: Text(description, style: TextStyle(fontSize: 12, color: _textSecondaryColor)),
+        trailing: Icon(Icons.arrow_forward_ios, color: _textSecondaryColor, size: 16),
+        onTap: () {},
+      ),
+    );
+  }
+
+  Widget _buildReportListItem(Map<String, dynamic> report) {
+    Color typeColor = report['type'] == 'مالي' ? Colors.green : Colors.orange;
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: typeColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            report['type'] == 'مالي' ? Icons.attach_money : Icons.timeline,
+            color: typeColor,
+          ),
+        ),
         title: Text(
-          title,
+          report['title'],
           style: TextStyle(fontWeight: FontWeight.bold, color: _textColor),
         ),
-        subtitle: Text(
-          description,
-          style: TextStyle(fontSize: 12, color: _textSecondaryColor),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 14, color: _textSecondaryColor),
+                const SizedBox(width: 4),
+                Text(
+                  report['period'],
+                  style: TextStyle(fontSize: 12, color: _textSecondaryColor),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'رقم التقرير: ${report['id']}',
+              style: TextStyle(fontSize: 11, color: _textSecondaryColor),
+            ),
+          ],
         ),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          color: _textSecondaryColor,
-          size: 16,
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: typeColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            report['type'],
+            style: TextStyle(
+              color: typeColor,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-        onTap: () {},
+        onTap: () {
+          _showReportDetails(report);
+        },
+      ),
+    );
+  }
+
+  void _showReportDetails(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              report['type'] == 'مالي' ? Icons.attach_money : Icons.timeline,
+              color: report['type'] == 'مالي' ? Colors.green : Colors.orange,
+            ),
+            const SizedBox(width: 8),
+            Text('تفاصيل التقرير: ${report['id']}'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetailRow('العنوان:', report['title']),
+              _buildDetailRow('النوع:', report['type']),
+              _buildDetailRow('الفترة:', report['period']),
+              _buildDetailRow('تاريخ الإنشاء:', DateFormat('yyyy-MM-dd').format(report['generatedDate'])),
+              
+              const SizedBox(height: 16),
+              
+              // عرض البيانات المالية الإضافية
+              if (report['totalRevenue'] != null)
+                _buildDetailRow('الإيراد الكلي:', '${_formatCurrency(report['totalRevenue'])}درهم'),
+              if (report['totalBills'] != null)
+                _buildDetailRow('إجمالي الفواتير:', '${report['totalBills']} فاتورة'),
+              if (report['paidBills'] != null)
+                _buildDetailRow('الفواتير المدفوعة:', '${report['paidBills']} فاتورة'),
+              if (report['receivedInvoices'] != null)
+                _buildDetailRow('الفواتير المستلمة:', report['receivedInvoices']),
+              if (report['totalReceivedAmount'] != null)
+                _buildDetailRow('إجمالي المبلغ المستلم:', report['totalReceivedAmount']),
+              if (report['averageReceivedAmount'] != null)
+                _buildDetailRow('متوسط المبلغ المستلم:', report['averageReceivedAmount']),
+              if (report['overdueAmount'] != null)
+                _buildDetailRow('المبلغ المتأخر:', '${_formatCurrency(report['overdueAmount'])}درهم'),
+              if (report['overdueBills'] != null)
+                _buildDetailRow('الفواتير المتأخرة:', '${report['overdueBills']} فاتورة'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('تم تحميل التقرير: ${report['title']}'),
+                  backgroundColor: _primaryColor,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: _primaryColor),
+            child: const Text('تحميل PDF'),
+          ),
+        ],
       ),
     );
   }
@@ -833,10 +921,7 @@ class _WastePremiumSpecialistScreenState
               _buildDetailRow('الخدمة:', request['service']),
               _buildDetailRow('الحالة:', request['status']),
               _buildDetailRow('الأولوية:', request['priority']),
-              _buildDetailRow(
-                'التاريخ:',
-                DateFormat('yyyy-MM-dd HH:mm').format(request['date']),
-              ),
+              _buildDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(request['date'])),
               const SizedBox(height: 16),
               const Text(
                 'ملاحظات إضافية:',
@@ -907,47 +992,27 @@ class _WastePremiumSpecialistScreenState
               TextField(
                 decoration: InputDecoration(
                   labelText: 'اسم العميل',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 decoration: InputDecoration(
                   labelText: 'نوع الخدمة',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField(
                 decoration: InputDecoration(
                   labelText: 'الأولوية',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 ),
                 items: ['منخفض', 'متوسط', 'عالي']
-                    .map(
-                      (priority) => DropdownMenuItem(
-                        value: priority,
-                        child: Text(priority),
-                      ),
-                    )
+                    .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))
                     .toList(),
                 onChanged: (value) {},
               ),
@@ -968,18 +1033,13 @@ class _WastePremiumSpecialistScreenState
                           content: const Text('تم إنشاء الطلب بنجاح'),
                           backgroundColor: _primaryColor,
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primaryColor,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                     child: const Text('إنشاء'),
                   ),
