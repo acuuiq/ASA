@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:mang_mu/screens/employee/employee_electricity/billing_accountant_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/consumption_monitoring_officer_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/maintenance_technician_electrity.dart';
-import 'package:mang_mu/screens/employee/employee_electricity/premium_services_specialist_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/quality_auditor_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/system_supervisor_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/reporting_officer_electricity.dart';
@@ -14,10 +13,8 @@ import 'package:mang_mu/screens/employee/employee_water/water_billing_accountant
 import 'package:mang_mu/screens/employee/employee_water/water_consumption_monitor.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_emergency_officer.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_maintenance_technician.dart';
-import 'package:mang_mu/screens/employee/employee_water/water_premium_specialist.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_supervisor.dart';
 import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart';
-import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';
 import 'package:mang_mu/screens/employee/employee_wast/reporting_officer_wast.dart';
 import 'package:mang_mu/screens/employee/employee_wast/system_supervisor_waste.dart';
 import 'package:mang_mu/screens/employee/employee_wast/waste_billing_officer.dart';
@@ -63,10 +60,10 @@ class _EsigninScreenState extends State<EsigninScreen>
       'محاسب الفواتير',
       'مراقب الاستهلاك',
       'فني الصيانة',
-      'خصائي الخدمات المميزة',
+      /*'خصائي الخدمات المميزة',*/
       'مدقق الجودة ',
       'مسؤول الابلاغ ',
-      'مشرف النظام',
+      'مسؤول محطة الكهرباء',
     ],
     'ماء': [
       'مدقق الجودة ',
@@ -75,8 +72,8 @@ class _EsigninScreenState extends State<EsigninScreen>
       'مراقب الاستهلاك ',
       'ضابط الطوارئ ',
       'فني الصيانة',
-      'أخصائي الخدمات المميزة',
-      'مشرف المياه',
+      /*'خصائي الخدمات المميزة',*/
+      'مسؤول محطة الماء ',
 
     ],
     'نفايات': [
@@ -143,17 +140,6 @@ class _EsigninScreenState extends State<EsigninScreen>
         print(
           'تم تسجيل الدخول كـ: $_selectedSection - $_selectedSpecialization',
         );
-
-        // مثال للتنقل حسب القسم:
-        /*
-        if (_selectedSection == 'كهرباء') {
-          Navigator.pushNamed(context, 'شاشة_الكهرباء_الجديدة');
-        } else if (_selectedSection == 'ماء') {
-          Navigator.pushNamed(context, 'شاشة_الماء_الجديدة');
-        } else if (_selectedSection == 'نفايات') {
-          Navigator.pushNamed(context, 'شاشة_النفايات_الجديدة');
-        }
-        */
         if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'محاسب الفواتير') {
           // التنقل إلى شاشة محاسب الفواتير (الكهرباء)
@@ -179,7 +165,7 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => MaintenanceTechnicianScreen(),
             ),
           );
-        } else if (_selectedSection == 'كهرباء' &&
+        }/*else if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'خصائي الخدمات المميزة') {
           // التنقل إلى شاشة خدمات متميزة متخصصة في الكهرباء
           Navigator.pushReplacement(
@@ -188,7 +174,8 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => PremiumServicesSpecialistScreen(),
             ),
           );
-        } else if (_selectedSection == 'كهرباء' &&
+        } */
+         else if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'مدقق الجودة ') {
           // التنقل إلى شاشة مدقق جودة الكهرباء
           Navigator.pushReplacement(
@@ -196,7 +183,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             MaterialPageRoute(builder: (context) => QualityAuditorScreen()),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'مشرف النظام') {
+            _selectedSpecialization == 'مسؤول محطة الكهرباء') {
           // التنقل إلى شاشة مشرف نظام الكهرباء
           Navigator.pushReplacement(
             context,
@@ -256,7 +243,7 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => WaterMaintenanceTechnicianScreen(),
             ),
           );
-        } else if (_selectedSection == 'ماء' &&
+        }/* else if (_selectedSection == 'ماء' &&
             _selectedSpecialization == 'أخصائي الخدمات المميزة') {
           // التنقل إلى شاشة أخصائي الخدمات المميزة للمياه
           Navigator.pushReplacement(
@@ -265,8 +252,8 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => WaterPremiumSpecialistScreen(),
             ),
           );
-        } else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'مشرف المياه') {
+        } */else if (_selectedSection == 'ماء' &&
+            _selectedSpecialization == 'مسؤول محطة الماء ') {
           // التنقل إلى شاشة مشرف المياه
           Navigator.pushReplacement(
             context,
@@ -288,16 +275,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             context,
             MaterialPageRoute(builder: (context) => ContainerRequestManager()),
           );
-        } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مسؤول الاستجابة للطوارئ') {
-          // التنقل إلى شاشة مسؤول استجابة للطوارئ
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EmergencyResponseOfficerScreen(),
-            ),
-          );
-        } else if (_selectedSection == 'نفايات' &&
+        }else if (_selectedSection == 'نفايات' &&
             _selectedSpecialization?.trim() == 'مسؤول الابلاغ') {
           // التنقل إلى شاشة مسؤول الابلاغ
           Navigator.pushReplacement(
