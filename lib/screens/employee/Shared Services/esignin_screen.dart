@@ -17,7 +17,7 @@ import 'package:mang_mu/screens/employee/employee_water/water_maintenance_techni
 import 'package:mang_mu/screens/employee/employee_water/water_premium_specialist.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_supervisor.dart';
 import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart';
-import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';
+/*import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';*/
 import 'package:mang_mu/screens/employee/employee_wast/reporting_officer_wast.dart';
 import 'package:mang_mu/screens/employee/employee_wast/system_supervisor_waste.dart';
 import 'package:mang_mu/screens/employee/employee_wast/waste_billing_officer.dart';
@@ -182,12 +182,7 @@ class _EsigninScreenState extends State<EsigninScreen>
         } else if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'خصائي الخدمات المميزة') {
           // التنقل إلى شاشة خدمات متميزة متخصصة في الكهرباء
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PremiumServicesSpecialistScreen(),
-            ),
-          );
+        
         } else if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'مدقق الجودة ') {
           // التنقل إلى شاشة مدقق جودة الكهرباء
@@ -294,7 +289,7 @@ class _EsigninScreenState extends State<EsigninScreen>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => EmergencyResponseOfficerScreen(),
+              builder: (context) => ReportingOfficerWasteScreen(),
             ),
           );
         } else if (_selectedSection == 'نفايات' &&
@@ -347,7 +342,7 @@ class _EsigninScreenState extends State<EsigninScreen>
           // التنقل إلى شاشة جدولة النفايات
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => WasteSchedulerApp()),
+            MaterialPageRoute(builder: (context) => EmployeeScheduleScreen()),
           );
         }
       });
