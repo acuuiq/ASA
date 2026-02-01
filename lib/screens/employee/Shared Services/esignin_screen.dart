@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:mang_mu/screens/employee/employee_electricity/billing_accountant_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/consumption_monitoring_officer_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/maintenance_technician_electrity.dart';
+import 'package:mang_mu/screens/employee/employee_electricity/premium_services_specialist_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/quality_auditor_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/system_supervisor_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/reporting_officer_electricity.dart';
@@ -13,12 +14,9 @@ import 'package:mang_mu/screens/employee/employee_water/water_billing_accountant
 import 'package:mang_mu/screens/employee/employee_water/water_consumption_monitor.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_emergency_officer.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_maintenance_technician.dart';
+import 'package:mang_mu/screens/employee/employee_water/water_premium_specialist.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_supervisor.dart';
-import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart';
-<<<<<<< HEAD
-/*import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';*/
-=======
->>>>>>> 2da7403f2f2a0f336c254d248581dfd066d483f4
+import 'package:mang_mu/screens/employee/employee_wast/emergency_response_officer.dart';
 import 'package:mang_mu/screens/employee/employee_wast/reporting_officer_wast.dart';
 import 'package:mang_mu/screens/employee/employee_wast/system_supervisor_waste.dart';
 import 'package:mang_mu/screens/employee/employee_wast/waste_billing_officer.dart';
@@ -64,10 +62,10 @@ class _EsigninScreenState extends State<EsigninScreen>
       'محاسب الفواتير',
       'مراقب الاستهلاك',
       'فني الصيانة',
-      /*'خصائي الخدمات المميزة',*/
+      'خصائي الخدمات المميزة',
       'مدقق الجودة ',
       'مسؤول الابلاغ ',
-      'مسؤول محطة الكهرباء',
+      'مشرف النظام',
     ],
     'ماء': [
       'مدقق الجودة ',
@@ -76,12 +74,11 @@ class _EsigninScreenState extends State<EsigninScreen>
       'مراقب الاستهلاك ',
       'ضابط الطوارئ ',
       'فني الصيانة',
-      /*'خصائي الخدمات المميزة',*/
-      'مسؤول محطة الماء ',
+      'أخصائي الخدمات المميزة',
+      'مشرف المياه',
 
     ],
     'نفايات': [
-      'مدير طلبات الحاويات',
       'مسؤول الاستجابة للطوارئ',
       'مسؤول الابلاغ  ',
       'مشرف النظام',
@@ -144,6 +141,17 @@ class _EsigninScreenState extends State<EsigninScreen>
         print(
           'تم تسجيل الدخول كـ: $_selectedSection - $_selectedSpecialization',
         );
+
+        // مثال للتنقل حسب القسم:
+        /*
+        if (_selectedSection == 'كهرباء') {
+          Navigator.pushNamed(context, 'شاشة_الكهرباء_الجديدة');
+        } else if (_selectedSection == 'ماء') {
+          Navigator.pushNamed(context, 'شاشة_الماء_الجديدة');
+        } else if (_selectedSection == 'نفايات') {
+          Navigator.pushNamed(context, 'شاشة_النفايات_الجديدة');
+        }
+        */
         if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'محاسب الفواتير') {
           // التنقل إلى شاشة محاسب الفواتير (الكهرباء)
@@ -169,22 +177,16 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => MaintenanceTechnicianScreen(),
             ),
           );
-        }/*else if (_selectedSection == 'كهرباء' &&
+        } else if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'خصائي الخدمات المميزة') {
           // التنقل إلى شاشة خدمات متميزة متخصصة في الكهرباء
-<<<<<<< HEAD
-        
-        } else if (_selectedSection == 'كهرباء' &&
-=======
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => PremiumServicesSpecialistScreen(),
+              builder: (context) => WastePremiumSpecialistScreen(),
             ),
           );
-        } */
-         else if (_selectedSection == 'كهرباء' &&
->>>>>>> 2da7403f2f2a0f336c254d248581dfd066d483f4
+        } else if (_selectedSection == 'كهرباء' &&
             _selectedSpecialization == 'مدقق الجودة ') {
           // التنقل إلى شاشة مدقق جودة الكهرباء
           Navigator.pushReplacement(
@@ -192,7 +194,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             MaterialPageRoute(builder: (context) => QualityAuditorScreen()),
           );
         } else if (_selectedSection == 'كهرباء' &&
-            _selectedSpecialization == 'مسؤول محطة الكهرباء') {
+            _selectedSpecialization == 'مشرف النظام') {
           // التنقل إلى شاشة مشرف نظام الكهرباء
           Navigator.pushReplacement(
             context,
@@ -252,7 +254,7 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => WaterMaintenanceTechnicianScreen(),
             ),
           );
-        }/* else if (_selectedSection == 'ماء' &&
+        } else if (_selectedSection == 'ماء' &&
             _selectedSpecialization == 'أخصائي الخدمات المميزة') {
           // التنقل إلى شاشة أخصائي الخدمات المميزة للمياه
           Navigator.pushReplacement(
@@ -261,8 +263,8 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => WaterPremiumSpecialistScreen(),
             ),
           );
-        } */else if (_selectedSection == 'ماء' &&
-            _selectedSpecialization == 'مسؤول محطة الماء ') {
+        } else if (_selectedSection == 'ماء' &&
+            _selectedSpecialization == 'مشرف المياه') {
           // التنقل إلى شاشة مشرف المياه
           Navigator.pushReplacement(
             context,
@@ -277,27 +279,9 @@ class _EsigninScreenState extends State<EsigninScreen>
               builder: (context) => ReportingOfficerWaterScreen(),
             ),
           );
+        
+       
         } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مدير طلبات الحاويات') {
-          // التنقل إلى شاشة مدير طلبات الحاويات
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ContainerRequestManager()),
-          );
-<<<<<<< HEAD
-        } else if (_selectedSection == 'نفايات' &&
-            _selectedSpecialization == 'مسؤول الاستجابة للطوارئ') {
-          // التنقل إلى شاشة مسؤول استجابة للطوارئ
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ReportingOfficerWasteScreen(),
-            ),
-          );
-        } else if (_selectedSection == 'نفايات' &&
-=======
-        }else if (_selectedSection == 'نفايات' &&
->>>>>>> 2da7403f2f2a0f336c254d248581dfd066d483f4
             _selectedSpecialization?.trim() == 'مسؤول الابلاغ') {
           // التنقل إلى شاشة مسؤول الابلاغ
           Navigator.pushReplacement(
