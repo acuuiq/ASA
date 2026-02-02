@@ -8,7 +8,6 @@ import 'dart:typed_data';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show File, Platform;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:mang_mu/screens/employee/Shared Services/esignin_screen.dart';
@@ -28,16 +27,13 @@ class _ReportingOfficerElectricityScreenState extends State<ReportingOfficerElec
   late TabController _employeeSubTabController;
   late TabController _appSubTabController;
   late AnimationController _animationController;
-  late Animation<double> _animation;
-  
+  late TabController _emergencyTabController;
+  late TabController _emergencySubTabController;
+
   String _selectedProblem = '';
   String _problemDescription = '';
-  String _problemImage = '';
-  bool _showDetails = false;
   String _selectedReportType = 'اليوم';
-  List<dynamic> _filteredReports = [];
   TextEditingController _searchController = TextEditingController();
-  static const String screenroot = 'esignin_screen';
 
   // ألوان وزارة الكهرباء الحكومية
   final Color _primaryColor = Color(0xFF0056A4); // أزرق حكومي
@@ -52,24 +48,21 @@ class _ReportingOfficerElectricityScreenState extends State<ReportingOfficerElec
   final Color _errorColor = Color(0xffdc3545);
 
   // نظام التقارير
-  String _selectedArea = 'جميع المناطق';
   String _selectedReportTypeSystem = 'يومي';
   List<DateTime> _selectedDates = [];
   String? _selectedWeek;
   String? _selectedMonth;
-  final List<String> _areas = ['جميع المناطق', 'المنطقة الوسطى', 'المنطقة الشرقية', 'المنطقة الغربية', 'المنطقة الشمالية'];
   final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
   final List<String> _weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
   final List<String> _months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   
   // متغيرات التصفية والتبويبات الفرعية
-  String _currentSubTab = 'غير مقروءة';
   Map<String, String> _subTabStatus = {
-    'electricity': 'غير مقروءة',
-    'employee': 'غير مقروءة',
-    'app': 'غير مقروءة',
-  };
-  
+  'electricity': 'غير مقروءة',
+  'employee': 'غير مقروءة',
+  'app': 'غير مقروءة',
+  'emergency': 'غير مقروءة', // أضف هذا
+};
   // متغيرات التصفية
   String _filterStatus = 'جميع الحالات';
   String _filterPriority = 'جميع الأولويات';
@@ -77,6 +70,62 @@ class _ReportingOfficerElectricityScreenState extends State<ReportingOfficerElec
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
   
+  List<EmergencyReport> _emergencyReports = [
+  EmergencyReport(
+    customerName: 'علي حميد',
+    location: 'حي الصحة - شارع المستشفى',
+    area: 'حي الصحة',
+    emergencyType: 'حادث كهربائي',
+    accidentLocation: 'أمام المستشفى العام',
+    date: '2024-01-26',
+    time: '10:15 ص',
+    description: 'حادث انفجار محول كهربائي أمام المستشفى العام، يوجد مصابين.',
+    imageAsset: 'assets/emergency1.jpg',
+    status: 'لم يتم المعالجة',
+    isRead: false,
+    reportedDate: DateTime.now().subtract(Duration(minutes: 30)),
+    severity: 'حرجة',
+    injuredCount: 2,
+    firePresent: true,
+    roadClosed: true,
+  ),
+  EmergencyReport(
+    customerName: 'سعاد أحمد',
+    location: 'حي الأندلس - شارع المدارس',
+    area: 'حي الأندلس',
+    emergencyType: 'حادث سير مع عمود كهرباء',
+    accidentLocation: 'تقاطع شارع المدارس مع شارع الرياض',
+    date: '2024-01-26',
+    time: '09:45 ص',
+    description: 'تصادم سيارة مع عمود إنارة كهربائي، العمود مائل ويشكل خطراً.',
+    imageAsset: 'assets/emergency2.jpg',
+    status: 'قيد المعالجة',
+    isRead: true,
+    reportedDate: DateTime.now().subtract(Duration(hours: 2)),
+    severity: 'عالية',
+    injuredCount: 1,
+    firePresent: false,
+    roadClosed: true,
+  ),
+  EmergencyReport(
+    customerName: 'مصطفى كريم',
+    location: 'حي القادسية - سوق الخضار',
+    area: 'حي القادسية',
+    emergencyType: 'حريق في لوحة توزيع',
+    accidentLocation: 'سوق الخضار المركزي - المحل رقم 45',
+    date: '2024-01-25',
+    time: '11:30 ص',
+    description: 'حريق في لوحة التوزيع الكهربائية بسوق الخضار، تم إخلاء المنطقة.',
+    imageAsset: 'assets/emergency3.jpg',
+    status: 'قيد المعالجة',
+    isRead: false,
+    reportedDate: DateTime.now().subtract(Duration(days: 1)),
+    severity: 'عالية',
+    injuredCount: 0,
+    firePresent: true,
+    roadClosed: false,
+  ),
+];
   // بيانات التقارير
   final List<Map<String, dynamic>> reports = [
     {
@@ -319,20 +368,18 @@ class _ReportingOfficerElectricityScreenState extends State<ReportingOfficerElec
   @override
 void initState() {
   super.initState();
-  _mainTabController = TabController(length: 4, vsync: this);
+  _mainTabController = TabController(length: 5, vsync: this);
   _electricityTabController = TabController(length: 4, vsync: this);
   _employeeTabController = TabController(length: 3, vsync: this);
   _appTabController = TabController(length: 4, vsync: this);
+  _emergencyTabController = TabController(length: 3, vsync: this); // أضف هذا
   _electricitySubTabController = TabController(length: 2, vsync: this);
   _employeeSubTabController = TabController(length: 2, vsync: this);
   _appSubTabController = TabController(length: 2, vsync: this);
+  _emergencySubTabController = TabController(length: 2, vsync: this); // أضف هذا
   _animationController = AnimationController(
     vsync: this,
     duration: Duration(milliseconds: 500),
-  );
-  _animation = CurvedAnimation(
-    parent: _animationController,
-    curve: Curves.easeInOut,
   );
   _filterReports();
   
@@ -354,6 +401,11 @@ void initState() {
       _subTabStatus['app'] = _appSubTabController.index == 0 ? 'غير مقروءة' : 'مقروءة';
     });
   });
+   _emergencySubTabController.addListener(() {
+    setState(() {
+      _subTabStatus['emergency'] = _emergencySubTabController.index == 0 ? 'غير مقروءة' : 'مقروءة';
+    });
+  });
 }
 
   @override
@@ -362,145 +414,134 @@ void dispose() {
   _electricityTabController.dispose();
   _employeeTabController.dispose();
   _appTabController.dispose();
+  _emergencyTabController.dispose(); // أضف هذا
   _electricitySubTabController.dispose();
   _employeeSubTabController.dispose();
   _appSubTabController.dispose();
+  _emergencySubTabController.dispose(); // أضف هذا
   _animationController.dispose();
   _searchController.dispose();
   super.dispose();
 }
-
   void _filterReports() {
     final now = DateTime.now();
-    final searchQuery = _searchController.text.toLowerCase();
+    _searchController.text.toLowerCase();
     
     setState(() {
-      List<dynamic> allProblems = _getAllProblems();
+      _getAllProblems();
       
       if (_selectedReportType == 'اليوم') {
-        _filteredReports = allProblems.where((problem) {
-          final problemDate = DateTime.parse(problem.date);
-          final matchesDate = problemDate.year == now.year &&
-                 problemDate.month == now.month &&
-                 problemDate.day == now.day;
-          final matchesSearch = _problemMatchesSearch(problem, searchQuery);
-          return matchesDate && matchesSearch;
-        }).toList();
       } else if (_selectedReportType == 'الأسبوع') {
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        _filteredReports = allProblems.where((problem) {
-          final problemDate = DateTime.parse(problem.date);
-          final matchesDate = problemDate.isAfter(startOfWeek.subtract(Duration(days: 1))) &&
-                 problemDate.isBefore(now.add(Duration(days: 1)));
-          final matchesSearch = _problemMatchesSearch(problem, searchQuery);
-          return matchesDate && matchesSearch;
-        }).toList();
+        now.subtract(Duration(days: now.weekday - 1));
       } else if (_selectedReportType == 'الشهر') {
-        _filteredReports = allProblems.where((problem) {
-          final problemDate = DateTime.parse(problem.date);
-          final matchesDate = problemDate.year == now.year &&
-                 problemDate.month == now.month;
-          final matchesSearch = _problemMatchesSearch(problem, searchQuery);
-          return matchesDate && matchesSearch;
-        }).toList();
       }
     });
   }
 
   bool _problemMatchesSearch(dynamic problem, String searchQuery) {
-    if (searchQuery.isEmpty) return true;
-    
-    String name = '';
-    String type = '';
-    String location = '';
-    String date = '';
-    String time = '';
-    String status = '';
+  if (searchQuery.isEmpty) return true;
+  
+  String name = '';
+  String type = '';
+  String location = '';
+  String date = '';
+  String time = '';
+  String status = '';
 
-    if (problem is ElectricityProblem) {
-      name = problem.customerName;
-      type = problem.problemType;
-      location = problem.location;
-      date = problem.date;
-      time = problem.time;
-      status = problem.status;
-    } else if (problem is EmployeeProblem) {
-      name = problem.customerName;
-      type = problem.problemType;
-      location = problem.location;
-      date = problem.date;
-      time = problem.time;
-      status = problem.status;
-    } else if (problem is AppProblem) {
-      name = problem.customerName;
-      type = problem.problemType;
-      location = problem.location;
-      date = problem.date;
-      time = problem.time;
-      status = problem.status;
-    } else if (problem is TransformerProblem) {
-      name = problem.customerName;
-      type = 'مشكلة في المحول';
-      location = problem.location;
-      date = problem.date;
-      time = problem.time;
-      status = problem.status;
-    } else if (problem is SafetyHazardProblem) {
-      name = problem.customerName;
-      type = 'خطر أماني';
-      location = problem.location;
-      date = problem.date;
-      time = problem.time;
-      status = problem.status;
-    } else if (problem is ConnectionProblem) {
-      name = problem.customerName;
-      type = problem.problemType;
-      location = problem.location;
-      date = problem.date;
-      time = problem.time;
-      status = problem.status;
-    }
-
-    return name.toLowerCase().contains(searchQuery) ||
-           type.toLowerCase().contains(searchQuery) ||
-           location.toLowerCase().contains(searchQuery) ||
-           date.contains(searchQuery) ||
-           time.contains(searchQuery) ||
-           status.toLowerCase().contains(searchQuery);
+  if (problem is ElectricityProblem) {
+    name = problem.customerName;
+    type = problem.problemType;
+    location = problem.location;
+    date = problem.date;
+    time = problem.time;
+    status = problem.status;
+  } else if (problem is EmployeeProblem) {
+    name = problem.customerName;
+    type = problem.problemType;
+    location = problem.location;
+    date = problem.date;
+    time = problem.time;
+    status = problem.status;
+  } else if (problem is AppProblem) {
+    name = problem.customerName;
+    type = problem.problemType;
+    location = problem.location;
+    date = problem.date;
+    time = problem.time;
+    status = problem.status;
+  } else if (problem is TransformerProblem) {
+    name = problem.customerName;
+    type = 'مشكلة في المحول';
+    location = problem.location;
+    date = problem.date;
+    time = problem.time;
+    status = problem.status;
+  } else if (problem is SafetyHazardProblem) {
+    name = problem.customerName;
+    type = 'خطر أماني';
+    location = problem.location;
+    date = problem.date;
+    time = problem.time;
+    status = problem.status;
+  } else if (problem is ConnectionProblem) {
+    name = problem.customerName;
+    type = problem.problemType;
+    location = problem.location;
+    date = problem.date;
+    time = problem.time;
+    status = problem.status;
+  } else if (problem is EmergencyReport) { // أضف هذا
+    name = problem.customerName;
+    type = problem.emergencyType;
+    location = problem.location;
+    date = problem.date;
+    time = problem.time;
+    status = problem.status;
   }
+
+  return name.toLowerCase().contains(searchQuery) ||
+         type.toLowerCase().contains(searchQuery) ||
+         location.toLowerCase().contains(searchQuery) ||
+         date.contains(searchQuery) ||
+         time.contains(searchQuery) ||
+         status.toLowerCase().contains(searchQuery);
+}
 
   List<dynamic> _getAllProblems() {
-    return [
-      ..._electricityProblems,
-      ..._employeeProblems,
-      ..._appProblems,
-      ..._transformerProblems,
-      ..._safetyHazardProblems,
-      ..._connectionProblems,
-    ];
-  }
+  return [
+    ..._electricityProblems,
+    ..._employeeProblems,
+    ..._appProblems,
+    ..._transformerProblems,
+    ..._safetyHazardProblems,
+    ..._connectionProblems,
+    ..._emergencyReports, // أضف هذا
+  ];
+}
 
   // دالة لتصفية المشاكل حسب حالة القراءة
   List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType) {
-    String currentSubTab = _subTabStatus[tabType] ?? 'غير مقروءة';
-    
-    return problems.where((problem) {
-      if (problem is ElectricityProblem) {
-        return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
-      } else if (problem is EmployeeProblem) {
-        return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
-      } else if (problem is AppProblem) {
-        return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
-      } else if (problem is TransformerProblem) {
-        return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
-      } else if (problem is SafetyHazardProblem) {
-        return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
-      } else if (problem is ConnectionProblem) {
-        return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
-      }
-      return true;
-    }).toList();
-  }
+  String currentSubTab = _subTabStatus[tabType] ?? 'غير مقروءة';
+  
+  return problems.where((problem) {
+    if (problem is ElectricityProblem) {
+      return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
+    } else if (problem is EmployeeProblem) {
+      return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
+    } else if (problem is AppProblem) {
+      return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
+    } else if (problem is TransformerProblem) {
+      return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
+    } else if (problem is SafetyHazardProblem) {
+      return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
+    } else if (problem is ConnectionProblem) {
+      return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
+    } else if (problem is EmergencyReport) { // أضف هذا
+      return currentSubTab == 'غير مقروءة' ? !problem.isRead : problem.isRead;
+    }
+    return true;
+  }).toList();
+}
 
   // دالة لتحديد لون المشكلة حسب الفئة
   Color _getProblemCategoryColor(String category) {
@@ -536,41 +577,45 @@ void dispose() {
 
   // دالة لتحديث حالة القراءة
   void _markAsRead(dynamic problem) {
-    setState(() {
-      if (problem is ElectricityProblem) {
-        final index = _electricityProblems.indexWhere((p) => p.customerId == problem.customerId);
-        if (index != -1) {
-          _electricityProblems[index] = _electricityProblems[index].copyWith(isRead: true);
-        }
-      } else if (problem is EmployeeProblem) {
-        final index = _employeeProblems.indexWhere((p) => p.customerName == problem.customerName && p.reportedDate == problem.reportedDate);
-        if (index != -1) {
-          _employeeProblems[index] = _employeeProblems[index].copyWith(isRead: true);
-        }
-      } else if (problem is AppProblem) {
-        final index = _appProblems.indexWhere((p) => p.customerName == problem.customerName && p.reportedDate == problem.reportedDate);
-        if (index != -1) {
-          _appProblems[index] = _appProblems[index].copyWith(isRead: true);
-        }
-      } else if (problem is TransformerProblem) {
-        final index = _transformerProblems.indexWhere((p) => p.transformerCode == problem.transformerCode);
-        if (index != -1) {
-          _transformerProblems[index] = _transformerProblems[index].copyWith(isRead: true);
-        }
-      } else if (problem is SafetyHazardProblem) {
-        final index = _safetyHazardProblems.indexWhere((p) => p.customerName == problem.customerName);
-        if (index != -1) {
-          _safetyHazardProblems[index] = _safetyHazardProblems[index].copyWith(isRead: true);
-        }
-      } else if (problem is ConnectionProblem) {
-        final index = _connectionProblems.indexWhere((p) => p.customerName == problem.customerName);
-        if (index != -1) {
-          _connectionProblems[index] = _connectionProblems[index].copyWith(isRead: true);
-        }
+  setState(() {
+    if (problem is ElectricityProblem) {
+      final index = _electricityProblems.indexWhere((p) => p.customerId == problem.customerId);
+      if (index != -1) {
+        _electricityProblems[index] = _electricityProblems[index].copyWith(isRead: true);
       }
-    });
-  }
-
+    } else if (problem is EmployeeProblem) {
+      final index = _employeeProblems.indexWhere((p) => p.customerName == problem.customerName && p.reportedDate == problem.reportedDate);
+      if (index != -1) {
+        _employeeProblems[index] = _employeeProblems[index].copyWith(isRead: true);
+      }
+    } else if (problem is AppProblem) {
+      final index = _appProblems.indexWhere((p) => p.customerName == problem.customerName && p.reportedDate == problem.reportedDate);
+      if (index != -1) {
+        _appProblems[index] = _appProblems[index].copyWith(isRead: true);
+      }
+    } else if (problem is TransformerProblem) {
+      final index = _transformerProblems.indexWhere((p) => p.transformerCode == problem.transformerCode);
+      if (index != -1) {
+        _transformerProblems[index] = _transformerProblems[index].copyWith(isRead: true);
+      }
+    } else if (problem is SafetyHazardProblem) {
+      final index = _safetyHazardProblems.indexWhere((p) => p.customerName == problem.customerName);
+      if (index != -1) {
+        _safetyHazardProblems[index] = _safetyHazardProblems[index].copyWith(isRead: true);
+      }
+    } else if (problem is ConnectionProblem) {
+      final index = _connectionProblems.indexWhere((p) => p.customerName == problem.customerName);
+      if (index != -1) {
+        _connectionProblems[index] = _connectionProblems[index].copyWith(isRead: true);
+      }
+    } else if (problem is EmergencyReport) { // أضف هذا
+      final index = _emergencyReports.indexWhere((p) => p.customerName == problem.customerName && p.reportedDate == problem.reportedDate);
+      if (index != -1) {
+        _emergencyReports[index] = _emergencyReports[index].copyWith(isRead: true);
+      }
+    }
+  });
+}
   // دالة لعرض خيارات التصفية
   void _showFilterOptions(String tabType) {
     showModalBottomSheet(
@@ -752,47 +797,47 @@ void dispose() {
   }
 
   Color _getProblemColor(dynamic problem) {
-    if (problem is ElectricityProblem) {
-      return _getProblemCategoryColor(problem.problemCategory);
-    }
-    if (problem is EmployeeProblem) {
-      if (problem.problemType == 'موظف الصيانة') return _dangerColor;
-      if (problem.problemType == 'موظف الفواتير') return _warningColor;
-      return _infoColor;
-    }
-    if (problem is AppProblem) {
-      if (problem.problemType == 'تعطل في التطبيق') return _dangerColor;
-      if (problem.problemType == 'مشكلة في الدفع') return _warningColor;
-      if (problem.problemType == 'واجهة المستخدم') return _infoColor;
-      return _darkColor;
-    }
-    if (problem is TransformerProblem) return _darkColor;
-    if (problem is SafetyHazardProblem) return _dangerColor;
-    if (problem is ConnectionProblem) return _secondaryColor;
+  if (problem is ElectricityProblem) {
+    return _getProblemCategoryColor(problem.problemCategory);
+  }
+  if (problem is EmployeeProblem) {
+    if (problem.problemType == 'موظف الصيانة') return _dangerColor;
+    if (problem.problemType == 'موظف الفواتير') return _warningColor;
+    return _infoColor;
+  }
+  if (problem is AppProblem) {
+    if (problem.problemType == 'تعطل في التطبيق') return _dangerColor;
+    if (problem.problemType == 'مشكلة في الدفع') return _warningColor;
+    if (problem.problemType == 'واجهة المستخدم') return _infoColor;
     return _darkColor;
   }
-
+  if (problem is TransformerProblem) return _darkColor;
+  if (problem is SafetyHazardProblem) return _dangerColor;
+  if (problem is ConnectionProblem) return _secondaryColor;
+  if (problem is EmergencyReport) return _dangerColor; // أضف هذا
+  return _darkColor;
+}
   IconData _getProblemIcon(dynamic problem) {
-    if (problem is ElectricityProblem) {
-      return _getProblemCategoryIcon(problem.problemCategory);
-    }
-    if (problem is EmployeeProblem) {
-      if (problem.problemType == 'موظف الصيانة') return Icons.engineering;
-      if (problem.problemType == 'موظف الفواتير') return Icons.receipt_long;
-      return Icons.person;
-    }
-    if (problem is AppProblem) {
-      if (problem.problemType == 'تعطل في التطبيق') return Icons.error_outline;
-      if (problem.problemType == 'مشكلة في الدفع') return Icons.payment;
-      if (problem.problemType == 'واجهة المستخدم') return Icons.phone_iphone;
-      return Icons.apps;
-    }
-    if (problem is TransformerProblem) return Icons.electrical_services;
-    if (problem is SafetyHazardProblem) return Icons.warning;
-    if (problem is ConnectionProblem) return Icons.power;
-    return Icons.report_problem;
+  if (problem is ElectricityProblem) {
+    return _getProblemCategoryIcon(problem.problemCategory);
   }
-  
+  if (problem is EmployeeProblem) {
+    if (problem.problemType == 'موظف الصيانة') return Icons.engineering;
+    if (problem.problemType == 'موظف الفواتير') return Icons.receipt_long;
+    return Icons.person;
+  }
+  if (problem is AppProblem) {
+    if (problem.problemType == 'تعطل في التطبيق') return Icons.error_outline;
+    if (problem.problemType == 'مشكلة في الدفع') return Icons.payment;
+    if (problem.problemType == 'واجهة المستخدم') return Icons.phone_iphone;
+    return Icons.apps;
+  }
+  if (problem is TransformerProblem) return Icons.electrical_services;
+  if (problem is SafetyHazardProblem) return Icons.warning;
+  if (problem is ConnectionProblem) return Icons.power;
+  if (problem is EmergencyReport) return Icons.emergency; // أضف هذا
+  return Icons.report_problem;
+}
   String _formatNumber(int number) {
     return number.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -1963,30 +2008,31 @@ void dispose() {
               ),
               indicatorWeight: 4,
               indicatorSize: TabBarIndicatorSize.tab,
-              labelStyle: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-              unselectedLabelStyle: TextStyle(
-                fontSize: 11,
-              ),
+              labelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold), // تصغير الخط
+              unselectedLabelStyle: TextStyle(fontSize: 11,),
+              labelPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0), // تقليل المسافات
               labelColor: Colors.white,
               unselectedLabelColor: _primaryColor,
               tabs: [
                 Tab(
-                  icon: Icon(Icons.report_problem, size: 20),
-                  text: 'إبلاغ عن خدمة الكهرباء',
+                  icon: Icon(Icons.report_problem, size: 18),
+                  text: 'إبلاغ الكهرباء',
                 ),
                 Tab(
-                  icon: Icon(Icons.person, size: 20),
-                  text: 'إبلاغ عن تقصير الموظفين',
+                  icon: Icon(Icons.person, size: 18),
+                  text: 'إبلاغ الموظفين',
                 ),
                 Tab(
-                  icon: Icon(Icons.phone_iphone, size: 20),
-                  text: 'إبلاغ عن مشكلة في التطبيق',
+                  icon: Icon(Icons.phone_iphone, size: 18),
+                  text: 'مشاكل التطبيق',
+                ),
+                Tab( // أضف هذا التبويب الجديد
+                   
+                  icon: Icon(Icons.emergency, size: 18),
+                  text: 'أمر طارئ',
                 ),
                 Tab(
-                  icon: Icon(Icons.summarize, size: 20),
+                  icon: Icon(Icons.summarize, size: 18),
                   text: 'التقارير',
                 ),
               ],
@@ -2017,6 +2063,7 @@ void dispose() {
                   _buildElectricityReportSection(),
                   _buildEmployeeReportSection(),
                   _buildAppProblemSection(),
+                  _buildEmergencyReportSection(), // أضف هذا
                   _buildReportsView(context),
                 ],
               ),
@@ -2026,7 +2073,1128 @@ void dispose() {
       ),
     );
   }
+  Widget _buildEmergencyReportSection() {
+  return Column(
+    children: [
+      Container(
+        padding: EdgeInsets.zero,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: TabBar(
+          controller: _emergencyTabController,
+          isScrollable: true,
+          indicator: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_dangerColor, Colors.red],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          indicatorColor: Colors.transparent,
+          labelColor: Colors.white,
+          unselectedLabelColor: _dangerColor,
+          labelStyle: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+          unselectedLabelStyle: TextStyle(
+            fontSize: 11,
+          ),
+          padding: EdgeInsets.zero,
+          labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          indicatorPadding: EdgeInsets.zero,
+          tabAlignment: TabAlignment.start,
+          tabs: [
+            Tab(text: 'حوادث كهربائية'),
+            Tab(text: 'حرائق'),
+            Tab(text: 'أخرى'),
+          ],
+        ),
+      ),
+      Expanded(
+        child: TabBarView(
+          controller: _emergencyTabController,
+          children: [
+            _buildElectricalAccidentsContent(),
+            _buildFireEmergenciesContent(),
+            _buildOtherEmergenciesContent(),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+Widget _buildElectricalAccidentsContent() {
+  final filteredProblems = _emergencyReports.where((problem) => 
+      problem.emergencyType.contains('كهربائي')).toList();
+  final filteredByReadStatus = _filterProblemsByReadStatus(filteredProblems, 'emergency');
+  
+  return _buildEmergencyContentTemplate(
+    title: 'بلاغات الحوادث الكهربائية',
+    icon: Icons.electrical_services,
+    color: _dangerColor,
+    problems: filteredByReadStatus,
+  );
+}
 
+Widget _buildFireEmergenciesContent() {
+  final filteredProblems = _emergencyReports.where((problem) => 
+      problem.emergencyType.contains('حريق')).toList();
+  final filteredByReadStatus = _filterProblemsByReadStatus(filteredProblems, 'emergency');
+  
+  return _buildEmergencyContentTemplate(
+    title: 'بلاغات الحرائق الكهربائية',
+    icon: Icons.local_fire_department,
+    color: Colors.red,
+    problems: filteredByReadStatus,
+  );
+}
+
+Widget _buildOtherEmergenciesContent() {
+  final filteredProblems = _emergencyReports.where((problem) => 
+      !problem.emergencyType.contains('كهربائي') && 
+      !problem.emergencyType.contains('حريق')).toList();
+  final filteredByReadStatus = _filterProblemsByReadStatus(filteredProblems, 'emergency');
+  
+  return _buildEmergencyContentTemplate(
+    title: 'بلاغات طارئة أخرى',
+    icon: Icons.warning,
+    color: Colors.orange,
+    problems: filteredByReadStatus,
+  );
+}
+
+Widget _buildEmergencyContentTemplate({
+  required String title,
+  required IconData icon,
+  required Color color,
+  required List<dynamic> problems,
+}) {
+  return Column(
+    children: [
+      Container(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                      Text(
+                        'وزارة الكهرباء - الطوارئ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    Chip(
+                      label: Text(
+                        '${problems.where((p) => !p.isRead).length}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      backgroundColor: color,
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    SizedBox(width: 4),
+                    Chip(
+                      label: Text(
+                        'غير مقروء',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                      ),
+                      backgroundColor: color.withOpacity(0.8),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: TabBar(
+                controller: _emergencySubTabController,
+                indicator: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.grey[600],
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('غير مقروءة'),
+                        SizedBox(width: 4),
+                        Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${problems.where((p) => !p.isRead).length}',
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('مقروءة'),
+                        SizedBox(width: 4),
+                        Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${problems.where((p) => p.isRead).length}',
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8),
+          ],
+        ),
+      ),
+      Expanded(
+        child: problems.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
+                    SizedBox(height: 16),
+                    Text(
+                      _subTabStatus['emergency'] == 'غير مقروءة'
+                          ? 'لا توجد بلاغات طارئة غير مقروءة'
+                          : 'لا توجد بلاغات طارئة مقروءة',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      _subTabStatus['emergency'] == 'غير مقروءة'
+                          ? 'جميع البلاغات الطارئة تمت قراءتها'
+                          : 'لم تتم قراءة أي بلاغ طارئ بعد',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                itemCount: problems.length,
+                itemBuilder: (context, index) {
+                  final problem = problems[index];
+                  return _buildEmergencyProblemCard(
+                    problem,
+                    color,
+                    () {
+                      _markAsRead(problem);
+                      _showEmergencyDetails(problem);
+                    },
+                  );
+                },
+              ),
+      ),
+    ],
+  );
+}
+Widget _buildEmergencyProblemCard(EmergencyReport problem, Color color, VoidCallback onTap) {
+  return Card(
+    margin: EdgeInsets.only(bottom: 12, left: 4, right: 4),
+    elevation: problem.isRead ? 1 : 3,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(
+        color: problem.isRead ? Colors.grey[200]! : color.withOpacity(0.3),
+        width: problem.isRead ? 1 : 2,
+      ),
+    ),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // رأس البطاقة
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(problem.isRead ? 0.05 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: color.withOpacity(problem.isRead ? 0.1 : 0.3),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.emergency,
+                    color: color,
+                    size: 22,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        problem.customerName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: problem.isRead ? FontWeight.normal : FontWeight.bold,
+                          color: problem.isRead ? Colors.grey[700] : color,
+                        ),
+                      ),
+                      Text(
+                        problem.area,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: problem.isRead ? Colors.grey[500] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _getEmergencyStatusColor(problem.status).withOpacity(problem.isRead ? 0.05 : 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _getEmergencyStatusColor(problem.status).withOpacity(problem.isRead ? 0.2 : 0.3)
+                    ),
+                  ),
+                  child: Text(
+                    problem.status,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: problem.isRead ? FontWeight.normal : FontWeight.bold,
+                      color: _getEmergencyStatusColor(problem.status),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            // شدة الحالة
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getSeverityColor(problem.severity).withOpacity(problem.isRead ? 0.05 : 0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.warning,
+                    size: 12,
+                    color: _getSeverityColor(problem.severity),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'شدة الحالة: ${problem.severity}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _getSeverityColor(problem.severity),
+                      fontWeight: problem.isRead ? FontWeight.normal : FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 8),
+
+            // نوع الطارئ
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(problem.isRead ? 0.05 : 0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                problem.emergencyType,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: problem.isRead ? color.withOpacity(0.8) : color,
+                  fontWeight: problem.isRead ? FontWeight.normal : FontWeight.bold,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 8),
+
+            // معلومات إضافية
+            Row(
+              children: [
+                if (problem.injuredCount > 0)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(problem.isRead ? 0.05 : 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.personal_injury, size: 12, color: Colors.red),
+                        SizedBox(width: 4),
+                        Text(
+                          '${problem.injuredCount} مصاب',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                
+                if (problem.firePresent)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(problem.isRead ? 0.05 : 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.local_fire_department, size: 12, color: Colors.orange),
+                        SizedBox(width: 4),
+                        Text(
+                          'حريق',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.orange,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                
+                if (problem.roadClosed)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(problem.isRead ? 0.05 : 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.no_crash, size: 12, color: Colors.blue),
+                        SizedBox(width: 4),
+                        Text(
+                          'طريق مغلق',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            // الموقع والتاريخ
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 14, color: Colors.grey),
+                SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    problem.location,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: problem.isRead ? Colors.grey[500] : Colors.grey[700],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 4),
+            
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                SizedBox(width: 4),
+                Text(
+                  problem.date,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: problem.isRead ? Colors.grey[500] : Colors.grey[700],
+                  ),
+                ),
+                SizedBox(width: 16),
+                Icon(Icons.access_time, size: 14, color: Colors.grey),
+                SizedBox(width: 4),
+                Text(
+                  problem.time,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: problem.isRead ? Colors.grey[500] : Colors.grey[700],
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            // الوصف
+            Text(
+              problem.description.length > 120 
+                  ? '${problem.description.substring(0, 120)}...' 
+                  : problem.description,
+              style: TextStyle(
+                fontSize: 12,
+                color: problem.isRead ? Colors.grey[600] : Colors.grey[800],
+                height: 1.4,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+
+            SizedBox(height: 12),
+
+            // صورة البلاغ
+            Container(
+              height: 100,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[100],
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.emergency_rounded,
+                      size: 32,
+                      color: Colors.grey[400],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'صورة الطارئ',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 12),
+
+            // الأزرار
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                InkWell(
+                  onTap: () => _forwardToCivilDefense(problem),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(problem.isRead ? 0.05 : 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.red.withOpacity(problem.isRead ? 0.2 : 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.local_police,
+                          size: 14,
+                          color: Colors.red,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'إرسال للدفاع المدني',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                if (!problem.isRead)
+                  InkWell(
+                    onTap: () => _markAsRead(problem),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _successColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _successColor.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.mark_email_read,
+                            size: 14,
+                            color: _successColor,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'تحديد كمقروء',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: _successColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+Color _getEmergencyStatusColor(String status) {
+  switch (status) {
+    case 'لم يتم المعالجة':
+      return Colors.red;
+    case 'قيد المعالجة':
+      return Colors.orange;
+    case 'تم المعالجة':
+      return Colors.green;
+    default:
+      return Colors.grey;
+  }
+}
+
+Color _getSeverityColor(String severity) {
+  switch (severity) {
+    case 'حرجة':
+      return Colors.red;
+    case 'عالية':
+      return Colors.orange;
+    case 'متوسطة':
+      return Colors.yellow[700]!;
+    case 'منخفضة':
+      return Colors.green;
+    default:
+      return Colors.grey;
+  }
+}
+
+void _forwardToCivilDefense(EmergencyReport emergency) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.red, width: 1),
+      ),
+      title: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.local_police, color: Colors.white),
+            SizedBox(width: 8),
+            Text(
+              'إرسال للدفاع المدني',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('سيتم إرسال هذا البلاغ الطارئ إلى:'),
+            SizedBox(height: 16),
+            Card(
+              elevation: 2,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.red,
+                  child: Icon(Icons.local_police, color: Colors.white, size: 20),
+                ),
+                title: Text(
+                  'الدفاع المدني - غرفة الطوارئ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+                subtitle: Text(
+                  'رقم الطوارئ: 115',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 8),
+            Card(
+              elevation: 2,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.blue,
+                  child: Icon(Icons.local_hospital, color: Colors.white, size: 20),
+                ),
+                title: Text(
+                  'الإسعاف',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+                subtitle: Text(
+                  'رقم الطوارئ: 122',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text('هل تريد إرسال البلاغ الطارئ؟'),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            _showEmergencyForwardedMessage();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('إرسال فوري'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showEmergencyForwardedMessage() {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.local_police, color: Colors.red, size: 20),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'تم إرسال البلاغ للدفاع المدني',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  Text(
+                    'سيتم التعامل مع الحالة فوراً',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      duration: Duration(seconds: 4),
+    ),
+  );
+}
+void _showEmergencyDetails(EmergencyReport emergency) {
+  String details = '''
+🚨 **وزارة الكهرباء - نظام الطوارئ**
+🚑 **تفاصيل البلاغ الطارئ**
+
+👤 **المواطن:** ${emergency.customerName}
+🚨 **نوع الطارئ:** ${emergency.emergencyType}
+📍 **موقع الحادثة:** ${emergency.accidentLocation}
+🏘️ **المنطقة:** ${emergency.area}
+📅 **التاريخ:** ${emergency.date}
+⏰ **الوقت:** ${emergency.time}
+⚡ **شدة الحالة:** ${emergency.severity}
+📌 **الحالة:** ${emergency.status}
+
+📝 **وصف الحادثة:**
+${emergency.description}
+
+🚑 **الإصابات:** ${emergency.injuredCount} مصاب
+🔥 **حريق:** ${emergency.firePresent ? 'نعم' : 'لا'}
+🚧 **إغلاق طريق:** ${emergency.roadClosed ? 'نعم' : 'لا'}
+
+📞 **إجراءات الطوارئ:**
+1. تم إخلاء المنطقة من المدنيين
+2. تم فصل التيار الكهربائي عن المنطقة
+3. تم إبلاغ الدفاع المدني
+4. تم إبلاغ الإسعاف
+5. تم تنبيه أقسام الشرطة المجاورة
+
+🚨 **أرقام الطوارئ المعنية:**
+- الدفاع المدني: 115
+- الإسعاف: 122
+- شرطة الكهرباء: 123
+''';
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.red, width: 2),
+      ),
+      title: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.emergency_rounded, color: Colors.white, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'بلاغ طارئ - ${emergency.emergencyType}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // صورة البلاغ
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.emergency_rounded,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'صورة الحادثة',
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'تم رفعها بواسطة الشاهد',
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 16),
+            
+            // معلومات الطارئ
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildEmergencyDetailRow('👤 الشاهد:', emergency.customerName),
+                  _buildEmergencyDetailRow('🚨 نوع الطارئ:', emergency.emergencyType),
+                  _buildEmergencyDetailRow('📍 موقع الحادثة:', emergency.accidentLocation),
+                  _buildEmergencyDetailRow('🏘️ المنطقة:', emergency.area),
+                  _buildEmergencyDetailRow('📅 التاريخ:', emergency.date),
+                  _buildEmergencyDetailRow('⏰ الوقت:', emergency.time),
+                  _buildEmergencyDetailRow('⚡ الشدة:', emergency.severity),
+                  _buildEmergencyDetailRow('📌 الحالة:', emergency.status),
+                  _buildEmergencyDetailRow('🚑 الإصابات:', '${emergency.injuredCount} مصاب'),
+                  _buildEmergencyDetailRow('🔥 حريق:', emergency.firePresent ? 'نعم' : 'لا'),
+                  _buildEmergencyDetailRow('🚧 طريق مغلق:', emergency.roadClosed ? 'نعم' : 'لا'),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 16),
+            
+            // وصف الحادثة
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '📝 وصف الحادثة:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange[800],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    emergency.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[800],
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 16),
+            
+            // إجراءات الطوارئ
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🚨 إجراءات الطوارئ المتخذة:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[800],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text('• تم إخلاء المنطقة من المدنيين', style: TextStyle(fontSize: 11)),
+                  Text('• تم فصل التيار الكهربائي عن المنطقة', style: TextStyle(fontSize: 11)),
+                  Text('• تم إبلاغ الدفاع المدني (115)', style: TextStyle(fontSize: 11)),
+                  Text('• تم إبلاغ الإسعاف (122)', style: TextStyle(fontSize: 11)),
+                  Text('• تم تنبيه أقسام الشرطة المجاورة', style: TextStyle(fontSize: 11)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        OutlinedButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            _forwardToCivilDefense(emergency);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('إرسال للدفاع المدني'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildEmergencyDetailRow(String label, String value) {
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[800],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildElectricityReportSection() {
   return Column(
     children: [
@@ -4328,16 +5496,18 @@ Widget _buildElectricityContentTemplate({
   }
 
   String _getLocation(dynamic problem) {
-    if (problem is ElectricityProblem) return problem.location;
-    if (problem is EmployeeProblem) return problem.location;
-    if (problem is AppProblem) return problem.location;
-    if (problem is TransformerProblem) return problem.location;
-    if (problem is SafetyHazardProblem) return problem.location;
-    if (problem is ConnectionProblem) return problem.location;
-    return '';
-  }
+  if (problem is ElectricityProblem) return problem.location;
+  if (problem is EmployeeProblem) return problem.location;
+  if (problem is AppProblem) return problem.location;
+  if (problem is TransformerProblem) return problem.location;
+  if (problem is SafetyHazardProblem) return problem.location;
+  if (problem is ConnectionProblem) return problem.location;
+  if (problem is EmergencyReport) return problem.location; // أضف هذا
+  return '';
+}
 
   void _showProblemDetails(dynamic problem) {
+    // ignore: unused_local_variable
     String details = '';
     String imageCaption = '';
     
@@ -4570,8 +5740,8 @@ ${problem.description}
                     SizedBox(height: 8),
                     
                     _buildDetailRow('👤 العميل:', problem.customerName),
-                    if (problem is ElectricityProblem && problem.customerId != null)
-                      _buildDetailRow('🆔 رقم العميل:', problem.customerId!),
+                    if (problem is ElectricityProblem)
+                      _buildDetailRow('🆔 رقم العميل:', problem.customerId),
                     if (problem is EmployeeProblem && problem.employeeName != null)
                       _buildDetailRow('👨‍💼 الموظف:', problem.employeeName!),
                     if (problem is EmployeeProblem && problem.employeeDepartment != null)
@@ -4582,26 +5752,26 @@ ${problem.description}
                       _buildDetailRow('📊 إصدار التطبيق:', problem.appVersion!),
                     if (problem is AppProblem && problem.deviceType != null)
                       _buildDetailRow('📟 نوع الجهاز:', problem.deviceType!),
-                    if (problem is TransformerProblem && problem.transformerCode != null)
-                      _buildDetailRow('🏭 كود المحول:', problem.transformerCode!),
-                    if (problem is ElectricityProblem && problem.problemType != null)
-                      _buildDetailRow('🔧 نوع المشكلة:', problem.problemType!),
-                    if (problem is EmployeeProblem && problem.problemType != null)
-                      _buildDetailRow('📋 نوع البلاغ:', problem.problemType!),
-                    if (problem is AppProblem && problem.problemType != null)
-                      _buildDetailRow('📱 نوع المشكلة:', problem.problemType!),
-                    if (problem is ElectricityProblem && problem.problemCategory != null)
-                      _buildDetailRow('📊 فئة المشكلة:', problem.problemCategory!),
-                    if (problem is ElectricityProblem && problem.substation != null)
-                      _buildDetailRow('🏭 محطة التحويل:', problem.substation!),
+                    if (problem is TransformerProblem)
+                      _buildDetailRow('🏭 كود المحول:', problem.transformerCode),
+                    if (problem is ElectricityProblem)
+                      _buildDetailRow('🔧 نوع المشكلة:', problem.problemType),
+                    if (problem is EmployeeProblem)
+                      _buildDetailRow('📋 نوع البلاغ:', problem.problemType),
+                    if (problem is AppProblem)
+                      _buildDetailRow('📱 نوع المشكلة:', problem.problemType),
+                    if (problem is ElectricityProblem)
+                      _buildDetailRow('📊 فئة المشكلة:', problem.problemCategory),
+                    if (problem is ElectricityProblem)
+                      _buildDetailRow('🏭 محطة التحويل:', problem.substation),
                     _buildDetailRow('📍 الموقع:', _getLocation(problem)),
                     _buildDetailRow('📅 التاريخ:', problem.date),
                     _buildDetailRow('⏰ الوقت:', problem.time),
                     _buildDetailRow('📌 الحالة:', problem.status),
-                    if (problem is ElectricityProblem && problem.duration != null)
-                      _buildDetailRow('⏳ المدة:', problem.duration!),
-                    if (problem is ElectricityProblem && problem.priority != null)
-                      _buildDetailRow('⚡ الأولوية:', problem.priority!),
+                    if (problem is ElectricityProblem )
+                      _buildDetailRow('⏳ المدة:', problem.duration),
+                    if (problem is ElectricityProblem )
+                      _buildDetailRow('⚡ الأولوية:', problem.priority),
                     
                     SizedBox(height: 12),
                     
@@ -5056,7 +6226,6 @@ ${problem.description}
                             onPressed: () {
                               _animationController.reverse().then((value) {
                                 setState(() {
-                                  _showDetails = false;
                                 });
                               });
                             },
@@ -5083,7 +6252,6 @@ ${problem.description}
                             onPressed: () {
                               _animationController.reverse().then((value) {
                                 setState(() {
-                                  _showDetails = false;
                                 });
                               });
                               _showSuccessMessage();
@@ -8141,6 +9309,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         break;
     }
     
+    // ignore: body_might_complete_normally_catch_error
     launch(url).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -9186,6 +10355,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+// === أضف هذا الكلاس هنا ===
+class EmergencyReport {
+  final String customerName;
+  final String location;
+  final String area;
+  final String emergencyType;
+  final String accidentLocation;
+  final String date;
+  final String time;
+  final String description;
+  final String imageAsset;
+  final String status;
+  final bool isRead;
+  final DateTime reportedDate;
+  final String severity;
+  final int injuredCount;
+  final bool firePresent;
+  final bool roadClosed;
+
+  EmergencyReport({
+    required this.customerName,
+    required this.location,
+    required this.area,
+    required this.emergencyType,
+    required this.accidentLocation,
+    required this.date,
+    required this.time,
+    required this.description,
+    required this.imageAsset,
+    required this.status,
+    required this.isRead,
+    required this.reportedDate,
+    required this.severity,
+    required this.injuredCount,
+    required this.firePresent,
+    required this.roadClosed,
+  });
+
+  EmergencyReport copyWith({
+    String? customerName,
+    String? location,
+    String? area,
+    String? emergencyType,
+    String? accidentLocation,
+    String? date,
+    String? time,
+    String? description,
+    String? imageAsset,
+    String? status,
+    bool? isRead,
+    DateTime? reportedDate,
+    String? severity,
+    int? injuredCount,
+    bool? firePresent,
+    bool? roadClosed,
+  }) {
+    return EmergencyReport(
+      customerName: customerName ?? this.customerName,
+      location: location ?? this.location,
+      area: area ?? this.area,
+      emergencyType: emergencyType ?? this.emergencyType,
+      accidentLocation: accidentLocation ?? this.accidentLocation,
+      date: date ?? this.date,
+      time: time ?? this.time,
+      description: description ?? this.description,
+      imageAsset: imageAsset ?? this.imageAsset,
+      status: status ?? this.status,
+      isRead: isRead ?? this.isRead,
+      reportedDate: reportedDate ?? this.reportedDate,
+      severity: severity ?? this.severity,
+      injuredCount: injuredCount ?? this.injuredCount,
+      firePresent: firePresent ?? this.firePresent,
+      roadClosed: roadClosed ?? this.roadClosed,
     );
   }
 }
