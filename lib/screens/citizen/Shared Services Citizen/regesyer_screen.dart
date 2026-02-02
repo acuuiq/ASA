@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mang_mu/screens/citizen/Shared%20Services%20Citizen/user_main_screen.dart';
-
+import 'signin_screen.dart';
 class RegesyerScreen extends StatefulWidget {
   static const String screenRoot = 'Regesyer_screen';
 
@@ -29,9 +29,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
   final TextEditingController _idNumberController = TextEditingController();
   final TextEditingController _houseNumberController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
-
-  final TextEditingController _phoneController =
-      TextEditingController(); // جديد: حقل رقم الموبايل
+  final TextEditingController _phoneController = TextEditingController();
 
   int _currentStep = 0;
   final _formKey = GlobalKey<FormState>();
@@ -43,18 +41,14 @@ class _RegesyerScreenState extends State<RegesyerScreen>
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
 
-  final Color _primaryColor = const Color(0xFF0D47A1);
-  final Color _secondaryColor = const Color(0xFF1976D2);
-  final Color _accentColor = const Color(0xFF64B5F6);
-  final Color _backgroundColor = const Color(0xFFF8F9FA);
-  final Color _textColor = const Color(0xFF212121);
-  final Color _textSecondaryColor = const Color(0xFF757575);
-  final Color _successColor = const Color(0xFF2E7D32);
-  final Color _warningColor = const Color(0xFFF57C00);
+  // الألوان مطابقة تماماً لتسجيل الدخول
+  final Color _gradientStart = const Color.fromARGB(255, 8, 93, 99);
+  final Color _gradientEnd = const Color.fromARGB(255, 1, 17, 27);
+  final Color _buttonGradientStart = const Color.fromARGB(255, 17, 126, 117);
+  final Color _buttonGradientEnd = const Color.fromARGB(255, 16, 78, 88);
+  final Color _cardBackground = const Color.fromARGB(255, 255, 255, 255);
   final Color _errorColor = const Color(0xFFD32F2F);
-  final Color _borderColor = const Color(0xFFE0E0E0);
-  final Color _locationColor = const Color(0xFF4CAF50);
-  final Color _phoneColor = const Color(0xFF2196F3); // لون خاص بحقل الموبايل
+  final Color _successColor = const Color(0xFF2E7D32);
 
   // قائمة المناطق
   final List<String> _regions = [
@@ -132,8 +126,6 @@ class _RegesyerScreenState extends State<RegesyerScreen>
   void initState() {
     super.initState();
 
-    print('InitState called');
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -174,13 +166,11 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     _idNumberController.dispose();
     _houseNumberController.dispose();
     _locationController.dispose();
-    _phoneController.dispose(); // جديد
+    _phoneController.dispose();
     _controller.dispose();
     _flashController.dispose();
     super.dispose();
   }
-
-  // حذف جميع دوال GPS والموقع
 
   Future<void> _pickImage(bool isFront) async {
     try {
@@ -275,24 +265,33 @@ class _RegesyerScreenState extends State<RegesyerScreen>
           height: MediaQuery.of(context).size.height * 0.7,
           child: Column(
             children: [
-              Padding(
+              Container(
                 padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_gradientStart, _gradientEnd],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
                     Text(
                       'اختر المنطقة',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: _primaryColor,
+                        color: Colors.white,
                         fontFamily: 'Tajawal',
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
+                    SizedBox(width: 40),
                   ],
                 ),
               ),
@@ -302,20 +301,29 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                   itemCount: _regions.length,
                   itemBuilder: (context, index) {
                     final region = _regions[index];
-                    return ListTile(
-                      title: Text(
-                        region,
-                        style: TextStyle(fontFamily: 'Tajawal', fontSize: 14),
+                    return Container(
+                      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: ListTile(
+                        title: Text(
+                          region,
+                          style: TextStyle(fontFamily: 'Tajawal', fontSize: 14),
+                        ),
+                        trailing: _locationController.text == region
+                            ? Icon(Icons.check, color: _buttonGradientStart)
+                            : null,
+                        tileColor: _locationController.text == region
+                            ? _buttonGradientStart.withOpacity(0.1)
+                            : null,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _locationController.text = region;
+                          });
+                          Navigator.pop(context);
+                        },
                       ),
-                      trailing: _locationController.text == region
-                          ? Icon(Icons.check, color: _primaryColor)
-                          : null,
-                      onTap: () {
-                        setState(() {
-                          _locationController.text = region;
-                        });
-                        Navigator.pop(context);
-                      },
                     );
                   },
                 ),
@@ -337,10 +345,9 @@ class _RegesyerScreenState extends State<RegesyerScreen>
       final idNumber = _idNumberController.text.trim();
       final houseNumber = _houseNumberController.text.trim();
       final location = _locationController.text.trim();
-      final phone = _phoneController.text.trim(); // جديد
+      final phone = _phoneController.text.trim();
 
       if (phone.isEmpty) {
-        // جديد
         _showError('الرجاء إدخال رقم الموبايل');
         return false;
       }
@@ -413,13 +420,12 @@ class _RegesyerScreenState extends State<RegesyerScreen>
         }
       }
 
-      // إضافة الحقول الجديدة
       final insertData = {
         'id': user.id,
         'full_name': fullName,
         'id_number': idNumber,
         'email': email,
-        'phone': phone, // جديد
+        'phone': phone,
         'house_number': houseNumber,
         'location': location,
         'front_id_image': frontImageUrl,
@@ -502,34 +508,22 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     }
   }
 
-  void _showSuccess(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message, style: TextStyle(fontFamily: 'Tajawal')),
-          backgroundColor: _successColor,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
   Widget _buildImagePreview(File? image, bool isFront) {
     return Container(
       height: 140,
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: _primaryColor.withOpacity(0.1),
-        border: Border.all(color: _primaryColor, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        color: _buttonGradientStart.withOpacity(0.1),
+        border: Border.all(color: _buttonGradientStart, width: 1.5),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
           if (image != null)
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Image.file(
                 image,
                 fit: BoxFit.cover,
@@ -541,13 +535,13 @@ class _RegesyerScreenState extends State<RegesyerScreen>
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.photo_camera, size: 40, color: _textSecondaryColor),
+                Icon(Icons.photo_camera, size: 40, color: _buttonGradientStart),
                 SizedBox(height: 8),
                 Text(
                   isFront ? 'الصورة الأمامية' : 'الصورة الخلفية',
                   style: TextStyle(
                     fontSize: 12,
-                    color: _textSecondaryColor,
+                    color: _buttonGradientStart,
                     fontFamily: 'Tajawal',
                   ),
                 ),
@@ -557,7 +551,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
           if (image != null)
             Positioned(
               top: 4,
-              left: 4,
+              right: 4,
               child: GestureDetector(
                 onTap: () => _removeImage(isFront),
                 child: Container(
@@ -587,16 +581,16 @@ class _RegesyerScreenState extends State<RegesyerScreen>
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: _primaryColor.withOpacity(0.05),
-        border: Border.all(color: _primaryColor, width: 2),
+        borderRadius: BorderRadius.circular(16),
+        color: _buttonGradientStart.withOpacity(0.05),
+        border: Border.all(color: _buttonGradientStart, width: 2),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
           if (_selfieImage != null)
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
               child: Image.file(
                 _selfieImage!,
                 fit: BoxFit.cover,
@@ -614,14 +608,14 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _primaryColor.withOpacity(0.3),
+                      color: _buttonGradientStart.withOpacity(0.3),
                       width: 2,
                     ),
                   ),
                   child: Icon(
                     Icons.face,
                     size: 40,
-                    color: _primaryColor.withOpacity(0.5),
+                    color: _buttonGradientStart.withOpacity(0.5),
                   ),
                 ),
                 SizedBox(height: 12),
@@ -629,7 +623,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                   'لم يتم التقاط صورة سيلفي بعد',
                   style: TextStyle(
                     fontSize: 13,
-                    color: _textSecondaryColor,
+                    color: _buttonGradientStart,
                     fontFamily: 'Tajawal',
                   ),
                 ),
@@ -643,7 +637,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                 height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   color: Colors.white.withOpacity(_flashAnimation.value * 0.7),
                 ),
               );
@@ -677,7 +671,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     );
   }
 
-  Widget _buildStepIndicator() {
+ Widget _buildStepIndicator() {
     final List<String> stepTitles = [
       'البيانات',
       'الحساب',
@@ -687,65 +681,83 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     ];
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          SizedBox(height: 0), // تقليل المسافة العلوية أكثر
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(5, (index) {
               return Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _currentStep >= index
-                      ? _primaryColor
-                      : Colors.grey[300],
-                  border: Border.all(
-                    color: _currentStep >= index
-                        ? _primaryColor
-                        : const Color.fromARGB(255, 189, 189, 189),
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    (index + 1).toString(),
-                    style: TextStyle(
-                      color: _currentStep >= index
-                          ? Colors.white
-                          : Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                width: 56,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Transform.translate(
+                      offset: Offset(0, -3), // رفع الأرقام للأعلى بمقدار 3 بكسل
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentStep >= index
+                              ? _buttonGradientStart
+                              : Colors.grey[300],
+                          border: Border.all(
+                            color: _currentStep >= index
+                                ? _buttonGradientStart
+                                : const Color.fromARGB(255, 197, 196, 196),
+                            width: 2,
+                          ),
+                          boxShadow: _currentStep >= index
+                              ? [
+                                  BoxShadow(
+                                    color: _buttonGradientStart.withOpacity(0.3),
+                                    blurRadius: 4,
+                                    spreadRadius: 0.5,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Center(
+                          child: Text(
+                            (index + 1).toString(),
+                            style: TextStyle(
+                              color: _currentStep >= index
+                                  ? Colors.white
+                                  : Colors.grey[600],
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    SizedBox(height: 6), // إزالة المسافة بين الرقم والكلمة
+                    Transform.translate(
+                      offset: Offset(0, -2), // رفع الكلمات مع الأرقام
+                      child: Text(
+                        stepTitles[index],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 10,
+                          height: 1.0, // تقليل ارتفاع السطر أكثر
+                          color: _currentStep >= index
+                              ? _buttonGradientStart
+                              : Colors.grey[600],
+                          fontFamily: 'Tajawal',
+                          fontWeight: _currentStep >= index
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             }),
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: stepTitles.map((title) {
-              final index = stepTitles.indexOf(title);
-              return Container(
-                width: 60,
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: _currentStep >= index
-                        ? _primaryColor
-                        : Colors.grey[600],
-                    fontFamily: 'Tajawal',
-                    fontWeight: _currentStep >= index
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              );
-            }).toList(),
           ),
         ],
       ),
@@ -761,24 +773,25 @@ class _RegesyerScreenState extends State<RegesyerScreen>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: _textColor,
+            color: _gradientEnd,
             fontFamily: 'Tajawal',
           ),
         ),
         SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _borderColor),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _buttonGradientStart.withOpacity(0.3)),
             color: Colors.white,
           ),
           child: InkWell(
             onTap: () => _showRegionSelectionDialog(),
+            borderRadius: BorderRadius.circular(16),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    padding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -790,8 +803,8 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                             style: TextStyle(
                               fontFamily: 'Tajawal',
                               color: _locationController.text.isEmpty
-                                  ? _textSecondaryColor
-                                  : _textColor,
+                                  ? Colors.grey
+                                  : _gradientEnd,
                               fontSize: 14,
                             ),
                             maxLines: 1,
@@ -801,8 +814,8 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                         Icon(
                           Icons.arrow_drop_down,
                           color: _locationController.text.isEmpty
-                              ? _textSecondaryColor
-                              : _primaryColor,
+                              ? Colors.grey
+                              : _buttonGradientStart,
                         ),
                       ],
                     ),
@@ -817,20 +830,20 @@ class _RegesyerScreenState extends State<RegesyerScreen>
           Container(
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: _locationColor.withOpacity(0.1),
-              border: Border.all(color: _locationColor.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(12),
+              color: _successColor.withOpacity(0.1),
+              border: Border.all(color: _successColor.withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.check_circle, color: _locationColor, size: 16),
+                Icon(Icons.check_circle, color: _successColor, size: 16),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _locationController.text,
                     style: TextStyle(
                       fontSize: 12,
-                      color: _textColor,
+                      color: _gradientEnd,
                       fontFamily: 'Tajawal',
                     ),
                     maxLines: 2,
@@ -862,14 +875,16 @@ class _RegesyerScreenState extends State<RegesyerScreen>
 
   @override
   Widget build(BuildContext context) {
-    print('Build called - Current step: $_currentStep');
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: isDarkMode ? _gradientEnd : Color(0xFFF5F7FA),
       body: SafeArea(
         child: Column(
           children: [
-            // الشعار والعنوان
+            // الشعار والعنوان - نفس تصميم تسجيل الدخول
             Container(
               margin: EdgeInsets.only(top: 20, bottom: 10),
               child: Column(
@@ -878,13 +893,18 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                     width: 70,
                     height: 70,
                     decoration: BoxDecoration(
-                      color: _primaryColor,
+                      gradient: LinearGradient(
+                        colors: [_gradientStart, _gradientEnd],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: _primaryColor.withOpacity(0.2),
-                          blurRadius: 8,
-                          spreadRadius: 1,
+                          color: _gradientStart.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
@@ -900,10 +920,10 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                   Text(
                     'إنشاء حساب جديد',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Tajawal',
-                      color: _primaryColor,
+                      color: _gradientEnd,
                     ),
                   ),
                   SizedBox(height: 4),
@@ -912,7 +932,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                     style: TextStyle(
                       fontSize: 12,
                       fontFamily: 'Tajawal',
-                      color: _textSecondaryColor,
+                      color: _buttonGradientStart,
                     ),
                   ),
                 ],
@@ -931,513 +951,583 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                   child: Column(
                     children: [
                       if (_currentStep == 0) ...[
-                        _buildTextField(
-                          controller: _fullNameController,
-                          label: 'الاسم الرباعي',
-                          icon: Icons.person_outline,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'الرجاء إدخال الاسم الرباعي';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _idNumberController,
-                          label: 'رقم الهوية',
-                          icon: Icons.credit_card_outlined,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'الرجاء إدخال رقم الهوية';
-                            }
-                            if (value.length != 10) {
-                              return 'رقم الهوية يجب أن يكون 10 أرقام';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _houseNumberController,
-                          label: 'رقم الدار/المنزل',
-                          icon: Icons.home_outlined,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'الرجاء إدخال رقم الدار';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _phoneController,
-                          label: 'رقم الموبايل',
-                          icon: Icons.phone_android_outlined,
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'الرجاء إدخال رقم الموبايل';
-                            }
-                            if (value.length < 10 || value.length > 15) {
-                              return 'رقم الموبايل غير صحيح';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        _buildLocationField(),
-                        SizedBox(height: 24),
-                        _buildAuthButton(
-                          icon: Icons.arrow_forward,
-                          label: 'التالي',
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              if (_locationController.text.isEmpty) {
-                                _showError('الرجاء اختيار المنطقة');
-                              } else {
-                                setState(() => _currentStep = 1);
-                              }
-                            }
-                          },
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
+                            child: Column(
+                              children: [
+                                _buildTextField(
+                                  controller: _fullNameController,
+                                  label: 'الاسم الرباعي',
+                                  icon: Icons.person_outline,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال الاسم الرباعي';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _idNumberController,
+                                  label: 'رقم الهوية',
+                                  icon: Icons.credit_card_outlined,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال رقم الهوية';
+                                    }
+                                    if (value.length != 10) {
+                                      return 'رقم الهوية يجب أن يكون 10 أرقام';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _houseNumberController,
+                                  label: 'رقم الدار/المنزل',
+                                  icon: Icons.home_outlined,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال رقم الدار';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _phoneController,
+                                  label: 'رقم الموبايل',
+                                  icon: Icons.phone_android_outlined,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال رقم الموبايل';
+                                    }
+                                    if (value.length < 10 || value.length > 15) {
+                                      return 'رقم الموبايل غير صحيح';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(height: 16),
+                                _buildLocationField(),
+                                SizedBox(height: 24),
+                                _buildEnhancedAuthButton(
+                                  icon: Icons.arrow_forward,
+                                  label: 'التالي',
+                                  gradient: LinearGradient(
+                                    colors: [_buttonGradientStart, _buttonGradientEnd],
+                                  ),
+                                  onPressed: () {
+                                    if (_formKey.currentState!.validate()) {
+                                      if (_locationController.text.isEmpty) {
+                                        _showError('الرجاء اختيار المنطقة');
+                                      } else {
+                                        setState(() => _currentStep = 1);
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ] else if (_currentStep == 1) ...[
-                        _buildTextField(
-                          controller: _accountController,
-                          label: 'البريد الإلكتروني',
-                          icon: Icons.email_outlined,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'الرجاء إدخال البريد الإلكتروني';
-                            }
-                            if (!RegExp(
-                              r'^[^@]+@[^@]+\.[^@]+',
-                            ).hasMatch(value)) {
-                              return 'البريد الإلكتروني غير صحيح';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _codeController,
-                          label: 'كلمة المرور',
-                          icon: Icons.lock_outline,
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'الرجاء إدخال كلمة المرور';
-                            }
-                            if (value.length < 6) {
-                              return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildAuthButton(
-                                icon: Icons.arrow_back,
-                                label: 'السابق',
-                                isSecondary: true,
-                                onPressed: () =>
-                                    setState(() => _currentStep = 0),
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: _buildAuthButton(
-                                icon: Icons.arrow_forward,
-                                label: 'التالي',
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    setState(() => _currentStep = 2);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else if (_currentStep == 2) ...[
-                        Text(
-                          'رفع صور الهوية',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: _textColor,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'يرجى رفع صورتين للهوية (أمامية وخلفية)',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _textSecondaryColor,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                        SizedBox(height: 20),
-
-                        Text(
-                          'الصورة الأمامية',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _textColor,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        _buildImagePreview(_frontIdentityImage, true),
-                        SizedBox(height: 12),
-                        _buildAuthButton(
-                          icon: Icons.camera_alt,
-                          label: 'اختر الصورة الأمامية',
-                          onPressed: () => _pickImage(true),
-                        ),
-
-                        SizedBox(height: 24),
-
-                        Text(
-                          'الصورة الخلفية',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _textColor,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        _buildImagePreview(_backIdentityImage, false),
-                        SizedBox(height: 12),
-                        _buildAuthButton(
-                          icon: Icons.camera_alt,
-                          label: 'اختر الصورة الخلفية',
-                          onPressed: () => _pickImage(false),
-                        ),
-
-                        SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildAuthButton(
-                                icon: Icons.arrow_back,
-                                label: 'السابق',
-                                isSecondary: true,
-                                onPressed: () =>
-                                    setState(() => _currentStep = 1),
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: _buildAuthButton(
-                                icon: Icons.arrow_forward,
-                                label: 'التالي',
-                                onPressed: () {
-                                  if (_frontIdentityImage == null ||
-                                      _backIdentityImage == null) {
-                                    _showError(
-                                      'الرجاء رفع صور الهوية الأمامية والخلفية',
-                                    );
-                                  } else {
-                                    setState(() => _currentStep = 3);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else if (_currentStep == 3) ...[
-                        Text(
-                          'التقاط صورة سيلفي',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: _primaryColor,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'يرجى التقاط صورة سيلفي واضحة',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _textSecondaryColor,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                        SizedBox(height: 20),
-
-                        Container(
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: _accentColor.withOpacity(0.1),
-                            border: Border.all(
-                              color: _accentColor.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: _warningColor,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'تأكد من وضوح الوجه والإضاءة الجيدة',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: _textColor,
-                                    fontFamily: 'Tajawal',
-                                  ),
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
+                            child: Column(
+                              children: [
+                                _buildTextField(
+                                  controller: _accountController,
+                                  label: 'البريد الإلكتروني',
+                                  icon: Icons.email_outlined,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال البريد الإلكتروني';
+                                    }
+                                    if (!RegExp(
+                                      r'^[^@]+@[^@]+\.[^@]+',
+                                    ).hasMatch(value)) {
+                                      return 'البريد الإلكتروني غير صحيح';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: 20),
-                        _buildSelfiePreview(),
-                        SizedBox(height: 20),
-
-                        _isCapturingSelfie
-                            ? Center(
-                                child: Column(
+                                SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _codeController,
+                                  label: 'كلمة المرور',
+                                  icon: Icons.lock_outline,
+                                  obscureText: true,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال كلمة المرور';
+                                    }
+                                    if (value.length < 6) {
+                                      return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(height: 24),
+                                Row(
                                   children: [
-                                    CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        _primaryColor,
+                                    Expanded(
+                                      child: _buildSecondaryButton(
+                                        icon: Icons.arrow_back,
+                                        label: 'السابق',
+                                        onPressed: () =>
+                                            setState(() => _currentStep = 0),
                                       ),
                                     ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'جارٍ التقاط الصورة...',
-                                      style: TextStyle(
-                                        fontFamily: 'Tajawal',
-                                        color: _textSecondaryColor,
-                                        fontSize: 12,
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildEnhancedAuthButton(
+                                        icon: Icons.arrow_forward,
+                                        label: 'التالي',
+                                        gradient: LinearGradient(
+                                          colors: [_buttonGradientStart, _buttonGradientEnd],
+                                        ),
+                                        onPressed: () {
+                                          if (_formKey.currentState!.validate()) {
+                                            setState(() => _currentStep = 2);
+                                          }
+                                        },
                                       ),
                                     ),
                                   ],
                                 ),
-                              )
-                            : _buildAuthButton(
-                                icon: Icons.camera_alt,
-                                label: 'التقاط صورة سيلفي',
-                                onPressed: _captureSelfie,
-                              ),
-
-                        SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildAuthButton(
-                                icon: Icons.arrow_back,
-                                label: 'السابق',
-                                isSecondary: true,
-                                onPressed: () =>
-                                    setState(() => _currentStep = 2),
-                              ),
+                              ],
                             ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: _buildAuthButton(
-                                icon: _selfieImage != null
-                                    ? Icons.check
-                                    : Icons.skip_next,
-                                label: _selfieImage != null ? 'التالي' : 'تخطي',
-                                onPressed: () {
-                                  setState(() => _currentStep = 4);
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else if (_currentStep == 4) ...[
-                        Text(
-                          'مراجعة المعلومات',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: _textColor,
-                            fontFamily: 'Tajawal',
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          'راجع المعلومات قبل إنشاء الحساب',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _textSecondaryColor,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                        SizedBox(height: 20),
+                      ] else if (_currentStep == 2) ...[
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
+                            child: Column(
+                              children: [
+                                Text(
+                                  'رفع صور الهوية',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: _gradientEnd,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'يرجى رفع صورتين للهوية (أمامية وخلفية)',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _buttonGradientStart,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 20),
 
-                        Container(
-                          height: 420,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: Colors.white,
-                            border: Border.all(color: _borderColor),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 8,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: ListView(
-                            padding: EdgeInsets.all(16),
-                            children: [
-                              _buildReviewItem(
-                                'الاسم الرباعي',
-                                _fullNameController.text,
-                                Icons.person,
-                              ),
-                              SizedBox(height: 12),
-                              _buildReviewItem(
-                                'رقم الهوية',
-                                _idNumberController.text,
-                                Icons.credit_card,
-                              ),
-                              SizedBox(height: 12),
-                              _buildReviewItem(
-                                'رقم الدار/المنزل',
-                                _houseNumberController.text,
-                                Icons.home,
-                              ),
-                              SizedBox(height: 12),
-                              // --- جديد: حقل رقم الموبايل ---
-                              _buildReviewItem(
-                                'رقم الموبايل',
-                                _phoneController.text,
-                                Icons.phone_android,
-                              ),
-                              SizedBox(height: 12),
-                              // --- نهاية الجديد --
-                              SizedBox(height: 12),
-                              _buildReviewItem(
-                                'المنطقة',
-                                _locationController.text,
-                                Icons.location_on,
-                              ),
-                              SizedBox(height: 12),
-                              _buildReviewItem(
-                                'البريد الإلكتروني',
-                                _accountController.text,
-                                Icons.email,
-                              ),
-                              SizedBox(height: 12),
-                              _buildReviewItem(
-                                'كلمة المرور',
-                                '••••••••',
-                                Icons.lock,
-                              ),
-                              SizedBox(height: 12),
-                              _buildReviewStatus(
-                                'صورة الهوية الأمامية',
-                                _frontIdentityImage != null,
-                                Icons.photo_camera_front,
-                              ),
-                              SizedBox(height: 12),
-                              _buildReviewStatus(
-                                'صورة الهوية الخلفية',
-                                _backIdentityImage != null,
-                                Icons.photo_camera_back,
-                              ),
-                              SizedBox(height: 12),
-                              _buildReviewStatus(
-                                'صورة السيلفي',
-                                _selfieImage != null,
-                                Icons.face,
-                              ),
-                            ],
-                          ),
-                        ),
+                                Text(
+                                  'الصورة الأمامية',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _gradientEnd,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                _buildImagePreview(_frontIdentityImage, true),
+                                SizedBox(height: 12),
+                                _buildEnhancedAuthButton(
+                                  icon: Icons.camera_alt,
+                                  label: 'اختر الصورة الأمامية',
+                                  gradient: LinearGradient(
+                                    colors: [_buttonGradientStart, _buttonGradientEnd],
+                                  ),
+                                  onPressed: () => _pickImage(true),
+                                ),
 
-                        SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildAuthButton(
-                                icon: Icons.arrow_back,
-                                label: 'السابق',
-                                isSecondary: true,
-                                onPressed: () =>
-                                    setState(() => _currentStep = 3),
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: _isLoading
-                                  ? Container(
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        color: _primaryColor.withOpacity(0.1),
+                                SizedBox(height: 24),
+
+                                Text(
+                                  'الصورة الخلفية',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _gradientEnd,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                _buildImagePreview(_backIdentityImage, false),
+                                SizedBox(height: 12),
+                                _buildEnhancedAuthButton(
+                                  icon: Icons.camera_alt,
+                                  label: 'اختر الصورة الخلفية',
+                                  gradient: LinearGradient(
+                                    colors: [_buttonGradientStart, _buttonGradientEnd],
+                                  ),
+                                  onPressed: () => _pickImage(false),
+                                ),
+
+                                SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildSecondaryButton(
+                                        icon: Icons.arrow_back,
+                                        label: 'السابق',
+                                        onPressed: () =>
+                                            setState(() => _currentStep = 1),
                                       ),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                _primaryColor,
-                                              ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildEnhancedAuthButton(
+                                        icon: Icons.arrow_forward,
+                                        label: 'التالي',
+                                        gradient: LinearGradient(
+                                          colors: [_buttonGradientStart, _buttonGradientEnd],
+                                        ),
+                                        onPressed: () {
+                                          if (_frontIdentityImage == null ||
+                                              _backIdentityImage == null) {
+                                            _showError(
+                                              'الرجاء رفع صور الهوية الأمامية والخلفية',
+                                            );
+                                          } else {
+                                            setState(() => _currentStep = 3);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ] else if (_currentStep == 3) ...[
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
+                            child: Column(
+                              children: [
+                                Text(
+                                  'التقاط صورة سيلفي',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: _gradientEnd,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'يرجى التقاط صورة سيلفي واضحة',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _buttonGradientStart,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 20),
+
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: _buttonGradientStart.withOpacity(0.1),
+                                    border: Border.all(
+                                      color: _buttonGradientStart.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        color: _buttonGradientStart,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'تأكد من وضوح الوجه والإضاءة الجيدة',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: _gradientEnd,
+                                            fontFamily: 'Tajawal',
+                                          ),
                                         ),
                                       ),
-                                    )
-                                  : _buildAuthButton(
-                                      icon: Icons.check,
-                                      label: 'إنشاء الحساب',
-                                      onPressed: () async {
-                                        if (_formKey.currentState!.validate()) {
-                                          setState(() => _isLoading = true);
-                                          try {
-                                            final success =
-                                                await _createAccount();
-                                            if (!success && mounted) {
-                                              setState(
-                                                () => _isLoading = false,
-                                              );
-                                            }
-                                          } catch (e) {
-                                            if (mounted) {
-                                              setState(
-                                                () => _isLoading = false,
-                                              );
-                                            }
-                                            _showError('حدث خطأ: $e');
-                                          }
-                                        }
-                                      },
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 20),
+                                _buildSelfiePreview(),
+                                SizedBox(height: 20),
+
+                                _isCapturingSelfie
+                                    ? Center(
+                                        child: Column(
+                                          children: [
+                                            CircularProgressIndicator(
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                _buttonGradientStart,
+                                              ),
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'جارٍ التقاط الصورة...',
+                                              style: TextStyle(
+                                                fontFamily: 'Tajawal',
+                                                color: _buttonGradientStart,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : _buildEnhancedAuthButton(
+                                        icon: Icons.camera_alt,
+                                        label: 'التقاط صورة سيلفي',
+                                        gradient: LinearGradient(
+                                          colors: [_buttonGradientStart, _buttonGradientEnd],
+                                        ),
+                                        onPressed: _captureSelfie,
+                                      ),
+
+                                SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildSecondaryButton(
+                                        icon: Icons.arrow_back,
+                                        label: 'السابق',
+                                        onPressed: () =>
+                                            setState(() => _currentStep = 2),
+                                      ),
                                     ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildEnhancedAuthButton(
+                                        icon: _selfieImage != null
+                                            ? Icons.check
+                                            : Icons.skip_next,
+                                        label: _selfieImage != null ? 'التالي' : 'تخطي',
+                                        gradient: LinearGradient(
+                                          colors: [_buttonGradientStart, _buttonGradientEnd],
+                                        ),
+                                        onPressed: () {
+                                          setState(() => _currentStep = 4);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
+                        ),
+                      ] else if (_currentStep == 4) ...[
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
+                            child: Column(
+                              children: [
+                                Text(
+                                  'مراجعة المعلومات',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: _gradientEnd,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'راجع المعلومات قبل إنشاء الحساب',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _buttonGradientStart,
+                                    fontFamily: 'Tajawal',
+                                  ),
+                                ),
+                                SizedBox(height: 20),
+
+                                Container(
+                                  height: 420,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: _buttonGradientStart.withOpacity(0.2),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: _buttonGradientStart.withOpacity(0.1),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                        offset: Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ListView(
+                                    padding: EdgeInsets.all(16),
+                                    children: [
+                                      _buildReviewItem(
+                                        'الاسم الرباعي',
+                                        _fullNameController.text,
+                                        Icons.person,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewItem(
+                                        'رقم الهوية',
+                                        _idNumberController.text,
+                                        Icons.credit_card,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewItem(
+                                        'رقم الدار/المنزل',
+                                        _houseNumberController.text,
+                                        Icons.home,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewItem(
+                                        'رقم الموبايل',
+                                        _phoneController.text,
+                                        Icons.phone_android,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewItem(
+                                        'المنطقة',
+                                        _locationController.text,
+                                        Icons.location_on,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewItem(
+                                        'البريد الإلكتروني',
+                                        _accountController.text,
+                                        Icons.email,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewItem(
+                                        'كلمة المرور',
+                                        '••••••••',
+                                        Icons.lock,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewStatus(
+                                        'صورة الهوية الأمامية',
+                                        _frontIdentityImage != null,
+                                        Icons.photo_camera_front,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewStatus(
+                                        'صورة الهوية الخلفية',
+                                        _backIdentityImage != null,
+                                        Icons.photo_camera_back,
+                                      ),
+                                      SizedBox(height: 12),
+                                      _buildReviewStatus(
+                                        'صورة السيلفي',
+                                        _selfieImage != null,
+                                        Icons.face,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildSecondaryButton(
+                                        icon: Icons.arrow_back,
+                                        label: 'السابق',
+                                        onPressed: () =>
+                                            setState(() => _currentStep = 3),
+                                      ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: _isLoading
+                                          ? Container(
+                                              height: 48,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(16),
+                                                color: _buttonGradientStart.withOpacity(0.1),
+                                              ),
+                                              child: Center(
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<Color>(
+                                                        _buttonGradientStart,
+                                                      ),
+                                                ),
+                                              ),
+                                            )
+                                          : _buildEnhancedAuthButton(
+                                              icon: Icons.check,
+                                              label: 'إنشاء الحساب',
+                                              gradient: LinearGradient(
+                                                colors: [_buttonGradientStart, _buttonGradientEnd],
+                                              ),
+                                              onPressed: () async {
+                                                if (_formKey.currentState!.validate()) {
+                                                  setState(() => _isLoading = true);
+                                                  try {
+                                                    final success =
+                                                        await _createAccount();
+                                                    if (!success && mounted) {
+                                                      setState(
+                                                        () => _isLoading = false,
+                                                      );
+                                                    }
+                                                  } catch (e) {
+                                                    if (mounted) {
+                                                      setState(
+                                                        () => _isLoading = false,
+                                                      );
+                                                    }
+                                                    _showError('حدث خطأ: $e');
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
 
@@ -1449,21 +1539,25 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                             'لديك حساب بالفعل؟',
                             style: TextStyle(
                               fontFamily: 'Tajawal',
-                              color: _textSecondaryColor,
+                              color: _buttonGradientStart,
                               fontSize: 12,
                             ),
                           ),
                           TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(
+                            
+                          
+  onPressed: () {
+    Navigator.pushNamed(context,SigninScreen .screenroot);
+  },
+  child: Text(
                               'تسجيل الدخول',
-                              style: TextStyle(
-                                color: _primaryColor,
-                                fontFamily: 'Tajawal',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
+    style: TextStyle(
+      color: _buttonGradientStart,
+      fontFamily: 'Tajawal',
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+
                           ),
                         ],
                       ),
@@ -1491,7 +1585,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     return TextFormField(
       controller: controller,
       textAlign: TextAlign.right,
-      style: TextStyle(fontFamily: 'Tajawal', color: _textColor, fontSize: 14),
+      style: TextStyle(fontFamily: 'Tajawal', color: _gradientEnd, fontSize: 14),
       obscureText: obscureText,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
@@ -1500,24 +1594,31 @@ class _RegesyerScreenState extends State<RegesyerScreen>
         hintText: label,
         hintStyle: TextStyle(
           fontFamily: 'Tajawal',
-          color: _textSecondaryColor,
+          color: Colors.grey,
           fontSize: 14,
         ),
-        prefixIcon: Icon(icon, color: _textSecondaryColor, size: 20),
-        contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        prefixIcon: Icon(icon, color: _buttonGradientStart, size: 20),
+        contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Colors.white.withOpacity(0.9),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _borderColor),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: _buttonGradientStart.withOpacity(0.3),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _borderColor),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: _buttonGradientStart.withOpacity(0.3),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: _buttonGradientStart,
+            width: 2,
+          ),
         ),
       ),
     );
@@ -1527,8 +1628,8 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: _backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        color: _buttonGradientStart.withOpacity(0.05),
       ),
       child: Row(
         children: [
@@ -1537,9 +1638,9 @@ class _RegesyerScreenState extends State<RegesyerScreen>
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _primaryColor.withOpacity(0.1),
+              color: _buttonGradientStart.withOpacity(0.1),
             ),
-            child: Icon(icon, size: 18, color: _primaryColor),
+            child: Icon(icon, size: 18, color: _buttonGradientStart),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -1550,7 +1651,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: _textSecondaryColor,
+                    color: _buttonGradientStart,
                     fontFamily: 'Tajawal',
                   ),
                 ),
@@ -1560,7 +1661,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: value.isNotEmpty ? _textColor : _textSecondaryColor,
+                    color: value.isNotEmpty ? _gradientEnd : Colors.grey,
                     fontFamily: 'Tajawal',
                   ),
                   maxLines: 2,
@@ -1578,8 +1679,8 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: _backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        color: _buttonGradientStart.withOpacity(0.05),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1591,9 +1692,9 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                 height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _primaryColor.withOpacity(0.1),
+                  color: _buttonGradientStart.withOpacity(0.1),
                 ),
-                child: Icon(icon, size: 18, color: _primaryColor),
+                child: Icon(icon, size: 18, color: _buttonGradientStart),
               ),
               SizedBox(width: 12),
               Text(
@@ -1601,7 +1702,7 @@ class _RegesyerScreenState extends State<RegesyerScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: _textColor,
+                  color: _gradientEnd,
                   fontFamily: 'Tajawal',
                 ),
               ),
@@ -1627,39 +1728,97 @@ class _RegesyerScreenState extends State<RegesyerScreen>
     );
   }
 
-  Widget _buildAuthButton({
+  Widget _buildEnhancedAuthButton({
+    required IconData icon,
+    required String label,
+    required Gradient gradient,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withOpacity(0.3),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onPressed,
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: gradient,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Tajawal',
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton({
     required IconData icon,
     required String label,
     required VoidCallback onPressed,
-    bool isSecondary = false,
   }) {
-    return SizedBox(
-      height: 48,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isSecondary ? Colors.grey[200] : _primaryColor,
-          foregroundColor: isSecondary ? _textColor : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.1),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18),
-            SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Tajawal',
-              ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _buttonGradientStart.withOpacity(0.3)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onPressed,
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
             ),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: _buttonGradientStart, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _buttonGradientStart,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Tajawal',
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

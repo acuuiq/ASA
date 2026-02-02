@@ -20,18 +20,14 @@ class _MainscrenState extends State<Mainscren>
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
   
-  // الألوان الجديدة المطابقة لشاشة تسجيل الدخول
-  final Color _primaryColor = const Color(0xFF0D47A1);
-  final Color _secondaryColor = const Color(0xFF1976D2);
-  final Color _accentColor = const Color(0xFF64B5F6);
-  final Color _backgroundColor = const Color(0xFFF8F9FA);
+  // الألوان مطابقة تماماً لتسجيل الدخول
+  final Color _gradientStart = const Color.fromARGB(255, 8, 93, 99);
+  final Color _gradientEnd = const Color.fromARGB(255, 1, 17, 27);
+  final Color _buttonGradientStart = const Color.fromARGB(255, 17, 126, 117);
+  final Color _buttonGradientEnd = const Color.fromARGB(255, 16, 78, 88);
   final Color _cardColor = Colors.white;
   final Color _textColor = const Color(0xFF212121);
   final Color _textSecondaryColor = const Color(0xFF757575);
-  final Color _successColor = const Color(0xFF2E7D32);
-  final Color _warningColor = const Color(0xFFF57C00);
-  final Color _errorColor = const Color(0xFFD32F2F);
-  final Color _borderColor = const Color(0xFFE0E0E0);
 
   final PageController _pageController = PageController();
   int _currentPage = 0;
@@ -84,23 +80,29 @@ class _MainscrenState extends State<Mainscren>
 @override
 Widget build(BuildContext context) {
   final size = MediaQuery.of(context).size;
+  final theme = Theme.of(context);
+  final isDarkMode = theme.brightness == Brightness.dark;
 
   return Scaffold(
-    backgroundColor: _backgroundColor,
     body: Stack(
       children: [
-        // خلفية بسيطة مع تدرج لوني
+        // الخلفية المتدرجة مع SVG - نفس تصميم تسجيل الدخول
         Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                _primaryColor.withOpacity(0.1),
-                _backgroundColor,
-              ],
+            gradient: RadialGradient(
+              center: Alignment.topRight,
+              radius: 1.5,
+              colors: isDarkMode
+                  ? [const Color(0xFF0A0E21), const Color(0xFF1D1E33)]
+                  : [const Color(0xFFF5F7FA), const Color(0xFFE4E7EB)],
             ),
           ),
+        ),
+
+        // تأثير ضبابي
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+          child: Container(color: Colors.transparent),
         ),
 
         // المحتوى الرئيسي
@@ -116,51 +118,69 @@ Widget build(BuildContext context) {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // الشعار والعنوان
+                    // الشعار والعنوان - نفس تصميم تسجيل الدخول
                     Container(
                       margin: const EdgeInsets.only(bottom: 40),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [_gradientStart, _gradientEnd],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _gradientStart.withOpacity(0.3),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                            offset: const Offset(0, 20),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.blueGrey.withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
                       child: Column(
                         children: [
-                          // الشعار
                           Container(
-                            width: 140,
-                            height: 140,
-                            padding: const EdgeInsets.all(24),
+                            width: 150,
+                            height: 150,
                             decoration: BoxDecoration(
-                              color: _primaryColor,
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _primaryColor.withOpacity(0.3),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Image.asset(
                               'images/lbbb.png',
                               fit: BoxFit.contain,
-                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 25),
-                          // العنوان
+                          const SizedBox(height: 1),
                           Text(
                             'مدينتي الذكية',
                             style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
                               fontFamily: 'Tajawal',
-                              color: _primaryColor,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: _gradientStart.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Text(
                             'نحو مستقبل رقمي متكامل',
                             style: TextStyle(
-                              fontSize: 16,
+                              color: Colors.white.withOpacity(0.9),
                               fontFamily: 'Tajawal',
-                              color: _textSecondaryColor,
+                              fontSize: 16,
                             ),
                           ),
                         ],
@@ -173,38 +193,56 @@ Widget build(BuildContext context) {
                         // زر دخول المواطنين
                         Container(
                           width: double.infinity,
-                          height: 56,
                           margin: const EdgeInsets.only(bottom: 16),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(
-                                context,
-                                WecomeScreen.screenroot,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primaryColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _buttonGradientStart.withOpacity(0.3),
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 6),
                               ),
-                              elevation: 3,
-                              shadowColor: _primaryColor.withOpacity(0.3),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.people_alt_rounded, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'دخول المواطنين',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Tajawal',
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  WecomeScreen.screenroot,
+                                );
+                              },
+                              child: Container(
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  gradient: LinearGradient(
+                                    colors: [_buttonGradientStart, _buttonGradientEnd],
                                   ),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.people_alt_rounded, 
+                                      color: Colors.white, 
+                                      size: 24),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'دخول المواطنين',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Tajawal',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -212,38 +250,50 @@ Widget build(BuildContext context) {
                         // زر دخول الموظفين
                         Container(
                           width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(
-                                context,
-                                EwecomeScreen.screenroot,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _cardColor,
-                              foregroundColor: _primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(color: _primaryColor, width: 2),
-                              ),
-                              elevation: 1,
-                              shadowColor: _primaryColor.withOpacity(0.1),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _buttonGradientStart.withOpacity(0.3),
+                              width: 2,
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.badge_rounded, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'دخول الموظفين',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Tajawal',
-                                  ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  EwecomeScreen.screenroot,
+                                );
+                              },
+                              child: Container(
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  color: Colors.white,
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.badge_rounded, 
+                                      color: _buttonGradientStart, 
+                                      size: 24),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'دخول الموظفين',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Tajawal',
+                                        color: _buttonGradientStart,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -281,9 +331,14 @@ Widget build(BuildContext context) {
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
+                            gradient: _currentPage == index
+                                ? LinearGradient(
+                                    colors: [_buttonGradientStart, _buttonGradientEnd],
+                                  )
+                                : null,
                             color: _currentPage == index
-                                ? _primaryColor
-                                : _primaryColor.withOpacity(0.3),
+                                ? null
+                                : _buttonGradientStart.withOpacity(0.3),
                           ),
                         ),
                       ),
@@ -315,16 +370,27 @@ Widget build(BuildContext context) {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: _cardColor,
-        border: Border.all(color: _borderColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.9),
+            Colors.white.withOpacity(0.7),
+          ],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: _buttonGradientStart.withOpacity(0.1),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 5),
           ),
         ],
+        border: Border.all(
+          color: _buttonGradientStart.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -332,11 +398,13 @@ Widget build(BuildContext context) {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _primaryColor.withOpacity(0.1),
+              gradient: LinearGradient(
+                colors: [_buttonGradientStart, _buttonGradientEnd],
+              ),
             ),
             child: Icon(
               icon,
-              color: _primaryColor,
+              color: Colors.white,
               size: 24,
             ),
           ),
@@ -349,9 +417,9 @@ Widget build(BuildContext context) {
                 Text(
                   title,
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     fontFamily: 'Tajawal',
-                    color: _primaryColor,
+                    color: _gradientEnd,
                     fontSize: 16,
                   ),
                 ),
@@ -360,7 +428,7 @@ Widget build(BuildContext context) {
                   description,
                   style: TextStyle(
                     fontFamily: 'Tajawal',
-                    color: _textSecondaryColor,
+                    color: _buttonGradientStart,
                     fontSize: 14,
                   ),
                 ),
