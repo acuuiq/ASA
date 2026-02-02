@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mang_mu/models/event_model.dart';
+
 class EventEmployee extends StatefulWidget {
   const EventEmployee({super.key});
 
@@ -966,4 +966,33 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+}
+
+// نموذج بيانات الحدث
+class Event {
+  final String id;
+  final String title;
+  final String description;
+  final DateTime startDate;
+  final DateTime endDate;
+  final String eventType;
+  final String location;
+  final List<String> affectedAreas;
+  final String status; // 'مخطط', 'جاري', 'منتهي'
+  final String createdBy;
+  final DateTime createdAt;
+
+  Event({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.startDate,
+    required this.endDate,
+    required this.eventType,
+    required this.location,
+    required this.affectedAreas,
+    required this.status,
+    required this.createdBy,
+    required this.createdAt,
+  });
 }
