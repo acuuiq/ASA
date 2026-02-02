@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class AccountAuditorHome extends StatefulWidget {
   const AccountAuditorHome({super.key});
 
@@ -91,7 +92,6 @@ class _AccountAuditorHomeState extends State<AccountAuditorHome> {
         );
         filterRequests(filterStatus);
         
-        // إظهار رسالة نجاح
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('تمت الموافقة على إنشاء الحساب بنجاح'),
@@ -144,11 +144,11 @@ class _AccountAuditorHomeState extends State<AccountAuditorHome> {
           'لوحة تحكم محرر الحسابات',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        backgroundColor: Colors.indigo,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              // هنا يمكن إضافة دالة لتحميل البيانات من الخادم
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('تم تحديث البيانات'),
@@ -158,9 +158,7 @@ class _AccountAuditorHomeState extends State<AccountAuditorHome> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // دالة تسجيل الخروج
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -545,6 +543,7 @@ class _RejectDialogState extends State<RejectDialog> {
     super.dispose();
   }
 }
+
 // نموذج بيانات طلب إنشاء حساب
 class AccountRequest {
   final String id;
