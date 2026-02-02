@@ -1929,27 +1929,23 @@ class _ReportingOfficerWaterScreenState extends State<ReportingOfficerWaterScree
               ),
               indicatorWeight: 4,
               indicatorSize: TabBarIndicatorSize.tab,
-              labelStyle: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-              unselectedLabelStyle: TextStyle(
-                fontSize: 11,
-              ),
+              labelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold), // تصغير الخط
+              unselectedLabelStyle: TextStyle(fontSize: 11,),
+              labelPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0), // تقليل المسافات
               labelColor: Colors.white,
               unselectedLabelColor: _primaryColor,
               tabs: [
                 Tab(
                   icon: Icon(Icons.report_problem, size: 20),
-                  text: 'إبلاغ عن خدمة المياه',
+                  text: 'إبلاغ المياه',
                 ),
                 Tab(
                   icon: Icon(Icons.person, size: 20),
-                  text: 'إبلاغ عن تقصير الموظفين',
+                  text: 'إبلاغ الموظفين',
                 ),
                 Tab(
                   icon: Icon(Icons.phone_iphone, size: 20),
-                  text: 'إبلاغ عن مشكلة في التطبيق',
+                  text: 'إبلاغ عن التطبيق',
                 ),
                 Tab(
                   icon: Icon(Icons.summarize, size: 20),
