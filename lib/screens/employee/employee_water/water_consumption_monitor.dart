@@ -2017,45 +2017,754 @@ class WaterConsumptionMonitorScreenState
   void _sendAlertToCustomer(Map<String, dynamic> customer) {
     _showSuccessSnackbar('تم إرسال تنبيه إلى ${customer['name']}');
   }
+  // أضف هذه المتغيرات مع باقي المتغيرات الأخرى في State
+int _currentReportTab = 0; // 0: إنشاء التقارير، 1: التقارير الواردة
 
+// بيانات التقارير الواردة للمياه
+final List<Map<String, dynamic>> _receivedReports = [
+  {
+    'id': 'WREP-MON-2024-001',
+    'title': 'تقرير استهلاك المياه الشهري',
+    'sender': 'قسم مراقبة الاستهلاك',
+    'date': DateTime.now().subtract(Duration(days: 2)),
+    'type': 'شهري',
+    'size': '1.5 MB',
+    'status': 'مستلم',
+    'fileType': 'PDF',
+    'area': 'جميع المناطق',
+  },
+  {
+    'id': 'WREP-MON-2024-002',
+    'title': 'تقرير الاستهلاك المرتفع',
+    'sender': 'مراقب المنطقة الشرقية',
+    'date': DateTime.now().subtract(Duration(days: 5)),
+    'type': 'أسبوعي',
+    'size': '920 KB',
+    'status': 'مستلم',
+    'fileType': 'PDF',
+    'area': 'حي العليا',
+  },
+  {
+    'id': 'WREP-MON-2024-003',
+    'title': 'تقرير الإنذارات اليومي',
+    'sender': 'فرع بغداد للمياه',
+    'date': DateTime.now().subtract(Duration(days: 1)),
+    'type': 'يومي',
+    'size': '520 KB',
+    'status': 'غير مقروء',
+    'fileType': 'Excel',
+    'area': 'حي الرياض',
+  },
+];
   Widget _buildReportsView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+  final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // العنوان الرئيسي
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'نظام التقارير',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
-                ),
+              child: Icon(Icons.summarize_rounded, color: _primaryColor, size: 24),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              ' تقارير مراقبة استهلاك المياه',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        
+        // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: _cardColor(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor(context)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildMonitorReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
+              ),
+              Expanded(
+                child: _buildMonitorReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          _buildReportTypeFilter(),
-          const SizedBox(height: 20),
-          _buildReportOptions(),
-          const SizedBox(height: 20),
-          _buildGenerateReportButton(),
+        ),
+        const SizedBox(height: 20),
+        
+        // عرض المحتوى حسب التبويب المختار
+        _currentReportTab == 0 
+            ? _buildMonitorCreateReportSection(isDarkMode)
+            : _buildMonitorReceivedReportsSection(isDarkMode),
+      ],
+    ),
+  );
+}
+
+Widget _buildMonitorReportInnerTabButton(String title, int tabIndex, bool isDarkMode) {
+  bool isSelected = _currentReportTab == tabIndex;
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _currentReportTab = tabIndex;
+      });
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? _primaryColor : Colors.transparent,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : _textColor(context),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+Widget _buildMonitorCreateReportSection(bool isDarkMode) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'إنشاء تقرير مراقبة جديد',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: _textColor(context),
+        ),
+      ),
+      const SizedBox(height: 16),
+      _buildReportTypeFilter(),
+      const SizedBox(height: 20),
+      _buildReportOptions(),
+      const SizedBox(height: 20),
+      _buildGenerateReportButton(),
+      const SizedBox(height: 20),
+      
+      // إضافة إحصائيات سريعة لمراقبة الاستهلاك
+      _buildMonitorQuickStats(isDarkMode),
+    ],
+  );
+}
+Widget _buildMonitorReceivedReportsSection(bool isDarkMode) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'التقارير المستلمة - مراقبة الاستهلاك',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: _textColor(context),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'عرض وإدارة جميع التقارير التي تم استلامها في قسم مراقبة الاستهلاك',
+        style: TextStyle(
+          color: _textSecondaryColor(context),
+        ),
+      ),
+      const SizedBox(height: 20),
+      
+      // إحصائيات سريعة
+      Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _backgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _borderColor(context)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Column(
+              children: [
+                Text(
+                  _receivedReports.length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+                Text(
+                  'إجمالي التقارير',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  _receivedReports.where((r) => r['status'] == 'غير مقروء').length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _warningColor,
+                  ),
+                ),
+                Text(
+                  'غير مقروء',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  '${_calculateMonitorTotalSize(_receivedReports)} MB',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _successColor,
+                  ),
+                ),
+                Text(
+                  'الحجم الإجمالي',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      
+      const SizedBox(height: 20),
+      
+      // فلترة التقارير حسب المنطقة
+      _buildAreaFilterForReports(),
+      const SizedBox(height: 16),
+      
+      // قائمة التقارير
+      ..._getFilteredReceivedReports().map((report) => _buildMonitorReceivedReportCard(report, isDarkMode)),
+    ],
+  );
+}
+
+List<Map<String, dynamic>> _getFilteredReceivedReports() {
+  if (_selectedArea == 'جميع المناطق') {
+    return _receivedReports;
+  }
+  return _receivedReports.where((report) => report['area'] == _selectedArea).toList();
+}
+
+Widget _buildAreaFilterForReports() {
+  return Container(
+    padding: EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: _backgroundColor(context),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _borderColor(context)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'فلترة حسب المنطقة',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: _textColor(context),
+            fontSize: 14,
+          ),
+        ),
+        SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Wrap(
+            spacing: 8,
+            children: _areas.map((area) {
+              final isSelected = _selectedArea == area;
+              return FilterChip(
+                label: Text(area),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedArea = selected ? area : 'جميع المناطق';
+                  });
+                },
+                selectedColor: _primaryColor.withOpacity(0.2),
+                checkmarkColor: _primaryColor,
+                labelStyle: TextStyle(
+                  color: isSelected ? _primaryColor : _textColor(context),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+Widget _buildMonitorReceivedReportCard(Map<String, dynamic> report, bool isDarkMode) {
+  bool isUnread = report['status'] == 'غير مقروء';
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: _cardColor(context),
+      border: Border.all(color: _borderColor(context)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: ListTile(
+      contentPadding: EdgeInsets.all(16),
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: _getMonitorReportColor(report['fileType']).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          _getMonitorReportIcon(report['fileType']),
+          color: _getMonitorReportColor(report['fileType']),
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: _textColor(context),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isUnread)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _warningColor,
+                shape: BoxShape.circle,
+              ),
+            ),
         ],
       ),
-    );
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 4),
+          Text(
+            'من: ${report['sender']} • المنطقة: ${report['area']}',
+            style: TextStyle(
+              fontSize: 12,
+              color: _textSecondaryColor(context),
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            '${DateFormat('yyyy-MM-dd').format(report['date'])} • ${report['type']} • ${report['size']}',
+            style: TextStyle(
+              fontSize: 10,
+              color: _textSecondaryColor(context),
+            ),
+          ),
+        ],
+      ),
+      trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert_rounded, color: _textSecondaryColor(context)),
+        onSelected: (value) {
+          _handleMonitorReportAction(value, report);
+        },
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem<String>(
+            value: 'view',
+            child: Row(
+              children: [
+                Icon(Icons.visibility_rounded, size: 18, color: _primaryColor),
+                SizedBox(width: 8),
+                Text('عرض التقرير'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'download',
+            child: Row(
+              children: [
+                Icon(Icons.download_rounded, size: 18, color: _successColor),
+                SizedBox(width: 8),
+                Text('تحميل'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'share',
+            child: Row(
+              children: [
+                Icon(Icons.share_rounded, size: 18, color: _accentColor),
+                SizedBox(width: 8),
+                Text('مشاركة'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_rounded, size: 18, color: _errorColor),
+                SizedBox(width: 8),
+                Text('حذف'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      onTap: () {
+        _viewMonitorReceivedReport(report);
+      },
+    ),
+  );
+}
+// دوال مساعدة للتقارير
+Color _getMonitorReportColor(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return _errorColor;
+    case 'Excel':
+      return _successColor;
+    case 'Word':
+      return _primaryColor;
+    default:
+      return _accentColor;
   }
+}
 
+IconData _getMonitorReportIcon(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return Icons.picture_as_pdf_rounded;
+    case 'Excel':
+      return Icons.table_chart_rounded;
+    case 'Word':
+      return Icons.description_rounded;
+    default:
+      return Icons.insert_drive_file_rounded;
+  }
+}
+
+String _calculateMonitorTotalSize(List<Map<String, dynamic>> reports) {
+  double total = 0;
+  for (var report in reports) {
+    String sizeStr = report['size'];
+    if (sizeStr.contains('MB')) {
+      total += double.parse(sizeStr.replaceAll(' MB', ''));
+    } else if (sizeStr.contains('KB')) {
+      total += double.parse(sizeStr.replaceAll(' KB', '')) / 1024;
+    }
+  }
+  return total.toStringAsFixed(1);
+}
+
+void _handleMonitorReportAction(String action, Map<String, dynamic> report) {
+  switch (action) {
+    case 'view':
+      _viewMonitorReceivedReport(report);
+      break;
+    case 'download':
+      _downloadMonitorReport(report);
+      break;
+    case 'share':
+      _shareMonitorReport(report);
+      break;
+    case 'delete':
+      _deleteMonitorReport(report);
+      break;
+  }
+}
+
+void _viewMonitorReceivedReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(context),
+      title: Row(
+        children: [
+          Icon(_getMonitorReportIcon(report['fileType']), color: _getMonitorReportColor(report['fileType'])),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _textColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildMonitorReportDetailRow('المرسل:', report['sender']),
+            _buildMonitorReportDetailRow('المنطقة:', report['area']),
+            _buildMonitorReportDetailRow('النوع:', report['type']),
+            _buildMonitorReportDetailRow('الحجم:', report['size']),
+            _buildMonitorReportDetailRow('صيغة الملف:', report['fileType']),
+            _buildMonitorReportDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+            _buildMonitorReportDetailRow('الحالة:', report['status']),
+            SizedBox(height: 16),
+            Text(
+              'ملخص التقرير:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'هذا التقرير يحتوي على البيانات الشهرية لاستهلاك المياه في المنطقة المحددة. يشمل إحصائيات الاستهلاك، الإنذارات، والعملاء ذوي الاستهلاك المرتفع.',
+              style: TextStyle(
+                color: _textSecondaryColor(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => _downloadMonitorReport(report),
+          child: Text('تحميل'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildMonitorReportDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: _textSecondaryColor(context),
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: _textColor(context),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _downloadMonitorReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('جاري تحميل: ${report['title']}'),
+      backgroundColor: _successColor,
+    ),
+  );
+}
+
+void _shareMonitorReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('مشاركة: ${report['title']}'),
+      backgroundColor: _primaryColor,
+    ),
+  );
+}
+
+void _deleteMonitorReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(context),
+      title: Row(
+        children: [
+          Icon(Icons.delete_rounded, color: _errorColor),
+          SizedBox(width: 8),
+          Text('حذف التقرير'),
+        ],
+      ),
+      content: Text(
+        'هل أنت متأكد من حذف تقرير "${report['title']}"؟',
+        style: TextStyle(
+          color: _textColor(context),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _errorColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () {
+            setState(() {
+              _receivedReports.remove(report);
+            });
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('تم حذف التقرير: ${report['title']}'),
+                backgroundColor: _errorColor,
+              ),
+            );
+          },
+          child: Text('حذف'),
+        ),
+      ],
+    ),
+  );
+}
+Widget _buildMonitorQuickStats(bool isDarkMode) {
+  final filteredData = _selectedArea == 'جميع المناطق'
+      ? _consumptionData
+      : _consumptionData.where((item) => item['area'] == _selectedArea).toList();
+
+  final totalConsumption = filteredData.fold<double>(
+    0,
+    (sum, item) => sum + (item['currentConsumption'] as int).toDouble(),
+  );
+  final totalCustomers = filteredData.fold<int>(
+    0,
+    (sum, item) => sum + (item['customers'] as int),
+  );
+  final highConsumptionCount = filteredData.fold<int>(
+    0,
+    (sum, item) => sum + (item['highConsumptionCustomers'] as int),
+  );
+  final alertsCount = _getFilteredAlerts().length;
+
+  return Container(
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: _backgroundColor(context),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _borderColor(context)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'إحصائيات سريعة - ${_selectedArea}',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildMonitorQuickStatItem('الاستهلاك', '${NumberFormat('#,##0').format(totalConsumption)} لتر', Icons.water_drop_rounded, _waterBlue),
+            _buildMonitorQuickStatItem('العملاء', '${NumberFormat('#,##0').format(totalCustomers)}', Icons.people_rounded, _successColor),
+            _buildMonitorQuickStatItem('إنذارات', '$alertsCount', Icons.warning_rounded, _warningColor),
+            _buildMonitorQuickStatItem('استهلاك مرتفع', '$highConsumptionCount', Icons.trending_up_rounded, _errorColor),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildMonitorQuickStatItem(String title, String value, IconData icon, Color color) {
+  return Column(
+    children: [
+      Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      SizedBox(height: 8),
+      Text(
+        value,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: color,
+        ),
+      ),
+      SizedBox(height: 4),
+      Text(
+        title,
+        style: TextStyle(
+          fontSize: 10,
+          color: _textSecondaryColor(context),
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ],
+  );
+}
   Widget _buildReportTypeFilter() {
     return Container(
       decoration: BoxDecoration(
