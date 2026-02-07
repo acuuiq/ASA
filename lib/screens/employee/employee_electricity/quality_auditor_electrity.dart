@@ -71,7 +71,6 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       'time': 'منذ 5 دقائق',
       'read': false,
       'tab': 0,
-      'priority': 'عالي',
       'area': 'المنطقة الشرقية',
       'location': 'محطة التحويل الرئيسية',
       'value': '195V',
@@ -84,7 +83,6 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       'time': 'منذ ساعة',
       'read': false,
       'tab': 0,
-      'priority': 'متوسط',
       'area': 'المنطقة الغربية',
       'location': 'محطة الغربية',
       'value': '49.2 Hz',
@@ -97,7 +95,6 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       'time': 'منذ 3 ساعات',
       'read': true,
       'tab': 0,
-      'priority': 'عالي',
       'area': 'المنطقة الجنوبية',
       'location': 'محطة الجنوب',
       'value': '450A',
@@ -110,7 +107,6 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       'time': 'منذ يوم',
       'read': true,
       'tab': 1,
-      'priority': 'منخفض',
       'area': 'جميع المناطق',
       'reportType': 'شهري',
     },
@@ -122,7 +118,7 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       'time': 'منذ يومين',
       'read': true,
       'tab': 1,
-      'priority': 'متوسط',
+
       'area': 'المنطقة الوسطى',
       'reportType': 'أسبوعي',
     },
@@ -134,7 +130,6 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       'time': 'منذ 30 دقيقة',
       'read': false,
       'tab': 2,
-      'priority': 'متوسط',
       'area': 'حي السلام',
       'complaintType': 'رفرفة في الإضاءة',
     },
@@ -146,7 +141,7 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
   List<DateTime> _selectedDates = [];
   String? _selectedWeek;
   String? _selectedMonth;
-
+  int _currentReportTab = 0;
   final List<String> _areas = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
   final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
   final List<String> _weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
@@ -160,6 +155,7 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
   final Color _textColor = Color(0xFF212121);
   final Color _textSecondaryColor = Color(0xFF757575);
   final Color _successColor = Color(0xFF2E7D32);
+  final Color _warningColor = Color(0xFFF57C00); // ⬅️ أضف هذا اللون
   final Color _errorColor = Color(0xFFD32F2F);
   final Color _borderColor = Color(0xFFE0E0E0);
   final Color _cardColor = Color(0xFFFFFFFF);
@@ -217,7 +213,631 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       ],
     );
   }
+  // ========== شاشة التقارير ==========
+Widget _buildReportsView() {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
 
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // العنوان الرئيسي
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'نظام التقارير - جودة الكهرباء',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: isDarkMode ? _darkCardColor : _cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
+              ),
+              Expanded(
+                child: _buildReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // عرض المحتوى حسب التبويب المختار
+        _currentReportTab == 0 
+            ? _buildCreateReportSection(isDarkMode)
+            : _buildReceivedReportsSection(isDarkMode),
+      ],
+    ),
+  );
+}
+
+Widget _buildReportInnerTabButton(String title, int tabIndex, bool isDarkMode) {
+  bool isSelected = _currentReportTab == tabIndex;
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _currentReportTab = tabIndex;
+      });
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? _primaryColor : Colors.transparent,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+// قسم إنشاء التقارير (نفس الوظيفة الحالية)
+Widget _buildCreateReportSection(bool isDarkMode) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildAreaFilter(isDarkMode),
+      const SizedBox(height: 20),
+
+      _buildReportTypeFilter(isDarkMode),
+      const SizedBox(height: 20),
+
+      _buildReportOptions(isDarkMode),
+      const SizedBox(height: 20),
+
+      _buildGenerateReportButton(isDarkMode),
+    ],
+  );
+}
+
+// قسم التقارير الواردة
+Widget _buildReceivedReportsSection(bool isDarkMode) {
+  // بيانات تجريبية للتقارير الواردة
+  final List<Map<String, dynamic>> receivedReports = [
+    {
+      'id': 'REP-QA-2024-001',
+      'title': 'تقرير جودة الشبكة الشهري',
+      'sender': 'قسم الجودة',
+      'date': DateTime.now().subtract(Duration(days: 2)),
+      'type': 'شهري',
+      'size': '1.5 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المنطقة الشرقية',
+    },
+    {
+      'id': 'REP-QA-2024-002',
+      'title': 'تقرير الإنذارات الأسبوعي',
+      'sender': 'مكتب المراقبة',
+      'date': DateTime.now().subtract(Duration(days: 5)),
+      'type': 'أسبوعي',
+      'size': '950 KB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'جميع المناطق',
+    },
+    {
+      'id': 'REP-QA-2024-003',
+      'title': 'تقرير البلاغات اليومي',
+      'sender': 'فرع بغداد',
+      'date': DateTime.now().subtract(Duration(days: 1)),
+      'type': 'يومي',
+      'size': '550 KB',
+      'status': 'غير مقروء',
+      'fileType': 'Excel',
+      'area': 'حي السلام',
+    },
+    {
+      'id': 'REP-QA-2024-004',
+      'title': 'تقرير أداء الشبكة',
+      'sender': 'شبكة المراقبة',
+      'date': DateTime.now().subtract(Duration(days: 7)),
+      'type': 'شهري',
+      'size': '2.3 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المنطقة الوسطى',
+    },
+    {
+      'id': 'REP-QA-2024-005',
+      'title': 'تقرير الصيانة الوقائية',
+      'sender': 'قسم الصيانة',
+      'date': DateTime.now().subtract(Duration(days: 10)),
+      'type': 'شهري',
+      'size': '3.2 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المنطقة الشمالية',
+    },
+  ];
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'التقارير المستلمة',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? _darkTextColor : _textColor,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'عرض وإدارة جميع التقارير التي تم استلامها',
+        style: TextStyle(
+          color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+        ),
+      ),
+      const SizedBox(height: 20),
+      
+      // إحصائيات سريعة
+      Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDarkMode ? _darkCardColor.withOpacity(0.5) : _backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Column(
+              children: [
+                Text(
+                  receivedReports.length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+                Text(
+                  'إجمالي التقارير',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  receivedReports.where((r) => r['status'] == 'غير مقروء').length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _warningColor,
+                  ),
+                ),
+                Text(
+                  'غير مقروء',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  '${_calculateTotalSize(receivedReports)} MB',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _successColor,
+                  ),
+                ),
+                Text(
+                  'الحجم الإجمالي',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      
+      const SizedBox(height: 20),
+      
+      // قائمة التقارير
+      ...receivedReports.map((report) => _buildReceivedReportCard(report, isDarkMode)),
+    ],
+  );
+}
+
+// بناء بطاقة تقرير واردة
+Widget _buildReceivedReportCard(Map<String, dynamic> report, bool isDarkMode) {
+  bool isUnread = report['status'] == 'غير مقروء';
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: isDarkMode ? _darkCardColor : _cardColor,
+      border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: ListTile(
+      contentPadding: EdgeInsets.all(16),
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: _getReportColor(report['fileType']).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          _getReportIcon(report['fileType']),
+          color: _getReportColor(report['fileType']),
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: isDarkMode ? _darkTextColor : _textColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isUnread)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _warningColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+        ],
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 4),
+          Text(
+            'من: ${report['sender']}',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+            ),
+          ),
+          SizedBox(height: 2),
+          Row(
+            children: [
+              Text(
+                '${DateFormat('yyyy-MM-dd').format(report['date'])} • ${report['type']} • ${report['size']}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert_rounded, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
+        onSelected: (value) {
+          _handleReportAction(value, report);
+        },
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem<String>(
+            value: 'view',
+            child: Row(
+              children: [
+                Icon(Icons.visibility_rounded, size: 18, color: _primaryColor),
+                SizedBox(width: 8),
+                Text('عرض التقرير'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'download',
+            child: Row(
+              children: [
+                Icon(Icons.download_rounded, size: 18, color: _successColor),
+                SizedBox(width: 8),
+                Text('تحميل'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'share',
+            child: Row(
+              children: [
+                Icon(Icons.share_rounded, size: 18, color: _accentColor),
+                SizedBox(width: 8),
+                Text('مشاركة'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_rounded, size: 18, color: _errorColor),
+                SizedBox(width: 8),
+                Text('حذف'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      onTap: () {
+        _viewReceivedReport(report);
+      },
+    ),
+  );
+}
+
+// دوال مساعدة للتقارير الواردة
+Color _getReportColor(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return _errorColor;
+    case 'Excel':
+      return _successColor;
+    case 'Word':
+      return _primaryColor;
+    default:
+      return _accentColor;
+  }
+}
+
+IconData _getReportIcon(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return Icons.picture_as_pdf_rounded;
+    case 'Excel':
+      return Icons.table_chart_rounded;
+    case 'Word':
+      return Icons.description_rounded;
+    default:
+      return Icons.insert_drive_file_rounded;
+  }
+}
+
+String _calculateTotalSize(List<Map<String, dynamic>> reports) {
+  double total = 0;
+  for (var report in reports) {
+    String sizeStr = report['size'];
+    if (sizeStr.contains('MB')) {
+      total += double.parse(sizeStr.replaceAll(' MB', ''));
+    } else if (sizeStr.contains('KB')) {
+      total += double.parse(sizeStr.replaceAll(' KB', '')) / 1024;
+    }
+  }
+  return total.toStringAsFixed(1);
+}
+void _handleReportAction(String action, Map<String, dynamic> report) {
+  switch (action) {
+    case 'view':
+      _viewReceivedReport(report);
+      break;
+    case 'download':
+      _downloadReport(report);
+      break;
+    case 'share':
+      _shareReport(report);
+      break;
+    case 'delete':
+      _deleteReport(report);
+      break;
+  }
+}
+
+void _viewReceivedReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor,
+      title: Row(
+        children: [
+          Icon(_getReportIcon(report['fileType']), color: _getReportColor(report['fileType'])),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _textColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildReportDetailRow('المرسل:', report['sender']),
+            _buildReportDetailRow('النوع:', report['type']),
+            _buildReportDetailRow('المنطقة:', report['area']),
+            _buildReportDetailRow('الحجم:', report['size']),
+            _buildReportDetailRow('صيغة الملف:', report['fileType']),
+            _buildReportDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+            _buildReportDetailRow('الحالة:', report['status']),
+            SizedBox(height: 16),
+            Text(
+              'ملخص التقرير:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'هذا التقرير يحتوي على بيانات مراقبة جودة الكهرباء للشبكة. يشمل الإنذارات، البلاغات، مؤشرات الجودة، والتوصيات الفنية.',
+              style: TextStyle(
+                color: _textSecondaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => _downloadReport(report),
+          child: Text('تحميل'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildReportDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: _textSecondaryColor,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: _textColor,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _downloadReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('جاري تحميل: ${report['title']}'),
+      backgroundColor: _successColor,
+    ),
+  );
+}
+
+void _shareReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('مشاركة: ${report['title']}'),
+      backgroundColor: _primaryColor,
+    ),
+  );
+}
+
+void _deleteReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor,
+      title: Row(
+        children: [
+          Icon(Icons.delete_rounded, color: _errorColor),
+          SizedBox(width: 8),
+          Text('حذف التقرير'),
+        ],
+      ),
+      content: Text(
+        'هل أنت متأكد من حذف تقرير "${report['title']}"؟',
+        style: TextStyle(
+          color: _textColor,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _errorColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('تم حذف التقرير: ${report['title']}'),
+                backgroundColor: _errorColor,
+              ),
+            );
+          },
+          child: Text('حذف'),
+        ),
+      ],
+    ),
+  );
+}
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -337,25 +957,26 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
 
   // ========== الشاشة الرئيسية ==========
   Widget _buildDashboard() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildKPISection(isDarkMode),
-          const SizedBox(height: 20),
-          _buildMapSection(isDarkMode),
-          const SizedBox(height: 20),
-          _buildActiveAlarmsSection(isDarkMode),
-          const SizedBox(height: 20),
-          _buildRecentComplaintsSection(isDarkMode),
-        ],
-      ),
-    );
-  }
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return SingleChildScrollView(
+    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8), // ⬅️ تقليل الحشو
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildKPISection(isDarkMode),
+        const SizedBox(height: 12), // ⬅️ تقليل المسافات
+        _buildMapSection(isDarkMode),
+        const SizedBox(height: 12),
+        _buildActiveAlarmsSection(isDarkMode),
+        const SizedBox(height: 12),
+        _buildRecentComplaintsSection(isDarkMode),
+        const SizedBox(height: 8), // ⬅️ مسافة نهائية أقل
+      ],
+    ),
+  );
+}
 
   Widget _buildKPISection(bool isDarkMode) {
     return Card(
@@ -390,21 +1011,22 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
   Widget _buildKPIItem(String title, String value, IconData icon, Color color, bool isDarkMode) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
+        mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -412,7 +1034,7 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: isDarkMode ? _darkTextSecondaryColor : Colors.grey),
+              style: TextStyle(fontSize: 10, color: isDarkMode ? _darkTextSecondaryColor : Colors.grey),
             ),
           ],
         ),
@@ -495,10 +1117,11 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
 
   Widget _buildActiveAlarmsSection(bool isDarkMode) {
     return Card(
+       margin: const EdgeInsets.symmetric(vertical: 4),
       elevation: 2,
       color: isDarkMode ? _darkCardColor : _cardColor,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -507,7 +1130,7 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
                 Text(
                   'الإنذارات النشطة',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode ? _darkTextColor : _primaryColor,
                   ),
@@ -521,7 +1144,7 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
                   ),
                   child: Text(
                     _activeAlarms.length.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    style: const TextStyle(color: Colors.white, fontSize: 11),
                   ),
                 ),
               ],
@@ -533,132 +1156,172 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       ),
     );
   }
-
   Widget _buildAlarmItem(Map<String, dynamic> alarm, bool isDarkMode) {
-    Color severityColor = Colors.grey;
-    switch (alarm['severity']) {
-      case 'حرج':
-        severityColor = Colors.red;
-        break;
-      case 'عالي':
-        severityColor = Colors.orange;
-        break;
-      case 'متوسط':
-        severityColor = Colors.yellow;
-        break;
-    }
+  Color severityColor = Colors.grey;
+  switch (alarm['severity']) {
+    case 'حرج':
+      severityColor = Colors.red;
+      break;
+    case 'عالي':
+      severityColor = Colors.orange;
+      break;
+    case 'متوسط':
+      severityColor = Colors.yellow;
+      break;
+  }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: severityColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: severityColor.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.warning, color: severityColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alarm['type'],
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: severityColor,
-                  ),
-                ),
-                Text(alarm['location'], style: TextStyle(fontSize: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-                Text('القيمة: ${alarm['value']}', style: TextStyle(fontSize: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-              ],
-            ),
-          ),
-          Column(
+  return Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: severityColor.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: severityColor.withOpacity(0.3)),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.warning, color: severityColor, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(alarm['time'], style: TextStyle(fontSize: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-              const SizedBox(height: 4),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              Text(
+                alarm['type'],
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: severityColor,
+                  fontSize: 12, // ⬅️ تقليل حجم الخط أكثر
                 ),
-                child: const Text('معالجة', style: TextStyle(fontSize: 12,color: Color.fromARGB(255, 255, 255, 255),)),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                alarm['location'], 
+                style: TextStyle(
+                  fontSize: 10, // ⬅️ تقليل حجم الخط أكثر
+                  color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor
+                ),
+                maxLines: 2, // ⬅️ تحديد عدد الأسطر
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'القيمة: ${alarm['value']}', 
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor
+                ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecentComplaintsSection(bool isDarkMode) {
-    return Card(
-      elevation: 2,
-      color: isDarkMode ? _darkCardColor : _cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'آخر البلاغات',
+              alarm['time'], 
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? _darkTextColor : _primaryColor,
+                fontSize: 9, // ⬅️ تقليل حجم الخط أكثر
+                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor
               ),
             ),
-            const SizedBox(height: 16),
-            ..._recentComplaints.map((complaint) => _buildComplaintItem(complaint, isDarkMode)),
+            const SizedBox(height: 4),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), // ⬅️ تقليل الحشو
+                minimumSize: const Size(0, 0),
+              ),
+              child: const Text(
+                'معالجة', 
+                style: TextStyle(fontSize: 10) // ⬅️ تقليل حجم الخط
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildComplaintItem(Map<String, dynamic> complaint, bool isDarkMode) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      ],
+    ),
+  );
+}
+  Widget _buildRecentComplaintsSection(bool isDarkMode) {
+  return Card(
+    margin: const EdgeInsets.symmetric(vertical: 4),
+    elevation: 1,
+    color: isDarkMode ? _darkCardColor : _cardColor,
+    child: Padding(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
-      ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.report, color: Colors.blue),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(complaint['id'], style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? _darkTextColor : _textColor)),
-                Text(complaint['location'], style: TextStyle(fontSize: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-                Text(complaint['type'], style: TextStyle(fontSize: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-              ],
+          Text(
+            'آخر البلاغات',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? _darkTextColor : _primaryColor,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          const SizedBox(height: 12),
+          ..._recentComplaints.map((complaint) => _buildComplaintItem(complaint, isDarkMode)),
+        ],
+      ),
+    ),
+  );
+}
+Widget _buildComplaintItem(Map<String, dynamic> complaint, bool isDarkMode) {
+  return Card(
+    margin: const EdgeInsets.only(bottom: 6),
+    elevation: 0,
+    color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(6),
+      side: BorderSide(color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
+    ),
+    child: ListTile(
+      dense: true, // ⬅️ هذا مهم جداً
+      visualDensity: VisualDensity.compact, // ⬅️ هذا مهم جداً
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      leading: Icon(Icons.report, color: Colors.blue, size: 16),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            complaint['id'], 
+            style: TextStyle(
+              fontWeight: FontWeight.bold, 
+              color: isDarkMode ? _darkTextColor : _textColor,
+              fontSize: 11,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Row(
             children: [
-              Text(complaint['time'], style: TextStyle(fontSize: 12, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-              const SizedBox(height: 4),
+              Expanded(
+                child: Text(
+                  complaint['location'], 
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
                   color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(3),
                 ),
                 child: Text(
                   complaint['status'],
                   style: TextStyle(
                     color: Colors.blue,
-                    fontSize: 12,
+                    fontSize: 9,
                   ),
                 ),
               ),
@@ -666,10 +1329,24 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  // ========== شاشة المراقبة ==========
+      subtitle: Text(
+        complaint['type'], 
+        style: TextStyle(
+          fontSize: 10,
+          color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor
+        ),
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: Text(
+        complaint['time'], 
+        style: TextStyle(
+          fontSize: 9,
+          color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor
+        ),
+      ),
+    ),
+  );
+}  // ========== شاشة المراقبة ==========
   Widget _buildMonitoring() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
@@ -783,55 +1460,6 @@ class _QualityAuditorScreenState extends State<QualityAuditorScreen> {
       ),
     );
   }
-
-  // ========== شاشة التقارير ==========
-  Widget _buildReportsView() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.assignment, color: _primaryColor, size: 24),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'نظام التقارير - جودة الكهرباء',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? _darkTextColor : _primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          _buildAreaFilter(isDarkMode),
-          const SizedBox(height: 20),
-
-          _buildReportTypeFilter(isDarkMode),
-          const SizedBox(height: 20),
-
-          _buildReportOptions(isDarkMode),
-          const SizedBox(height: 20),
-
-          _buildGenerateReportButton(isDarkMode),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAreaFilter(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
@@ -2224,7 +2852,6 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
       'time': 'منذ 5 دقائق',
       'read': false,
       'tab': 0,
-      'priority': 'عالي',
       'area': 'المنطقة الشرقية',
       'location': 'محطة التحويل الرئيسية',
       'value': '195V',
@@ -2237,7 +2864,6 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
       'time': 'منذ ساعة',
       'read': false,
       'tab': 0,
-      'priority': 'متوسط',
       'area': 'المنطقة الغربية',
       'location': 'محطة الغربية',
       'value': '49.2 Hz',
@@ -2250,7 +2876,6 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
       'time': 'منذ 3 ساعات',
       'read': true,
       'tab': 0,
-      'priority': 'عالي',
       'area': 'المنطقة الجنوبية',
       'location': 'محطة الجنوب',
       'value': '450A',
@@ -2263,7 +2888,6 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
       'time': 'منذ يوم',
       'read': true,
       'tab': 1,
-      'priority': 'منخفض',
       'area': 'جميع المناطق',
       'reportType': 'شهري',
     },
@@ -2275,7 +2899,6 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
       'time': 'منذ يومين',
       'read': true,
       'tab': 1,
-      'priority': 'متوسط',
       'area': 'المنطقة الوسطى',
       'reportType': 'أسبوعي',
     },
@@ -2287,25 +2910,10 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
       'time': 'منذ 30 دقيقة',
       'read': false,
       'tab': 2,
-      'priority': 'متوسط',
       'area': 'حي السلام',
       'complaintType': 'رفرفة في الإضاءة',
     },
   ];
-
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'عالي':
-        return _errorColor;
-      case 'متوسط':
-        return _warningColor;
-      case 'منخفض':
-        return _successColor;
-      default:
-        return _textSecondaryColor(context);
-    }
-  }
-
   IconData _getNotificationIcon(String type) {
     switch (type) {
       case 'انخفاض الجهد':
@@ -2466,7 +3074,6 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
                     _buildDetailItem('الوصف', notification['description']),
                     _buildDetailItem('المنطقة', notification['area']),
                     _buildDetailItem('الوقت', notification['time']),
-                    _buildDetailItem('الأولوية', notification['priority']),
                     
                     if (notification['location'] != null)
                       _buildDetailItem('الموقع', notification['location']),
@@ -2786,25 +3393,6 @@ class _QualityNotificationsScreenState extends State<QualityNotificationsScreen>
                         SizedBox(height: 4),
                         Row(
                           children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: _getPriorityColor(notification['priority']).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: _getPriorityColor(notification['priority']).withOpacity(0.3),
-                                ),
-                              ),
-                              child: Text(
-                                notification['priority'],
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: _getPriorityColor(notification['priority']),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 8),
                             Icon(
                               Icons.location_on_outlined,
                               size: 12,
