@@ -234,6 +234,7 @@ class _QualityAuditorWaterScreenState extends State<QualityAuditorWaterScreen> {
   List<DateTime> _selectedDates = [];
   String? _selectedWeek;
   String? _selectedMonth;
+  int _currentReportTab = 0;
 
   final List<String> _areas = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
   final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
@@ -251,6 +252,8 @@ class _QualityAuditorWaterScreenState extends State<QualityAuditorWaterScreen> {
   final Color _errorColor = Color(0xFFD32F2F);
   final Color _borderColor = Color(0xFFE0E0E0);
   final Color _cardColor = Color(0xFFFFFFFF);
+  final Color _warningColor = Color(0xFFF57C00); // <-- أضف هذا السطر
+
 
   // ألوان الوضع الداكن
   final Color _darkPrimaryColor = Color(0xFF1565C0);
@@ -873,51 +876,711 @@ class _QualityAuditorWaterScreenState extends State<QualityAuditorWaterScreen> {
 
   // ========== شاشة التقارير ==========
   Widget _buildReportsView() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'نظام التقارير - جودة المياه',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? _darkTextColor : _primaryColor,
-                ),
+              child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'نظام التقارير - جودة المياه',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        
+        // تبويبات داخلية
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: isDarkMode ? _darkCardColor : _cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildQualityReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
+              ),
+              Expanded(
+                child: _buildQualityReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+        ),
+        const SizedBox(height: 20),
+        
+        // عرض المحتوى حسب التبويب المختار
+        _currentReportTab == 0 
+            ? _buildQualityCreateReportSection(isDarkMode)
+            : _buildQualityReceivedReportsSection(isDarkMode),
+      ],
+    ),
+  );
+}
 
-          _buildAreaFilter(isDarkMode),
-          const SizedBox(height: 20),
+Widget _buildQualityReportInnerTabButton(String title, int tabIndex, bool isDarkMode) {
+  bool isSelected = _currentReportTab == tabIndex;
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _currentReportTab = tabIndex;
+      });
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? _primaryColor : Colors.transparent,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : (isDarkMode ? _darkTextColor : _textColor),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
-          _buildReportTypeFilter(isDarkMode),
-          const SizedBox(height: 20),
+// قسم إنشاء التقارير للجودة
+Widget _buildQualityCreateReportSection(bool isDarkMode) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'إنشاء تقرير جديد لجودة المياه',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? _darkTextColor : _textColor,
+        ),
+      ),
+      const SizedBox(height: 16),
+      _buildAreaFilter(isDarkMode),
+      const SizedBox(height: 20),
+      _buildReportTypeFilter(isDarkMode),
+      const SizedBox(height: 20),
+      _buildReportOptions(isDarkMode),
+      const SizedBox(height: 20),
+      _buildGenerateReportButton(isDarkMode),
+      const SizedBox(height: 20),
+      _buildQualityQuickStats(isDarkMode),
+    ],
+  );
+}
 
-          _buildReportOptions(isDarkMode),
-          const SizedBox(height: 20),
+// قسم التقارير الواردة للجودة
+Widget _buildQualityReceivedReportsSection(bool isDarkMode) {
+  final List<Map<String, dynamic>> qualityReceivedReports = [
+    {
+      'id': 'QREP-2024-001',
+      'title': 'تقرير جودة المياه الشهري',
+      'sender': 'مختبر الجودة المركزي',
+      'date': DateTime.now().subtract(Duration(days: 2)),
+      'type': 'شهري',
+      'size': '2.1 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المنطقة الشرقية',
+    },
+    {
+      'id': 'QREP-2024-002',
+      'title': 'تقرير الإنذارات الأسبوعي',
+      'sender': 'غرفة التحكم',
+      'date': DateTime.now().subtract(Duration(days: 5)),
+      'type': 'أسبوعي',
+      'size': '1.3 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'جميع المناطق',
+    },
+    {
+      'id': 'QREP-2024-003',
+      'title': 'تقرير الفحوصات اليومية',
+      'sender': 'فرع المحطة الرئيسية',
+      'date': DateTime.now().subtract(Duration(days: 1)),
+      'type': 'يومي',
+      'size': '850 KB',
+      'status': 'غير مقروء',
+      'fileType': 'Excel',
+      'area': 'محطة المعالجة',
+    },
+    {
+      'id': 'QREP-2024-004',
+      'title': 'تقرير معايرة الأجهزة',
+      'sender': 'قسم الصيانة',
+      'date': DateTime.now().subtract(Duration(days: 7)),
+      'type': 'شهري',
+      'size': '3.2 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المختبر المركزي',
+    },
+    {
+      'id': 'QREP-2024-005',
+      'title': 'تقرير البلاغات المجمعة',
+      'sender': 'شؤون المواطنين',
+      'date': DateTime.now().subtract(Duration(days: 10)),
+      'type': 'أسبوعي',
+      'size': '1.8 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'حي السلام',
+    },
+  ];
 
-          _buildGenerateReportButton(isDarkMode),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'التقارير المستلمة - جودة المياه',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? _darkTextColor : _textColor,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'عرض وإدارة جميع التقارير التي تم استلامها في قسم جودة المياه',
+        style: TextStyle(
+          color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+        ),
+      ),
+      const SizedBox(height: 20),
+      
+      // إحصائيات سريعة للجودة
+      Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.white10 : _backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Column(
+              children: [
+                Text(
+                  qualityReceivedReports.length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+                Text(
+                  'إجمالي التقارير',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  qualityReceivedReports.where((r) => r['status'] == 'غير مقروء').length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _warningColor,
+                  ),
+                ),
+                Text(
+                  'غير مقروء',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  '${_calculateQualityTotalSize(qualityReceivedReports)} MB',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _successColor,
+                  ),
+                ),
+                Text(
+                  'الحجم الإجمالي',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      
+      const SizedBox(height: 20),
+      
+      // قائمة التقارير الخاصة بالجودة
+      ...qualityReceivedReports.map((report) => _buildQualityReceivedReportCard(report, isDarkMode)),
+    ],
+  );
+}
+
+// بناء بطاقة تقرير واردة للجودة
+Widget _buildQualityReceivedReportCard(Map<String, dynamic> report, bool isDarkMode) {
+  bool isUnread = report['status'] == 'غير مقروء';
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: isDarkMode ? _darkCardColor : _cardColor,
+      border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: ListTile(
+      contentPadding: EdgeInsets.all(16),
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: _getQualityReportColor(report['fileType']).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          _getQualityReportIcon(report['fileType']),
+          color: _getQualityReportColor(report['fileType']),
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: isDarkMode ? _darkTextColor : _textColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isUnread)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _warningColor,
+                shape: BoxShape.circle,
+              ),
+            ),
         ],
       ),
-    );
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 4),
+          Text(
+            'من: ${report['sender']}',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            '${DateFormat('yyyy-MM-dd').format(report['date'])} • ${report['type']} • ${report['size']}',
+            style: TextStyle(
+              fontSize: 10,
+              color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+            ),
+          ),
+          if (report['area'] != null) ...[
+            SizedBox(height: 2),
+            Text(
+              'المنطقة: ${report['area']}',
+              style: TextStyle(
+                fontSize: 10,
+                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+              ),
+            ),
+          ],
+        ],
+      ),
+      trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert_rounded, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
+        onSelected: (value) {
+          _handleQualityReportAction(value, report);
+        },
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem<String>(
+            value: 'view',
+            child: Row(
+              children: [
+                Icon(Icons.visibility_rounded, size: 18, color: _primaryColor),
+                SizedBox(width: 8),
+                Text('عرض التقرير'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'download',
+            child: Row(
+              children: [
+                Icon(Icons.download_rounded, size: 18, color: _successColor),
+                SizedBox(width: 8),
+                Text('تحميل'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'share',
+            child: Row(
+              children: [
+                Icon(Icons.share_rounded, size: 18, color: _accentColor),
+                SizedBox(width: 8),
+                Text('مشاركة'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_rounded, size: 18, color: _errorColor),
+                SizedBox(width: 8),
+                Text('حذف'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      onTap: () {
+        _viewQualityReceivedReport(report);
+      },
+    ),
+  );
+}
+
+// إحصائيات سريعة للجودة
+Widget _buildQualityQuickStats(bool isDarkMode) {
+  return Container(
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: isDarkMode ? Colors.white10 : _backgroundColor,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'إحصائيات سريعة - الجودة',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildQualityQuickStatItem('تقارير هذا الشهر', '12', Icons.calendar_today_rounded, _primaryColor),
+            _buildQualityQuickStatItem('إنذارات نشطة', '3', Icons.warning_rounded, _warningColor),
+            _buildQualityQuickStatItem('نسبة الجودة', '94.5%', Icons.analytics_rounded, _successColor),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+// دوال مساعدة للتقارير الواردة للجودة
+Color _getQualityReportColor(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return _errorColor;
+    case 'Excel':
+      return _successColor;
+    case 'Word':
+      return _primaryColor;
+    default:
+      return _accentColor;
   }
+}
+
+IconData _getQualityReportIcon(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return Icons.picture_as_pdf_rounded;
+    case 'Excel':
+      return Icons.table_chart_rounded;
+    case 'Word':
+      return Icons.description_rounded;
+    default:
+      return Icons.insert_drive_file_rounded;
+  }
+}
+
+String _calculateQualityTotalSize(List<Map<String, dynamic>> reports) {
+  double total = 0;
+  for (var report in reports) {
+    String sizeStr = report['size'];
+    if (sizeStr.contains('MB')) {
+      total += double.parse(sizeStr.replaceAll(' MB', ''));
+    } else if (sizeStr.contains('KB')) {
+      total += double.parse(sizeStr.replaceAll(' KB', '')) / 1024;
+    }
+  }
+  return total.toStringAsFixed(1);
+}
+
+void _handleQualityReportAction(String action, Map<String, dynamic> report) {
+  switch (action) {
+    case 'view':
+      _viewQualityReceivedReport(report);
+      break;
+    case 'download':
+      _downloadQualityReport(report);
+      break;
+    case 'share':
+      _shareQualityReport(report);
+      break;
+    case 'delete':
+      _deleteQualityReport(report);
+      break;
+  }
+}
+
+void _viewQualityReceivedReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor,
+      title: Row(
+        children: [
+          Icon(_getQualityReportIcon(report['fileType']), color: _getQualityReportColor(report['fileType'])),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _textColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildQualityReportDetailRow('المرسل:', report['sender']),
+            _buildQualityReportDetailRow('النوع:', report['type']),
+            _buildQualityReportDetailRow('المنطقة:', report['area'] ?? 'غير محدد'),
+            _buildQualityReportDetailRow('الحجم:', report['size']),
+            _buildQualityReportDetailRow('صيغة الملف:', report['fileType']),
+            _buildQualityReportDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+            _buildQualityReportDetailRow('الحالة:', report['status']),
+            SizedBox(height: 16),
+            Text(
+              'ملخص التقرير:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'هذا التقرير يحتوي على بيانات مراقبة جودة المياه والفحوصات المخبرية. يشمل قياسات جودة المياه، الإنذارات، البلاغات، ومعايرة الأجهزة.',
+              style: TextStyle(
+                color: _textSecondaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => _downloadQualityReport(report),
+          child: Text('تحميل'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildQualityReportDetailRow(String label, String value) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: isDarkMode ? _darkTextColor : _textColor,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _downloadQualityReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('جاري تحميل: ${report['title']}'),
+      backgroundColor: _successColor,
+    ),
+  );
+}
+
+void _shareQualityReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('مشاركة: ${report['title']}'),
+      backgroundColor: _primaryColor,
+    ),
+  );
+}
+
+void _deleteQualityReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor,
+      title: Row(
+        children: [
+          Icon(Icons.delete_rounded, color: _errorColor),
+          SizedBox(width: 8),
+          Text('حذف التقرير'),
+        ],
+      ),
+      content: Text(
+        'هل أنت متأكد من حذف تقرير "${report['title']}"؟',
+        style: TextStyle(
+          color: _textColor,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _errorColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('تم حذف التقرير: ${report['title']}'),
+                backgroundColor: _errorColor,
+              ),
+            );
+          },
+          child: Text('حذف'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildQualityQuickStatItem(String title, String value, IconData icon, Color color) {
+  return Column(
+    children: [
+      Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      SizedBox(height: 8),
+      Text(
+        value,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: color,
+        ),
+      ),
+      SizedBox(height: 4),
+      Text(
+        title,
+        style: TextStyle(
+          fontSize: 10,
+          color: _textSecondaryColor,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ],
+  );
+}
 
   Widget _buildAreaFilter(bool isDarkMode) {
     return Container(
@@ -1580,54 +2243,56 @@ class _QualityAuditorWaterScreenState extends State<QualityAuditorWaterScreen> {
     _showSuccessSnackbar('تم إنشاء التقرير لـ ${_selectedDates.length} يوم بنجاح');
     _showGeneratedReport(reportPeriod);
   }
-
   void _showGeneratedReport(String period) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _cardColor,
-        title: Text('التقرير $period', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('نوع التقرير: $_selectedReportType', style: TextStyle(color: _textColor)),
-              if (_selectedReportType == 'يومي' && _selectedDates.isNotEmpty)
-                Text('عدد الأيام: ${_selectedDates.length}', style: TextStyle(color: _textColor)),
-              if (_selectedWeek != null)
-                Text('الأسبوع: $_selectedWeek', style: TextStyle(color: _textColor)),
-              if (_selectedMonth != null)
-                Text('الشهر: $_selectedMonth', style: TextStyle(color: _textColor)),
-              const SizedBox(height: 16),
-              Text('ملخص التقرير:', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
-              Text('- إجمالي الإنذارات: ${_activeAlarms.length}', style: TextStyle(color: _textColor)),
-              Text('- البلاغات النشطة: ${_recentComplaints.length}', style: TextStyle(color: _textColor)),
-              Text('- معدل الجودة: 94.5%', style: TextStyle(color: _textColor)),
-              Text('- مناطق تحت المراقبة: 8', style: TextStyle(color: _textColor)),
-            ],
-          ),
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor,
+      title: Text('تقرير جودة المياه - $period', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('نوع التقرير: $_selectedReportType', style: TextStyle(color: _textColor)),
+            Text('المنطقة: $_selectedArea', style: TextStyle(color: _textColor)),
+            if (_selectedReportType == 'يومي' && _selectedDates.isNotEmpty)
+              Text('عدد الأيام: ${_selectedDates.length}', style: TextStyle(color: _textColor)),
+            if (_selectedWeek != null)
+              Text('الأسبوع: $_selectedWeek', style: TextStyle(color: _textColor)),
+            if (_selectedMonth != null)
+              Text('الشهر: $_selectedMonth', style: TextStyle(color: _textColor)),
+            const SizedBox(height: 16),
+            Text('ملخص التقرير:', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
+            Text('- إجمالي الإنذارات: ${_activeAlarms.length}', style: TextStyle(color: _textColor)),
+            Text('- البلاغات النشطة: ${_recentComplaints.length}', style: TextStyle(color: _textColor)),
+            Text('- معدل الجودة: 94.5%', style: TextStyle(color: _textColor)),
+            Text('- مناطق تحت المراقبة: 8', style: TextStyle(color: _textColor)),
+            Text('- فحوصات اليوم: 24', style: TextStyle(color: _textColor)),
+            Text('- أجهزة تعمل: 18/20', style: TextStyle(color: _textColor)),
+            Text('- معاملات مكتملة: 45', style: TextStyle(color: _textColor)),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق', style: TextStyle(color: _textSecondaryColor)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _generatePdfReport(period);
-            },
-            child: const Text('تصدير PDF'),
-          ),
-        ],
       ),
-    );
-  }
-
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق', style: TextStyle(color: _textSecondaryColor)),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+            _generatePdfReport(period);
+          },
+          child: const Text('تصدير PDF'),
+        ),
+      ],
+    ),
+  );
+}
   // ========== دوال PDF والتقارير ==========
   Future<void> _generatePdfReport(String period) async {
     try {
@@ -1657,7 +2322,84 @@ class _QualityAuditorWaterScreenState extends State<QualityAuditorWaterScreen> {
       _showErrorSnackbar('خطأ في تصدير التقرير: $e');
     }
   }
-
+  pw.Widget _buildPdfQualitySummary() {
+  return pw.Container(
+    decoration: pw.BoxDecoration(
+      border: pw.Border.all(color: PdfColors.blue),
+      borderRadius: pw.BorderRadius.circular(5),
+    ),
+    padding: const pw.EdgeInsets.all(15),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'ملخص تقرير الجودة',
+          style: pw.TextStyle(
+            fontSize: 18,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.blue,
+          ),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('إجمالي الإنذارات:'),
+            pw.Text('${_activeAlarms.length}'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('البلاغات النشطة:'),
+            pw.Text('${_recentComplaints.length}'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('معدل الجودة:'),
+            pw.Text('94.5%'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('مناطق تحت المراقبة:'),
+            pw.Text('8'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('فحوصات اليوم:'),
+            pw.Text('24'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('أجهزة تعمل:'),
+            pw.Text('18/20'),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text('معاملات مكتملة:'),
+            pw.Text('45'),
+          ],
+        ),
+      ],
+    ),
+  );
+}
   Future<void> _sharePdfFile(Uint8List pdfBytes, String period) async {
     try {
       final fileName = 'تقرير_جودة_المياه_${DateTime.now().millisecondsSinceEpoch}.pdf';
