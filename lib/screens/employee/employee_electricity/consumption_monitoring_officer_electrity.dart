@@ -66,6 +66,8 @@ class ConsumptionMonitoringOfficerScreenState
   List<DateTime> _selectedDates = [];
   String? _selectedWeek;
   String? _selectedMonth;
+  int _currentReportInnerTab = 0; // 0 = إنشاء التقارير, 1 = التقارير الواردة
+  late TabController _tabController;
 
   // متغيرات الإعدادات
   bool _notificationsEnabled = true;
@@ -2017,45 +2019,903 @@ class ConsumptionMonitoringOfficerScreenState
   void _sendAlertToCustomer(Map<String, dynamic> customer) {
     _showSuccessSnackbar('تم إرسال تنبيه إلى ${customer['name']}');
   }
-
   Widget _buildReportsView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // العنوان الرئيسي
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'نظام التقارير',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        
+        // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: _cardColor(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor(context)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildReportInnerTabButton('إنشاء التقارير', 0),
+              ),
+              Expanded(
+                child: _buildReportInnerTabButton('التقارير الواردة', 1),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // عرض المحتوى حسب التبويب المختار
+        _currentReportInnerTab == 0 
+            ? _buildCreateReportSection()
+            : _buildReceivedReportsSection(),
+      ],
+    ),
+  );
+}
+
+// زر التبويب الداخلي
+Widget _buildReportInnerTabButton(String title, int tabIndex) {
+  bool isSelected = _currentReportInnerTab == tabIndex;
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _currentReportInnerTab = tabIndex;
+      });
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? _primaryColor : Colors.transparent,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : _textColor(context),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+// قسم إنشاء التقارير (نفس الوظيفة الحالية لكن مع إعادة هيكلة)
+Widget _buildCreateReportSection() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'إنشاء تقرير جديد',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: _textColor(context),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'اختر نوع التقرير والفترة المطلوبة',
+        style: TextStyle(
+          color: _textSecondaryColor(context),
+        ),
+      ),
+      const SizedBox(height: 20),
+      _buildReportTypeFilter(),
+      const SizedBox(height: 20),
+      _buildReportOptions(),
+      const SizedBox(height: 20),
+      _buildGenerateReportButton(),
+      const SizedBox(height: 20),
+      
+      // إحصائيات سريعة
+      _buildQuickStats(),
+    ],
+  );
+}
+// قسم التقارير الواردة
+Widget _buildReceivedReportsSection() {
+  // بيانات تجريبية للتقارير الواردة (خاصة بمراقبة الاستهلاك)
+  final List<Map<String, dynamic>> receivedReports = [
+    {
+      'id': 'REP-CON-2024-001',
+      'title': 'تقرير الاستهلاك الشهري',
+      'sender': 'قسم مراقبة الاستهلاك',
+      'date': DateTime.now().subtract(Duration(days: 2)),
+      'type': 'شهري',
+      'size': '1.5 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'جميع المناطق',
+      'totalConsumption': 45000,
+      'customersCount': 880,
+      'highConsumptionAlerts': 12,
+    },
+    {
+      'id': 'REP-CON-2024-002',
+      'title': 'تقرير الإنذارات الأسبوعي',
+      'sender': 'مكتب المدير العام',
+      'date': DateTime.now().subtract(Duration(days: 5)),
+      'type': 'أسبوعي',
+      'size': '920 KB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المنطقة الشرقية',
+      'totalConsumption': 18500,
+      'customersCount': 350,
+      'highConsumptionAlerts': 8,
+    },
+    {
+      'id': 'REP-CON-2024-003',
+      'title': 'تقرير الاستهلاك اليومي',
+      'sender': 'فرع بغداد',
+      'date': DateTime.now().subtract(Duration(days: 1)),
+      'type': 'يومي',
+      'size': '520 KB',
+      'status': 'غير مقروء',
+      'fileType': 'Excel',
+      'area': 'حي العليا',
+      'totalConsumption': 15600,
+      'customersCount': 300,
+      'highConsumptionAlerts': 25,
+    },
+    {
+      'id': 'REP-CON-2024-004',
+      'title': 'تقرير أداء المناطق',
+      'sender': 'شؤون المناطق',
+      'date': DateTime.now().subtract(Duration(days: 7)),
+      'type': 'شهري',
+      'size': '2.3 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'جميع المناطق',
+      'totalConsumption': 125000,
+      'customersCount': 2500,
+      'highConsumptionAlerts': 48,
+    },
+    {
+      'id': 'REP-CON-2024-005',
+      'title': 'تقرير ذروة الاستهلاك',
+      'sender': 'الإدارة العليا',
+      'date': DateTime.now().subtract(Duration(days: 10)),
+      'type': 'سنوي',
+      'size': '3.8 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المنطقة الوسطى',
+      'totalConsumption': 520000,
+      'customersCount': 4500,
+      'highConsumptionAlerts': 120,
+    },
+  ];
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'التقارير المستلمة',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: _textColor(context),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'عرض وإدارة جميع التقارير التي تم استلامها',
+        style: TextStyle(
+          color: _textSecondaryColor(context),
+        ),
+      ),
+      const SizedBox(height: 20),
+      
+      // إحصائيات سريعة
+      Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _backgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _borderColor(context)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Column(
+              children: [
+                Text(
+                  receivedReports.length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+                Text(
+                  'إجمالي التقارير',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  receivedReports.where((r) => r['status'] == 'غير مقروء').length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _warningColor,
+                  ),
+                ),
+                Text(
+                  'غير مقروء',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  '${_calculateTotalSize(receivedReports)} MB',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _successColor,
+                  ),
+                ),
+                Text(
+                  'الحجم الإجمالي',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      
+      const SizedBox(height: 20),
+      
+      // فلتر حسب المنطقة
+      _buildAreaFilterForReports(),
+      
+      const SizedBox(height: 20),
+      
+      // قائمة التقارير
+      ...receivedReports.map((report) => _buildReceivedReportCard(report)),
+    ],
+  );
+}
+// إحصائيات سريعة
+Widget _buildQuickStats() {
+  return Container(
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: _backgroundColor(context),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _borderColor(context)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'إحصائيات سريعة',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildQuickStatItem('تقارير هذا الشهر', '7', Icons.calendar_today_rounded, _primaryColor),
+            _buildQuickStatItem('إنذارات مستلمة', '12', Icons.warning_rounded, _warningColor),
+            _buildQuickStatItem('مناطق مغطاة', '5', Icons.location_on_rounded, _successColor),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+// فلتر المناطق للتقارير الواردة
+Widget _buildAreaFilterForReports() {
+  final List<String> reportAreas = [
+    'جميع المناطق',
+    'المنطقة الشرقية',
+    'حي العليا',
+    'حي الرياض',
+    'حي النخيل',
+    'حي الصفا',
+    'المنطقة الوسطى',
+  ];
+  
+  String selectedReportArea = 'جميع المناطق';
+
+  return StatefulBuilder(
+    builder: (context, setState) {
+      return Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _backgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _borderColor(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'فلتر حسب المنطقة',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: _textColor(context),
+              ),
+            ),
+            SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: reportAreas.map((area) {
+                final isSelected = selectedReportArea == area;
+                return FilterChip(
+                  label: Text(
+                    area,
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      selectedReportArea = selected ? area : 'جميع المناطق';
+                    });
+                  },
+                  selectedColor: _primaryColor.withOpacity(0.2),
+                  checkmarkColor: _primaryColor,
+                  labelStyle: TextStyle(
+                    color: isSelected ? _primaryColor : _textColor(context),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: isSelected ? _primaryColor : _borderColor(context)),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+Widget _buildQuickStatItem(String title, String value, IconData icon, Color color) {
+  return Column(
+    children: [
+      Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      SizedBox(height: 8),
+      Text(
+        value,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: color,
+        ),
+      ),
+      SizedBox(height: 4),
+      Text(
+        title,
+        style: TextStyle(
+          fontSize: 10,
+          color: _textSecondaryColor(context),
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ],
+  );
+}
+// دوال مساعدة للتقارير الواردة
+Color _getReportColor(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return _errorColor;
+    case 'Excel':
+      return _successColor;
+    case 'Word':
+      return _primaryColor;
+    default:
+      return _accentColor;
+  }
+}
+
+IconData _getReportIcon(String fileType) {
+  switch (fileType) {
+    case 'PDF':
+      return Icons.picture_as_pdf_rounded;
+    case 'Excel':
+      return Icons.table_chart_rounded;
+    case 'Word':
+      return Icons.description_rounded;
+    default:
+      return Icons.insert_drive_file_rounded;
+  }
+}
+
+String _calculateTotalSize(List<Map<String, dynamic>> reports) {
+  double total = 0;
+  for (var report in reports) {
+    String sizeStr = report['size'];
+    if (sizeStr.contains('MB')) {
+      total += double.parse(sizeStr.replaceAll(' MB', ''));
+    } else if (sizeStr.contains('KB')) {
+      total += double.parse(sizeStr.replaceAll(' KB', '')) / 1024;
+    }
+  }
+  return total.toStringAsFixed(1);
+}
+
+void _handleReportAction(String action, Map<String, dynamic> report) {
+  switch (action) {
+    case 'view':
+      _viewReceivedReport(report);
+      break;
+    case 'download':
+      _downloadReport(report);
+      break;
+    case 'analyze':
+      _analyzeReport(report);
+      break;
+    case 'share':
+      _shareReport(report);
+      break;
+    case 'delete':
+      _deleteReport(report);
+      break;
+  }
+}
+
+void _viewReceivedReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(context),
+      title: Row(
+        children: [
+          Icon(_getReportIcon(report['fileType']), color: _getReportColor(report['fileType'])),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _textColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildReportDetailRow('المرسل:', report['sender']),
+            _buildReportDetailRow('المنطقة:', report['area']),
+            _buildReportDetailRow('النوع:', report['type']),
+            _buildReportDetailRow('الحجم:', report['size']),
+            _buildReportDetailRow('صيغة الملف:', report['fileType']),
+            _buildReportDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+            _buildReportDetailRow('الحالة:', report['status']),
+            SizedBox(height: 16),
+            Divider(color: _borderColor(context)),
+            SizedBox(height: 16),
+            Text(
+              'ملخص البيانات:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+            SizedBox(height: 8),
+            _buildReportDetailRow('إجمالي الاستهلاك:', '${NumberFormat('#,###').format(report['totalConsumption'])} ك.و.س'),
+            if (report['customersCount'] != null)
+              _buildReportDetailRow('عدد العملاء:', '${NumberFormat('#,###').format(report['customersCount'])}'),
+            if (report['highConsumptionAlerts'] != null)
+              _buildReportDetailRow('إنذارات استهلاك مرتفع:', '${report['highConsumptionAlerts']} إنذار'),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => _downloadReport(report),
+          child: Text('تحميل'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _accentColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => _analyzeReport(report),
+          child: Text('تحليل'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildReportDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: _textSecondaryColor(context),
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: _textColor(context),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _downloadReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('جاري تحميل: ${report['title']}'),
+      backgroundColor: _successColor,
+    ),
+  );
+}
+
+void _analyzeReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(context),
+      title: Row(
+        children: [
+          Icon(Icons.analytics_rounded, color: _accentColor),
+          SizedBox(width: 8),
+          Text('تحليل البيانات'),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'تحليل تقرير ${report['title']}',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _textColor(context),
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildAnalysisItem('متوسط الاستهلاك:', '51.2 ك.و.س/عميل'),
+          _buildAnalysisItem('أعلى منطقة:', 'حي العليا (15600 ك.و.س)'),
+          _buildAnalysisItem('أدنى منطقة:', 'حي الصفا (7200 ك.و.س)'),
+          _buildAnalysisItem('نسبة الزيادة:', '+5.4% عن الفترة السابقة'),
+          _buildAnalysisItem('الاستهلاك الأعلى:', '850 ك.و.س (أحمد محمد)'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildAnalysisItem(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Icon(Icons.chevron_right_rounded, size: 16, color: _primaryColor),
+        SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: _textSecondaryColor(context),
+          ),
+        ),
+        SizedBox(width: 8),
+        Text(
+          value,
+          style: TextStyle(
+            color: _textColor(context),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _shareReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('مشاركة: ${report['title']}'),
+      backgroundColor: _primaryColor,
+    ),
+  );
+}
+
+void _deleteReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(context),
+      title: Row(
+        children: [
+          Icon(Icons.delete_rounded, color: _errorColor),
+          SizedBox(width: 8),
+          Text('حذف التقرير'),
+        ],
+      ),
+      content: Text(
+        'هل أنت متأكد من حذف تقرير "${report['title']}"؟',
+        style: TextStyle(
+          color: _textColor(context),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _errorColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('تم حذف التقرير: ${report['title']}'),
+                backgroundColor: _errorColor,
+              ),
+            );
+          },
+          child: Text('حذف'),
+        ),
+      ],
+    ),
+  );
+}
+// بناء بطاقة تقرير واردة
+Widget _buildReceivedReportCard(Map<String, dynamic> report) {
+  bool isUnread = report['status'] == 'غير مقروء';
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: _cardColor(context),
+      border: Border.all(color: _borderColor(context)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: ListTile(
+      contentPadding: EdgeInsets.all(16),
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: _getReportColor(report['fileType']).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          _getReportIcon(report['fileType']),
+          color: _getReportColor(report['fileType']),
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: _textColor(context),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isUnread)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _warningColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+        ],
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 4),
+          Text(
+            'من: ${report['sender']}',
+            style: TextStyle(
+              fontSize: 12,
+              color: _textSecondaryColor(context),
+            ),
+          ),
+          SizedBox(height: 2),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.assignment, color: _primaryColor, size: 24),
-              ),
-              const SizedBox(width: 8),
+              Icon(Icons.location_on_outlined, size: 12, color: _textSecondaryColor(context)),
+              SizedBox(width: 4),
               Text(
-                'نظام التقارير',
+                report['area'],
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
+                  fontSize: 10,
+                  color: _textSecondaryColor(context),
+                ),
+              ),
+              SizedBox(width: 12),
+              Icon(Icons.bolt_outlined, size: 12, color: _textSecondaryColor(context)),
+              SizedBox(width: 4),
+              Text(
+                '${NumberFormat('#,###').format(report['totalConsumption'])} ك.و.س',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: _textSecondaryColor(context),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          _buildReportTypeFilter(),
-          const SizedBox(height: 20),
-          _buildReportOptions(),
-          const SizedBox(height: 20),
-          _buildGenerateReportButton(),
+          SizedBox(height: 2),
+          Text(
+            '${DateFormat('yyyy-MM-dd').format(report['date'])} • ${report['type']} • ${report['size']}',
+            style: TextStyle(
+              fontSize: 10,
+              color: _textSecondaryColor(context),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
+      trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert_rounded, color: _textSecondaryColor(context)),
+        onSelected: (value) {
+          _handleReportAction(value, report);
+        },
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem<String>(
+            value: 'view',
+            child: Row(
+              children: [
+                Icon(Icons.visibility_rounded, size: 18, color: _primaryColor),
+                SizedBox(width: 8),
+                Text('عرض التقرير'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'download',
+            child: Row(
+              children: [
+                Icon(Icons.download_rounded, size: 18, color: _successColor),
+                SizedBox(width: 8),
+                Text('تحميل'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'analyze',
+            child: Row(
+              children: [
+                Icon(Icons.analytics_rounded, size: 18, color: _accentColor),
+                SizedBox(width: 8),
+                Text('تحليل البيانات'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'share',
+            child: Row(
+              children: [
+                Icon(Icons.share_rounded, size: 18, color: _secondaryColor),
+                SizedBox(width: 8),
+                Text('مشاركة'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_rounded, size: 18, color: _errorColor),
+                SizedBox(width: 8),
+                Text('حذف'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      onTap: () {
+        _viewReceivedReport(report);
+      },
+    ),
+  );
+}
   Widget _buildReportTypeFilter() {
     return Container(
       decoration: BoxDecoration(
