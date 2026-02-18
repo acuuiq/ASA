@@ -15,9 +15,6 @@ class _SystemSupervisorScreenState extends State<SystemSupervisorScreen>
   late TabController _tabController;
   String _billFilter = 'الكل';
   String _selectedReportType = 'يومي';
-  List<DateTime> _selectedDates = [];
-  String? _selectedWeek;
-  String? _selectedMonth;
   int _selectedMaintenanceTab = 0; // 0: طلبات التقارير، 1: التقارير الواردة
   String _maintenanceReportFilter = 'الكل';
   bool _isDarkMode = false; // يمكن استبداله بـ Provider
@@ -71,8 +68,6 @@ Color _textColor() {
 
   // قوائم التقارير
   final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
-  final List<String> _weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
-  final List<String> _months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو','يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   
   // بيانات الفواتير المحدثة
   final List<Map<String, dynamic>> bills = [
