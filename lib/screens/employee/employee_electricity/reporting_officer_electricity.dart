@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:pdf/pdf.dart';
@@ -34,7 +34,7 @@ class _ReportingOfficerElectricityScreenState extends State<ReportingOfficerElec
   String _problemDescription = '';
   String _selectedReportType = 'اليوم';
   TextEditingController _searchController = TextEditingController();
-
+  int _currentReportTab = 0;
   // ألوان وزارة الكهرباء الحكومية
   final Color _primaryColor = Color(0xFF0056A4); // أزرق حكومي
   final Color _secondaryColor = Color(0xFF0077C8); // أزرق فاتح
@@ -1144,123 +1144,528 @@ void dispose() {
       ),
     );
   }
-
   Widget _buildReportsView(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
+
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
+              ),
+              Expanded(
+                child: _buildReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // عرض المحتوى حسب التبويب المختار
+        _currentReportTab == 0 
+            ? _buildCreateReportSection(isDarkMode)
+            : _buildReceivedReportsSection(isDarkMode),
+      ],
+    ),
+  );
+}
+Widget _buildReportInnerTabButton(String title, int tabIndex, bool isDarkMode) {
+  bool isSelected = _currentReportTab == tabIndex;
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _currentReportTab = tabIndex;
+      });
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? _primaryColor : Colors.transparent,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : (isDarkMode ? Colors.white : _primaryColor),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+Widget _buildCreateReportSection(bool isDarkMode) {
+  return SingleChildScrollView(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey[300]!),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.filter_alt, color: _primaryColor, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'فلترة التقارير',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : _textColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                _buildReportTypeFilter(isDarkMode),
+              ],
+            ),
+          ),
+        ),
+        
+        SizedBox(height: 20),
+        
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey[300]!),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildReportOptions(isDarkMode),
+          ),
+        ),
+        
+        SizedBox(height: 20),
+        
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: _buildGenerateReportButton(),
+        ),
+      ],
+    ),
+  );
+}
+Widget _buildReceivedReportsSection(bool isDarkMode) {
+  // بيانات تجريبية للتقارير الواردة
+  final List<Map<String, dynamic>> receivedReports = [
+    {
+      'id': 'REP-ELEC-2024-001',
+      'title': 'تقرير بلاغات الكهرباء الشهري',
+      'sender': 'قسم البلاغات',
+      'date': DateTime.now().subtract(Duration(days: 2)),
+      'type': 'شهري',
+      'size': '1.8 MB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'المنطقة الشرقية',
+    },
+    {
+      'id': 'REP-ELEC-2024-002',
+      'title': 'تقرير بلاغات الموظفين الأسبوعي',
+      'sender': 'فرع بغداد',
+      'date': DateTime.now().subtract(Duration(days: 5)),
+      'type': 'أسبوعي',
+      'size': '850 KB',
+      'status': 'مستلم',
+      'fileType': 'PDF',
+      'area': 'حي السلام',
+    },
+    {
+      'id': 'REP-ELEC-2024-003',
+      'title': 'تقرير بلاغات الطوارئ',
+      'sender': 'غرفة العمليات',
+      'date': DateTime.now().subtract(Duration(days: 1)),
+      'type': 'يومي',
+      'size': '650 KB',
+      'status': 'غير مقروء',
+      'fileType': 'PDF',
+      'area': 'جميع المناطق',
+    },
+  ];
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'التقارير المستلمة',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: isDarkMode ? Colors.white : _textColor(context),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'عرض وإدارة جميع التقارير التي تم استلامها',
+        style: TextStyle(
+          color: isDarkMode ? Colors.white70 : _textSecondaryColor(context),
+        ),
+      ),
+      const SizedBox(height: 20),
+      
+      // إحصائيات سريعة
+      Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDarkMode ? Color(0xFF1E1E1E) : _lightColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Column(
+              children: [
+                Text(
+                  receivedReports.length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+                Text(
+                  'إجمالي التقارير',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  receivedReports.where((r) => r['status'] == 'غير مقروء').length.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _warningColor,
+                  ),
+                ),
+                Text(
+                  'غير مقروء',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              children: [
+                Text(
+                  '8.5 MB',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _successColor,
+                  ),
+                ),
+                Text(
+                  'الحجم الإجمالي',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      
+      const SizedBox(height: 20),
+      
+      // قائمة التقارير
+      ...receivedReports.map((report) => _buildReceivedReportCard(report, isDarkMode)),
+    ],
+  );
+}
+Widget _buildReceivedReportCard(Map<String, dynamic> report, bool isDarkMode) {
+  bool isUnread = report['status'] == 'غير مقروء';
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+      border: Border.all(color: isDarkMode ? Colors.white24 : Colors.grey[200]!),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: ListTile(
+      contentPadding: EdgeInsets.all(16),
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: _primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          Icons.picture_as_pdf_rounded,
+          color: _primaryColor,
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: isDarkMode ? Colors.white : _textColor(context),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isUnread)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _warningColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+        ],
+      ),
+      subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: _primaryColor.withOpacity(0.1)),
+          SizedBox(height: 4),
+          Text(
+            'من: ${report['sender']}',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? Colors.white70 : _textSecondaryColor(context),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.summarize, color: _primaryColor, size: 28),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'نظام التقارير المتقدم',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: _primaryColor,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'وزارة الكهرباء - إدارة التقارير',
-                          style: TextStyle(
-                            color: _textSecondaryColor(context),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          ),
+          SizedBox(height: 2),
+          Row(
+            children: [
+              Text(
+                '${DateFormat('yyyy-MM-dd').format(report['date'])} • ${report['type']} • ${report['size']}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkMode ? Colors.white70 : _textSecondaryColor(context),
+                ),
               ),
-            ),
-          ),
-          
-          SizedBox(height: 20),
-          
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey[300]!),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.filter_alt, color: _primaryColor, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'فلترة التقارير',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _textColor(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  _buildReportTypeFilter(),
-                ],
-              ),
-            ),
-          ),
-          
-          SizedBox(height: 20),
-          
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey[300]!),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _buildReportOptions(),
-            ),
-          ),
-          
-          SizedBox(height: 20),
-          
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: _buildGenerateReportButton(),
+            ],
           ),
         ],
       ),
-    );
+      trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert_rounded, color: isDarkMode ? Colors.white70 : _textSecondaryColor(context)),
+        onSelected: (value) {
+          _handleReportAction(value, report);
+        },
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem<String>(
+            value: 'view',
+            child: Row(
+              children: [
+                Icon(Icons.visibility_rounded, size: 18, color: _primaryColor),
+                SizedBox(width: 8),
+                Text('عرض التقرير'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'download',
+            child: Row(
+              children: [
+                Icon(Icons.download_rounded, size: 18, color: _successColor),
+                SizedBox(width: 8),
+                Text('تحميل'),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'share',
+            child: Row(
+              children: [
+                Icon(Icons.share_rounded, size: 18, color: _accentColor),
+                SizedBox(width: 8),
+                Text('مشاركة'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      onTap: () {
+        _viewReceivedReport(report);
+      },
+    ),
+  );
+}
+void _handleReportAction(String action, Map<String, dynamic> report) {
+  switch (action) {
+    case 'view':
+      _viewReceivedReport(report);
+      break;
+    case 'download':
+      _downloadReport(report);
+      break;
+    case 'share':
+      _shareReport(report);
+      break;
   }
+}
 
-  Widget _buildReportTypeFilter() {
+void _viewReceivedReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.white,
+      title: Row(
+        children: [
+          Icon(Icons.picture_as_pdf_rounded, color: _primaryColor),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              report['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildReportDetailRow('المرسل:', report['sender']),
+            _buildReportDetailRow('النوع:', report['type']),
+            _buildReportDetailRow('المنطقة:', report['area']),
+            _buildReportDetailRow('الحجم:', report['size']),
+            _buildReportDetailRow('صيغة الملف:', report['fileType']),
+            _buildReportDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+            _buildReportDetailRow('الحالة:', report['status']),
+            SizedBox(height: 16),
+            Text(
+              'ملخص التقرير:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'هذا التقرير يحتوي على بيانات البلاغات المستلمة للكهرباء. يشمل بلاغات الكهرباء، بلاغات الموظفين، بلاغات التطبيق، وبلاغات الطوارئ.',
+              style: TextStyle(
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إغلاق'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => _downloadReport(report),
+          child: Text('تحميل'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildReportDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: Colors.grey[800],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _downloadReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('جاري تحميل: ${report['title']}'),
+      backgroundColor: _successColor,
+    ),
+  );
+}
+
+void _shareReport(Map<String, dynamic> report) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('مشاركة: ${report['title']}'),
+      backgroundColor: _primaryColor,
+    ),
+  );
+}
+  Widget _buildReportTypeFilter(bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1306,7 +1711,7 @@ void dispose() {
     );
   }
 
-  Widget _buildReportOptions() {
+  Widget _buildReportOptions(bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1942,11 +2347,12 @@ void dispose() {
     // زر الإشعارات
     IconButton(
       icon: Stack(
+        clipBehavior: Clip.none,
         children: [
           Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
           Positioned(
-            right: 0,
-            top: 0,
+            right: -4, // تعديل الموضع
+            top: -4,
             child: Container(
               padding: EdgeInsets.all(2),
               decoration: BoxDecoration(
@@ -1958,7 +2364,7 @@ void dispose() {
                 '3',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -1981,12 +2387,11 @@ void dispose() {
     ),
   ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(60),
+          preferredSize: Size.fromHeight(70),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(12),
               ),
               boxShadow: [
                 BoxShadow(
@@ -1996,6 +2401,7 @@ void dispose() {
                 ),
               ],
             ),
+                padding: EdgeInsets.symmetric(horizontal: 4),
             child: TabBar(
               controller: _mainTabController,
               indicator: BoxDecoration(
@@ -2008,9 +2414,9 @@ void dispose() {
               ),
               indicatorWeight: 4,
               indicatorSize: TabBarIndicatorSize.tab,
-              labelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold), // تصغير الخط
+              labelStyle: TextStyle(fontSize: 9, fontWeight: FontWeight.bold), // تصغير الخط
               unselectedLabelStyle: TextStyle(fontSize: 11,),
-              labelPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0), // تقليل المسافات
+              labelPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 0), // تقليل المسافات
               labelColor: Colors.white,
               unselectedLabelColor: _primaryColor,
               tabs: [
@@ -2948,38 +3354,6 @@ void _showEmergencyForwardedMessage() {
   );
 }
 void _showEmergencyDetails(EmergencyReport emergency) {
-  String details = '''
-🚨 **وزارة الكهرباء - نظام الطوارئ**
-🚑 **تفاصيل البلاغ الطارئ**
-
-👤 **المواطن:** ${emergency.customerName}
-🚨 **نوع الطارئ:** ${emergency.emergencyType}
-📍 **موقع الحادثة:** ${emergency.accidentLocation}
-🏘️ **المنطقة:** ${emergency.area}
-📅 **التاريخ:** ${emergency.date}
-⏰ **الوقت:** ${emergency.time}
-⚡ **شدة الحالة:** ${emergency.severity}
-📌 **الحالة:** ${emergency.status}
-
-📝 **وصف الحادثة:**
-${emergency.description}
-
-🚑 **الإصابات:** ${emergency.injuredCount} مصاب
-🔥 **حريق:** ${emergency.firePresent ? 'نعم' : 'لا'}
-🚧 **إغلاق طريق:** ${emergency.roadClosed ? 'نعم' : 'لا'}
-
-📞 **إجراءات الطوارئ:**
-1. تم إخلاء المنطقة من المدنيين
-2. تم فصل التيار الكهربائي عن المنطقة
-3. تم إبلاغ الدفاع المدني
-4. تم إبلاغ الإسعاف
-5. تم تنبيه أقسام الشرطة المجاورة
-
-🚨 **أرقام الطوارئ المعنية:**
-- الدفاع المدني: 115
-- الإسعاف: 122
-- شرطة الكهرباء: 123
-''';
 
   showDialog(
     context: context,
