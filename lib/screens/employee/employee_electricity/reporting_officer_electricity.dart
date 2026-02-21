@@ -2295,7 +2295,7 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               indicatorWeight: 4,
               indicatorSize: TabBarIndicatorSize.tab,
@@ -3111,7 +3111,7 @@ _buildSubTab(
               fontSize: 11,
             ),
             padding: EdgeInsets.zero,
-            labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            labelPadding: EdgeInsets.symmetric(horizontal: 3, vertical: 4),
             indicatorPadding: EdgeInsets.zero,
             tabAlignment: TabAlignment.start,
             tabs: [
