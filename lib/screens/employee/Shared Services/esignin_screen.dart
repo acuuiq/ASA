@@ -6,26 +6,21 @@ import 'dart:ui';
 import 'package:mang_mu/screens/employee/employee_electricity/billing_accountant_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/consumption_monitoring_officer_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/maintenance_technician_electrity.dart';
-import 'package:mang_mu/screens/employee/employee_electricity/quality_auditor_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/system_supervisor_electrity.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/reporting_officer_electricity.dart';
 
 // شاشات قسم المياه
-import 'package:mang_mu/screens/employee/employee_water/quality_auditor_water.dart';
 import 'package:mang_mu/screens/employee/employee_water/reporting_officer_water.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_billing_accountant.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_consumption_monitor.dart';
-import 'package:mang_mu/screens/employee/employee_water/water_emergency_officer.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_maintenance_technician.dart';
 import 'package:mang_mu/screens/employee/employee_water/water_supervisor.dart';
 
 // شاشات قسم النفايات
-import 'package:mang_mu/screens/employee/employee_wast/container_request_manager.dart';
 import 'package:mang_mu/screens/employee/employee_wast/reporting_officer_wast.dart';
 import 'package:mang_mu/screens/employee/employee_wast/system_supervisor_waste.dart';
 import 'package:mang_mu/screens/employee/employee_wast/waste_billing_officer.dart';
 import 'package:mang_mu/screens/employee/employee_wast/waste_cleaning_worker.dart';
-import 'package:mang_mu/screens/employee/employee_wast/waste_premium_specialist.dart';
 import 'package:mang_mu/screens/employee/employee_wast/waste_scheduler.dart';
 
 // الشاشات الجديدة للأقسام المضافة
@@ -33,7 +28,7 @@ import 'package:mang_mu/screens/employee/Shared Services/account_auditor.dart';
 import 'package:mang_mu/screens/employee/Shared Services/app_developer.dart';
 import 'package:mang_mu/screens/employee/Shared Services/event_employee.dart';
 import 'package:mang_mu/screens/employee/Shared Services/system_administrator.dart';
-
+import 'package:mang_mu/screens/employee/Shared Services/offers_gifts_specialist.dart';
 class EsigninScreen extends StatefulWidget {
   static const String screenroot = 'esignin_screen';
 
@@ -67,43 +62,38 @@ class _EsigninScreenState extends State<EsigninScreen>
   final List<String> _sections = ['كهرباء', 'ماء', 'نفايات', 'المالية', 'التقنية'];
 
   // قائمة التخصصات لكل قسم (تمت إضافة التخصصات الجديدة)
-  final Map<String, List<String>> _specializations = {
-    'كهرباء': [
-      'محاسب الفواتير',
-      'مراقب الاستهلاك',
-      'فني الصيانة',
-      'مدقق الجودة',
-      'مسؤول الإبلاغ',
-      'مسؤول محطة الكهرباء',
-    ],
-    'ماء': [
-      'مدقق الجودة',
-      'مسؤول الإبلاغ عن المياه',
-      'محاسب الفواتير',
-      'مراقب الاستهلاك',
-      'ضابط الطوارئ',
-      'فني الصيانة',
-      'مسؤول محطة الماء',
-    ],
-    'نفايات': [
-      'مدير طلبات الحاويات',
-      'مسؤول الاستجابة للطوارئ',
-      'مسؤول الابلاغ',
-      'مشرف النظام',
-      'موظف الفواتير',
-      'عامل النظافة',
-      'أخصائي الخدمات المميزة',
-      'جدولة النفايات',
-    ],
-    'المالية': [
-      'محرر الحسابات',
-    ],
-    'التقنية': [
-      'مطور البرنامج',
-      'موظف الأحداث',
-      'مدير النظام',
-    ],
-  };
+final Map<String, List<String>> _specializations = {
+  'كهرباء': [
+    'محاسب الفواتير',
+    'مراقب الاستهلاك',
+    'فني الصيانة',
+    'مسؤول الإبلاغ',
+    'مسؤول محطة الكهرباء',
+  ],
+  'ماء': [
+    'مسؤول الإبلاغ عن المياه',
+    'محاسب الفواتير',
+    'مراقب الاستهلاك',
+    'فني الصيانة',
+    'مسؤول محطة الماء',
+  ],
+  'نفايات': [
+    'مسؤول الابلاغ',
+    'مشرف النظام',
+    'موظف الفواتير',
+    'عامل النظافة',
+    'جدولة النفايات',
+  ],
+  'المالية': [
+    'محرر الحسابات',
+  ],
+  'التقنية': [
+    'مطور البرنامج',
+    'موظف الأحداث',
+    'مدير النظام',
+    'أخصائي تقديم الهدايا',  // تم إضافة هذا التخصص الجديد
+  ],
+};
 
   @override
   void initState() {
@@ -176,8 +166,13 @@ class _EsigninScreenState extends State<EsigninScreen>
             context,
             MaterialPageRoute(builder: (context) => const SystemAdministrator()),
           );
-        }
-        // التوجيه للشاشات القديمة (نفس الكود السابق مع تصحيح الأخطاء)
+        }else if (_selectedSection == 'التقنية' && _selectedSpecialization == 'أخصائي تقديم الهدايا') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OffersGiftsSpecialist()), // تأكد من إنشاء هذه الشاشة
+        );
+      }
+
         else if (_selectedSection == 'كهرباء' && _selectedSpecialization == 'محاسب الفواتير') {
           Navigator.pushReplacement(
             context,
@@ -193,11 +188,6 @@ class _EsigninScreenState extends State<EsigninScreen>
             context,
             MaterialPageRoute(builder: (context) => const MaintenanceTechnicianScreen()),
           );
-        } else if (_selectedSection == 'كهرباء' && _selectedSpecialization == 'مدقق الجودة') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const QualityAuditorScreen()),
-          );
         } else if (_selectedSection == 'كهرباء' && _selectedSpecialization == 'مسؤول محطة الكهرباء') {
           Navigator.pushReplacement(
             context,
@@ -207,11 +197,6 @@ class _EsigninScreenState extends State<EsigninScreen>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) =>  ReportingOfficerElectricityScreen()),
-          );
-        } else if (_selectedSection == 'ماء' && _selectedSpecialization == 'مدقق الجودة') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const QualityAuditorWaterScreen()),
           );
         } else if (_selectedSection == 'ماء' && _selectedSpecialization == 'محاسب الفواتير') {
           Navigator.pushReplacement(
@@ -223,12 +208,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             context,
             MaterialPageRoute(builder: (context) => const WaterConsumptionMonitorScreen()),
           );
-        } else if (_selectedSection == 'ماء' && _selectedSpecialization == 'ضابط الطوارئ') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const WaterEmergencyOfficerScreen()),
-          );
-        } else if (_selectedSection == 'ماء' && _selectedSpecialization == 'فني الصيانة') {
+        }else if (_selectedSection == 'ماء' && _selectedSpecialization == 'فني الصيانة') {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const WaterMaintenanceTechnicianScreen()),
@@ -243,12 +223,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             context,
             MaterialPageRoute(builder: (context) =>  ReportingOfficerWaterScreen()),
           );
-        } else if (_selectedSection == 'نفايات' && _selectedSpecialization == 'مدير طلبات الحاويات') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ContainerRequestManager()),
-          );
-        } else if (_selectedSection == 'نفايات' && _selectedSpecialization == 'مسؤول الابلاغ') {
+        }else if (_selectedSection == 'نفايات' && _selectedSpecialization == 'مسؤول الابلاغ') {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) =>  ReportingOfficerWasteScreen()),
@@ -268,12 +243,7 @@ class _EsigninScreenState extends State<EsigninScreen>
             context,
             MaterialPageRoute(builder: (context) => const WasteCleaningWorkerScreen()),
           );
-        } else if (_selectedSection == 'نفايات' && _selectedSpecialization == 'أخصائي الخدمات المميزة') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const WastePremiumSpecialistScreen()),
-          );
-        } else if (_selectedSection == 'نفايات' && _selectedSpecialization == 'جدولة النفايات') {
+        }else if (_selectedSection == 'نفايات' && _selectedSpecialization == 'جدولة النفايات') {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const WasteSchedulerApp()),
