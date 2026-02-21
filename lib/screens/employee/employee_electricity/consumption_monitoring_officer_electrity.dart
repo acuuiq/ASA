@@ -67,7 +67,6 @@ class ConsumptionMonitoringOfficerScreenState
   String? _selectedWeek;
   String? _selectedMonth;
   int _currentReportInnerTab = 0; // 0 = إنشاء التقارير, 1 = التقارير الواردة
-  late TabController _tabController;
 
   // متغيرات الإعدادات
   bool _notificationsEnabled = true;
@@ -126,28 +125,127 @@ class ConsumptionMonitoringOfficerScreenState
     },
   ];
 
-  final List<Map<String, dynamic>> _highConsumptionCustomers = [
+  // بيانات الاستهلاك اليومي (محاكاة)
+  final List<Map<String, dynamic>> _dailyConsumptionData = [
     {
-      'name': 'أحمد محمد',
-      'accountNumber': '123456789',
-      'area': 'حي العليا',
-      'currentConsumption': 850,
-      'averageConsumption': 450,
-      'increasePercent': 89,
-      'address': 'شارع الملك فهد - مبنى 25',
-      'meterNumber': 'MTR-001',
-      'lastReading': '2024-01-15',
+      'date': DateTime.now().subtract(Duration(days: 0)),
+      'area': 'حي الرياض',
+      'consumption': 1850,
+      'peakHours': '6-9 مساءً',
+      'peakConsumption': 720,
+      'avgConsumption': 185,
+      'customers': 250,
+      'temperature': 32,
     },
     {
-      'name': 'سارة عبدالله',
-      'accountNumber': '123456790',
+      'date': DateTime.now().subtract(Duration(days: 0)),
+      'area': 'حي النخيل',
+      'consumption': 1250,
+      'peakHours': '7-10 مساءً',
+      'peakConsumption': 480,
+      'avgConsumption': 125,
+      'customers': 180,
+      'temperature': 31,
+    },
+    {
+      'date': DateTime.now().subtract(Duration(days: 0)),
+      'area': 'حي العليا',
+      'consumption': 2200,
+      'peakHours': '5-8 مساءً',
+      'peakConsumption': 850,
+      'avgConsumption': 220,
+      'customers': 300,
+      'temperature': 33,
+    },
+    {
+      'date': DateTime.now().subtract(Duration(days: 0)),
+      'area': 'حي الصفا',
+      'consumption': 980,
+      'peakHours': '6-9 مساءً',
+      'peakConsumption': 380,
+      'avgConsumption': 98,
+      'customers': 150,
+      'temperature': 30,
+    },
+    {
+      'date': DateTime.now().subtract(Duration(days: 1)),
+      'area': 'جميع المناطق',
+      'consumption': 6200,
+      'peakHours': '6-9 مساءً',
+      'peakConsumption': 2400,
+      'avgConsumption': 155,
+      'customers': 880,
+      'temperature': 32,
+    },
+  ];
+
+  // بيانات الاستهلاك الشهري (محاكاة)
+  final List<Map<String, dynamic>> _monthlyConsumptionData = [
+    {
+      'month': 'يناير 2024',
       'area': 'حي الرياض',
-      'currentConsumption': 620,
-      'averageConsumption': 320,
-      'increasePercent': 94,
-      'address': 'شارع التحلية - مبنى 12',
-      'meterNumber': 'MTR-002',
-      'lastReading': '2024-01-14',
+      'consumption': 385000,
+      'previousMonth': 372000,
+      'changePercent': 3.5,
+      'avgDaily': 12419,
+      'peakDay': '15 يناير',
+      'peakConsumption': 1950,
+      'customers': 250,
+    },
+    {
+      'month': 'يناير 2024',
+      'area': 'حي النخيل',
+      'consumption': 276000,
+      'previousMonth': 285000,
+      'changePercent': -3.2,
+      'avgDaily': 8903,
+      'peakDay': '18 يناير',
+      'peakConsumption': 1300,
+      'customers': 180,
+    },
+    {
+      'month': 'يناير 2024',
+      'area': 'حي العليا',
+      'consumption': 485000,
+      'previousMonth': 462000,
+      'changePercent': 5.0,
+      'avgDaily': 15645,
+      'peakDay': '20 يناير',
+      'peakConsumption': 2300,
+      'customers': 300,
+    },
+    {
+      'month': 'يناير 2024',
+      'area': 'حي الصفا',
+      'consumption': 223000,
+      'previousMonth': 232000,
+      'changePercent': -3.9,
+      'avgDaily': 7194,
+      'peakDay': '12 يناير',
+      'peakConsumption': 1050,
+      'customers': 150,
+    },
+    {
+      'month': 'ديسمبر 2023',
+      'area': 'جميع المناطق',
+      'consumption': 1350000,
+      'previousMonth': 1310000,
+      'changePercent': 3.1,
+      'avgDaily': 43548,
+      'peakDay': '25 ديسمبر',
+      'peakConsumption': 48500,
+      'customers': 880,
+    },
+    {
+      'month': 'نوفمبر 2023',
+      'area': 'جميع المناطق',
+      'consumption': 1280000,
+      'previousMonth': 1250000,
+      'changePercent': 2.4,
+      'avgDaily': 42667,
+      'peakDay': '18 نوفمبر',
+      'peakConsumption': 45200,
+      'customers': 880,
     },
   ];
 
@@ -175,6 +273,9 @@ class ConsumptionMonitoringOfficerScreenState
       'status': 'تحت المراجعة',
     },
   ];
+
+  // بيانات المناطق للاختيار
+  final List<String> _areasForSelection = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
 
   // ========== دوال الإعدادات ==========
   void _resetToDefaults() {
@@ -556,18 +657,7 @@ class ConsumptionMonitoringOfficerScreenState
                 ),
               ),
               SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _openSupportChat(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _secondaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  icon: Icon(Icons.chat_rounded, size: 20),
-                  label: Text('مراسلة الدعم'),
-                ),
-              ),
+              
             ],
           ),
         ],
@@ -636,7 +726,7 @@ class ConsumptionMonitoringOfficerScreenState
     List<Map<String, String>> faqs = [
       {
         'question': 'كيف يمكنني مراقبة الاستهلاك المرتفع؟',
-        'answer': 'اذهب إلى قسم "الاستهلاك المرتفع" → استعرض قائمة العملاء → انقر على أي عميل لعرض التفاصيل → استخدم زر "إرسال تنبيه" لإرسال إنذار'
+        'answer': 'اذهب إلى قسم "الاستهلاك اليومي" أو "الاستهلاك الشهري" → استعرض البيانات حسب المنطقة → انقر على أي منطقة لعرض التفاصيل'
       },
       {
         'question': 'كيف أعرض تقرير الاستهلاك الشهري؟',
@@ -755,30 +845,6 @@ class ConsumptionMonitoringOfficerScreenState
     );
     launch('tel:9647862268894');
   }
-
-  void _openSupportChat() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SupportChatScreen(
-          isDarkMode: isDarkMode,
-          primaryColor: _primaryColor,
-          secondaryColor: _secondaryColor,
-          accentColor: _accentColor,
-          darkCardColor: Colors.white10,
-          cardColor: _cardColor(context),
-          darkTextColor: Colors.white,
-          textColor: _textColor(context),
-          darkTextSecondaryColor: Colors.white70,
-          textSecondaryColor: _textSecondaryColor(context),
-        ),
-      ),
-    );
-  }
-
   // ========== دوال PDF والتقارير ==========
 
   Future<void> _generatePdfReport(String period) async {
@@ -798,7 +864,7 @@ class ConsumptionMonitoringOfficerScreenState
               pw.SizedBox(height: 20),
               _buildPdfAlerts(),
               pw.SizedBox(height: 20),
-              _buildPdfHighConsumptionCustomers(),
+              _buildPdfDailyConsumption(),
             ];
           },
         ),
@@ -1115,14 +1181,16 @@ class ConsumptionMonitoringOfficerScreenState
     );
   }
 
-  pw.Widget _buildPdfHighConsumptionCustomers() {
-    final filteredCustomers = _getFilteredHighConsumptionCustomers();
+  pw.Widget _buildPdfDailyConsumption() {
+    final filteredData = _selectedArea == 'جميع المناطق'
+        ? _dailyConsumptionData.where((item) => item['area'] == 'جميع المناطق').toList()
+        : _dailyConsumptionData.where((item) => item['area'] == _selectedArea).toList();
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'العملاء ذوو الاستهلاك المرتفع',
+          'الاستهلاك اليومي',
           style: pw.TextStyle(
             fontSize: 18,
             fontWeight: pw.FontWeight.bold,
@@ -1130,52 +1198,52 @@ class ConsumptionMonitoringOfficerScreenState
           ),
         ),
         pw.SizedBox(height: 10),
-        if (filteredCustomers.isEmpty)
-          pw.Text('لا توجد عملاء ذوي استهلاك مرتفع'),
-        ...filteredCustomers.map((customer) => pw.Container(
-          margin: const pw.EdgeInsets.only(bottom: 10),
-          padding: const pw.EdgeInsets.all(10),
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: PdfColors.grey300),
-            borderRadius: pw.BorderRadius.circular(5),
-          ),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    customer['name'],
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
-                  pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: pw.BoxDecoration(
-                      color: PdfColors.orange,
-                      borderRadius: pw.BorderRadius.circular(10),
-                    ),
-                    child: pw.Text(
-                      'زيادة ${customer['increasePercent']}%',
-                      style: pw.TextStyle(
-                        color: PdfColors.white,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 5),
-              pw.Text('رقم الحساب: ${customer['accountNumber']}'),
-              pw.Text('المنطقة: ${customer['area']}'),
-              pw.Text('العنوان: ${customer['address']}'),
-              pw.Text('رقم العداد: ${customer['meterNumber']}'),
-              pw.Text('آخر قراءة: ${customer['lastReading']}'),
-              pw.Text('الاستهلاك الحالي: ${customer['currentConsumption']} ك.و.س'),
-              pw.Text('متوسط الاستهلاك: ${customer['averageConsumption']} ك.و.س'),
-            ],
-          ),
-        )).toList(),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey),
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColors.blue100),
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('التاريخ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('المنطقة', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('الاستهلاك', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('ذروة الاستهلاك', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ),
+              ],
+            ),
+            ...filteredData.map((item) => pw.TableRow(
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(DateFormat('yyyy-MM-dd').format(item['date'])),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(item['area']),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('${NumberFormat('#,##0').format(item['consumption'])} ك.و.س'),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text('${item['peakConsumption']} ك.و.س (${item['peakHours']})'),
+                ),
+              ],
+            )).toList(),
+          ],
+        ),
       ],
     );
   }
@@ -1200,12 +1268,14 @@ class ConsumptionMonitoringOfficerScreenState
       case 0:
         return _buildDashboardView();
       case 1:
-        return _buildHighConsumptionView();
+        return _buildDailyConsumptionView();
       case 2:
-        return _buildReportsView();
+        return _buildMonthlyConsumptionView();
       case 3:
-        return _buildSettingsView();
+        return _buildReportsView();
       case 4:
+        return _buildSettingsView();
+      case 5:
         return _buildHelpView();
       default:
         return _buildDashboardView();
@@ -1348,7 +1418,7 @@ class ConsumptionMonitoringOfficerScreenState
           value: _selectedArea,
           isExpanded: true,
           icon: Icon(Icons.arrow_drop_down, color: _primaryColor),
-          items: _areas.map((String area) {
+          items: _areasForSelection.map((String area) {
             return DropdownMenuItem<String>(
               value: area,
               child: Text(area, style: TextStyle(color: _textColor(context))),
@@ -1377,8 +1447,11 @@ class ConsumptionMonitoringOfficerScreenState
         child: Row(
           children: [
             _buildTabItem(0, Icons.dashboard, 'لوحة التحكم'),
-            _buildTabItem(1, Icons.trending_up, 'الاستهلاك المرتفع'),
-            _buildTabItem(2, Icons.assignment, 'التقارير'),
+            _buildTabItem(1, Icons.today_rounded, 'الاستهلاك اليومي'),
+            _buildTabItem(2, Icons.calendar_month_rounded, 'الاستهلاك الشهري'),
+            _buildTabItem(3, Icons.assignment, 'التقارير'),
+            _buildTabItem(4, Icons.settings, 'الإعدادات'),
+            _buildTabItem(5, Icons.help, 'المساعدة'),
           ],
         ),
       ),
@@ -1513,7 +1586,6 @@ class ConsumptionMonitoringOfficerScreenState
             ],
           ),
           const SizedBox(height: 20),
-          const SizedBox(height: 20),
           _buildAreasPerformanceSection(filteredData),
         ],
       ),
@@ -1521,79 +1593,79 @@ class ConsumptionMonitoringOfficerScreenState
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-  return Container(
-    constraints: const BoxConstraints(
-      minHeight: 120,
-      maxHeight: 140,
-    ),
-    decoration: BoxDecoration(
-      color: _cardColor(context),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: _borderColor(context)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 5),
-        ),
-      ],
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Flexible(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: _textColor(context),
-                fontFamily: 'Tajawal',
-                height: 0.5,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Flexible(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: _textSecondaryColor(context),
-                fontFamily: 'Tajawal',
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-                letterSpacing: 0.3,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: 120,
+        maxHeight: 140,
+      ),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-    ),
-  );
-}
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Flexible(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _textColor(context),
+                  fontFamily: 'Tajawal',
+                  height: 0.5,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Flexible(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _textSecondaryColor(context),
+                  fontFamily: 'Tajawal',
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  letterSpacing: 0.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildAreasPerformanceSection(List<Map<String, dynamic>> areasData) {
     return Container(
@@ -1735,95 +1807,205 @@ class ConsumptionMonitoringOfficerScreenState
     );
   }
 
-  Widget _buildHighConsumptionView() {
-    final filteredCustomers = _getFilteredHighConsumptionCustomers();
-    
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  // ========== قسم الاستهلاك اليومي ==========
+  Widget _buildDailyConsumptionView() {
+    final filteredData = _selectedArea == 'جميع المناطق'
+        ? _dailyConsumptionData.where((item) => item['area'] == 'جميع المناطق').toList()
+        : _dailyConsumptionData.where((item) => item['area'] == _selectedArea).toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // العنوان
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: _warningColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.trending_up, color: _warningColor, size: 24),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'العملاء ذوو الاستهلاك المرتفع',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: _primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              if (_selectedArea != 'جميع المناطق')
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'المنطقة: $_selectedArea',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: _primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: Icon(Icons.today_rounded, color: _primaryColor, size: 24),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'الاستهلاك اليومي',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
             ],
           ),
-        ),
-        if (filteredCustomers.isEmpty)
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline, color: _textSecondaryColor(context), size: 64),
-                  const SizedBox(height: 16),
-                  Text(
-                    'لا توجد عملاء ذوي استهلاك مرتفع ${_selectedArea != 'جميع المناطق' ? 'في $_selectedArea' : ''}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: _textSecondaryColor(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredCustomers.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: _buildCustomerCard(filteredCustomers[index]),
-                );
-              },
+          const SizedBox(height: 8),
+          Text(
+            'عرض وتحليل استهلاك الكهرباء اليومي حسب المناطق',
+            style: TextStyle(
+              color: _textSecondaryColor(context),
             ),
           ),
+          const SizedBox(height: 20),
+
+          // إحصائيات سريعة
+          _buildDailyStatsSummary(),
+          const SizedBox(height: 20),
+
+          // استهلاك اليوم الحالي
+          _buildCurrentDayConsumption(),
+          const SizedBox(height: 20),
+
+          // قائمة الاستهلاك اليومي
+          _buildDailyConsumptionList(filteredData),
+          const SizedBox(height: 20),
+
+          // تحليل ساعات الذروة
+          _buildPeakHoursAnalysis(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyStatsSummary() {
+    final today = DateTime.now();
+    final todayData = _dailyConsumptionData.where(
+      (item) => item['date'].year == today.year && 
+                item['date'].month == today.month && 
+                item['date'].day == today.day && 
+                item['area'] == 'جميع المناطق'
+    ).toList();
+
+    final totalToday = todayData.isNotEmpty ? todayData.first['consumption'] : 6200;
+    final peakToday = todayData.isNotEmpty ? todayData.first['peakConsumption'] : 2400;
+    final avgTemp = todayData.isNotEmpty ? todayData.first['temperature'] : 32;
+
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'إحصائيات اليوم',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: _textColor(context),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildDailyStatItem(
+                'إجمالي الاستهلاك',
+                '${NumberFormat('#,###').format(totalToday)}',
+                'ك.و.س',
+                Icons.bolt,
+                _electricBlue,
+              ),
+              _buildDailyStatItem(
+                'ذروة الاستهلاك',
+                '${NumberFormat('#,###').format(peakToday)}',
+                'ك.و.س',
+                Icons.trending_up_rounded,
+                _warningColor,
+              ),
+              _buildDailyStatItem(
+                'درجة الحرارة',
+                '$avgTemp',
+                '°C',
+                Icons.thermostat_rounded,
+                _accentColor,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyStatItem(String title, String value, String unit, IconData icon, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: _textColor(context),
+          ),
+        ),
+        Text(
+          unit,
+          style: TextStyle(
+            fontSize: 12,
+            color: _textSecondaryColor(context),
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            color: _textSecondaryColor(context),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildCustomerCard(Map<String, dynamic> customer) {
+  Widget _buildCurrentDayConsumption() {
+    final today = DateTime.now();
+    final areasData = _dailyConsumptionData.where(
+      (item) => item['date'].year == today.year && 
+                item['date'].month == today.month && 
+                item['date'].day == today.day &&
+                item['area'] != 'جميع المناطق'
+    ).toList();
+
     return Container(
       decoration: BoxDecoration(
         color: _cardColor(context),
@@ -1843,79 +2025,249 @@ class ConsumptionMonitoringOfficerScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Icon(Icons.electric_bolt_rounded, color: _primaryColor, size: 20),
+                SizedBox(width: 8),
                 Text(
-                  customer['name'],
+                  'استهلاك اليوم حسب المناطق',
                   style: TextStyle(
-                    fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                     color: _textColor(context),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _warningColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _warningColor.withOpacity(0.3)),
-                  ),
-                  child: Text(
-                    'زيادة ${customer['increasePercent']}%',
-                    style: TextStyle(
-                      color: _warningColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 8),
-            _buildCustomerInfoRow('رقم الحساب', customer['accountNumber']),
-            _buildCustomerInfoRow('المنطقة', customer['area']),
-            _buildCustomerInfoRow('العنوان', customer['address']),
-            _buildCustomerInfoRow('رقم العداد', customer['meterNumber']),
-            _buildCustomerInfoRow('آخر قراءة', customer['lastReading']),
-            const SizedBox(height: 12),
-            Divider(color: _borderColor(context)),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildConsumptionComparison(
-                  'الاستهلاك الحالي',
-                  '${customer['currentConsumption']}',
-                  _errorColor,
-                ),
-                _buildConsumptionComparison(
-                  'المتوسط',
-                  '${customer['averageConsumption']}',
-                  _textColor(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _primaryColor,
-                      side: BorderSide(color: _primaryColor),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+            SizedBox(height: 12),
+            ...areasData.map((area) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      area['area'],
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: _textColor(context),
                       ),
                     ),
-                    onPressed: () {
-                      _showCustomerDetails(customer);
-                    },
-                    child: const Text('تفاصيل'),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: LinearProgressIndicator(
+                      value: area['consumption'] / 2500,
+                      backgroundColor: _backgroundColor(context),
+                      valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    '${NumberFormat('#,###').format(area['consumption'])}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _textColor(context),
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'ك.و.س',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _textSecondaryColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyConsumptionList(List<Map<String, dynamic>> data) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.history_rounded, color: _primaryColor, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'سجل الاستهلاك اليومي',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: _textColor(context),
                   ),
                 ),
-                const SizedBox(width: 8),
               ],
+            ),
+            SizedBox(height: 12),
+            if (data.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(Icons.inbox_rounded, color: _textSecondaryColor(context), size: 48),
+                      SizedBox(height: 8),
+                      Text(
+                        'لا توجد بيانات',
+                        style: TextStyle(color: _textSecondaryColor(context)),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...data.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          DateFormat('dd').format(item['date']),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DateFormat('EEEE, yyyy-MM-dd').format(item['date']),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: _textColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.bolt_rounded, size: 12, color: _warningColor),
+                              SizedBox(width: 4),
+                              Text(
+                                'ذروة: ${item['peakHours']}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: _textSecondaryColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${NumberFormat('#,###').format(item['consumption'])}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _textColor(context),
+                          ),
+                        ),
+                        Text(
+                          'ك.و.س',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _textSecondaryColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              )).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPeakHoursAnalysis() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.access_time_rounded, color: _primaryColor, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'تحليل ساعات الذروة',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: _textColor(context),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _backgroundColor(context),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  _buildPeakHourItem('6-9 مساءً', 42, _warningColor),
+                  SizedBox(height: 8),
+                  _buildPeakHourItem('12-3 مساءً', 28, _accentColor),
+                  SizedBox(height: 8),
+                  _buildPeakHourItem('9-12 صباحاً', 18, _successColor),
+                  SizedBox(height: 8),
+                  _buildPeakHourItem('3-6 صباحاً', 12, _primaryColor),
+                ],
+              ),
             ),
           ],
         ),
@@ -1923,928 +2275,609 @@ class ConsumptionMonitoringOfficerScreenState
     );
   }
 
-  Widget _buildCustomerInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: _textColor(context),
-              ),
+  Widget _buildPeakHourItem(String period, int percentage, Color color) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            period,
+            style: TextStyle(
+              fontSize: 12,
+              color: _textColor(context),
             ),
           ),
-          Expanded(child: Text(value, style: TextStyle(color: _textSecondaryColor(context)))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConsumptionComparison(String label, String value, Color color) {
-    return Column(
-      children: [
+        ),
+        Expanded(
+          child: LinearProgressIndicator(
+            value: percentage / 100,
+            backgroundColor: _backgroundColor(context),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        SizedBox(width: 12),
         Text(
-          value,
+          '$percentage%',
           style: TextStyle(
-            fontSize: 16,
             fontWeight: FontWeight.bold,
             color: color,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: _textSecondaryColor(context),
-          ),
-        ),
       ],
     );
   }
 
-  void _showCustomerDetails(Map<String, dynamic> customer) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _cardColor(context),
-        title: Text('تفاصيل العميل - ${customer['name']}', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailItem('رقم الحساب', customer['accountNumber']),
-              _buildDetailItem('المنطقة', customer['area']),
-              _buildDetailItem('العنوان', customer['address']),
-              _buildDetailItem('رقم العداد', customer['meterNumber']),
-              _buildDetailItem('آخر قراءة', customer['lastReading']),
-              _buildDetailItem('الاستهلاك الحالي', '${customer['currentConsumption']} ك.و.س'),
-              _buildDetailItem('متوسط الاستهلاك', '${customer['averageConsumption']} ك.و.س'),
-              _buildDetailItem('نسبة الزيادة', '${customer['increasePercent']}%'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق', style: TextStyle(color: _textSecondaryColor(context))),
-          ),
-        ],
-      ),
-    );
-  }
+  // ========== قسم الاستهلاك الشهري ==========
+  Widget _buildMonthlyConsumptionView() {
+    final filteredData = _selectedArea == 'جميع المناطق'
+        ? _monthlyConsumptionData.where((item) => item['area'] == 'جميع المناطق').toList()
+        : _monthlyConsumptionData.where((item) => item['area'] == _selectedArea).toList();
 
-  Widget _buildDetailItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: TextStyle(fontWeight: FontWeight.bold, color: _textColor(context)),
-            ),
-          ),
-          Expanded(child: Text(value, style: TextStyle(color: _textSecondaryColor(context)))),
-        ],
-      ),
-    );
-  }
-
-  void _sendAlertToCustomer(Map<String, dynamic> customer) {
-    _showSuccessSnackbar('تم إرسال تنبيه إلى ${customer['name']}');
-  }
-  Widget _buildReportsView() {
-  return SingleChildScrollView(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // العنوان الرئيسي
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.assignment, color: _primaryColor, size: 24),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'نظام التقارير',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: _primaryColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        
-        // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
-        Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: _cardColor(context),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _borderColor(context)),
-          ),
-          child: Row(
+          // العنوان
+          Row(
             children: [
-              Expanded(
-                child: _buildReportInnerTabButton('إنشاء التقارير', 0),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.calendar_month_rounded, color: _primaryColor, size: 24),
               ),
-              Expanded(
-                child: _buildReportInnerTabButton('التقارير الواردة', 1),
+              const SizedBox(width: 8),
+              Text(
+                'الاستهلاك الشهري',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 20),
-        
-        // عرض المحتوى حسب التبويب المختار
-        _currentReportInnerTab == 0 
-            ? _buildCreateReportSection()
-            : _buildReceivedReportsSection(),
-      ],
-    ),
-  );
-}
-
-// زر التبويب الداخلي
-Widget _buildReportInnerTabButton(String title, int tabIndex) {
-  bool isSelected = _currentReportInnerTab == tabIndex;
-  return GestureDetector(
-    onTap: () {
-      setState(() {
-        _currentReportInnerTab = tabIndex;
-      });
-    },
-    child: Container(
-      decoration: BoxDecoration(
-        color: isSelected ? _primaryColor : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? _primaryColor : Colors.transparent,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? Colors.white : _textColor(context),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-// قسم إنشاء التقارير (نفس الوظيفة الحالية لكن مع إعادة هيكلة)
-Widget _buildCreateReportSection() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'إنشاء تقرير جديد',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: _textColor(context),
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'اختر نوع التقرير والفترة المطلوبة',
-        style: TextStyle(
-          color: _textSecondaryColor(context),
-        ),
-      ),
-      const SizedBox(height: 20),
-      _buildReportTypeFilter(),
-      const SizedBox(height: 20),
-      _buildReportOptions(),
-      const SizedBox(height: 20),
-      _buildGenerateReportButton(),
-      const SizedBox(height: 20),
-      
-      // إحصائيات سريعة
-      _buildQuickStats(),
-    ],
-  );
-}
-// قسم التقارير الواردة
-Widget _buildReceivedReportsSection() {
-  // بيانات تجريبية للتقارير الواردة (خاصة بمراقبة الاستهلاك)
-  final List<Map<String, dynamic>> receivedReports = [
-    {
-      'id': 'REP-CON-2024-001',
-      'title': 'تقرير الاستهلاك الشهري',
-      'sender': 'قسم مراقبة الاستهلاك',
-      'date': DateTime.now().subtract(Duration(days: 2)),
-      'type': 'شهري',
-      'size': '1.5 MB',
-      'status': 'مستلم',
-      'fileType': 'PDF',
-      'area': 'جميع المناطق',
-      'totalConsumption': 45000,
-      'customersCount': 880,
-      'highConsumptionAlerts': 12,
-    },
-    {
-      'id': 'REP-CON-2024-002',
-      'title': 'تقرير الإنذارات الأسبوعي',
-      'sender': 'مكتب المدير العام',
-      'date': DateTime.now().subtract(Duration(days: 5)),
-      'type': 'أسبوعي',
-      'size': '920 KB',
-      'status': 'مستلم',
-      'fileType': 'PDF',
-      'area': 'المنطقة الشرقية',
-      'totalConsumption': 18500,
-      'customersCount': 350,
-      'highConsumptionAlerts': 8,
-    },
-    {
-      'id': 'REP-CON-2024-003',
-      'title': 'تقرير الاستهلاك اليومي',
-      'sender': 'فرع بغداد',
-      'date': DateTime.now().subtract(Duration(days: 1)),
-      'type': 'يومي',
-      'size': '520 KB',
-      'status': 'غير مقروء',
-      'fileType': 'Excel',
-      'area': 'حي العليا',
-      'totalConsumption': 15600,
-      'customersCount': 300,
-      'highConsumptionAlerts': 25,
-    },
-    {
-      'id': 'REP-CON-2024-004',
-      'title': 'تقرير أداء المناطق',
-      'sender': 'شؤون المناطق',
-      'date': DateTime.now().subtract(Duration(days: 7)),
-      'type': 'شهري',
-      'size': '2.3 MB',
-      'status': 'مستلم',
-      'fileType': 'PDF',
-      'area': 'جميع المناطق',
-      'totalConsumption': 125000,
-      'customersCount': 2500,
-      'highConsumptionAlerts': 48,
-    },
-    {
-      'id': 'REP-CON-2024-005',
-      'title': 'تقرير ذروة الاستهلاك',
-      'sender': 'الإدارة العليا',
-      'date': DateTime.now().subtract(Duration(days: 10)),
-      'type': 'سنوي',
-      'size': '3.8 MB',
-      'status': 'مستلم',
-      'fileType': 'PDF',
-      'area': 'المنطقة الوسطى',
-      'totalConsumption': 520000,
-      'customersCount': 4500,
-      'highConsumptionAlerts': 120,
-    },
-  ];
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'التقارير المستلمة',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: _textColor(context),
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'عرض وإدارة جميع التقارير التي تم استلامها',
-        style: TextStyle(
-          color: _textSecondaryColor(context),
-        ),
-      ),
-      const SizedBox(height: 20),
-      
-      // إحصائيات سريعة
-      Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _backgroundColor(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _borderColor(context)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Column(
-              children: [
-                Text(
-                  receivedReports.length.toString(),
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: _primaryColor,
-                  ),
-                ),
-                Text(
-                  'إجمالي التقارير',
-                  style: TextStyle(
-                    color: _textSecondaryColor(context),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              children: [
-                Text(
-                  receivedReports.where((r) => r['status'] == 'غير مقروء').length.toString(),
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: _warningColor,
-                  ),
-                ),
-                Text(
-                  'غير مقروء',
-                  style: TextStyle(
-                    color: _textSecondaryColor(context),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              children: [
-                Text(
-                  '${_calculateTotalSize(receivedReports)} MB',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: _successColor,
-                  ),
-                ),
-                Text(
-                  'الحجم الإجمالي',
-                  style: TextStyle(
-                    color: _textSecondaryColor(context),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      
-      const SizedBox(height: 20),
-      
-      // فلتر حسب المنطقة
-      _buildAreaFilterForReports(),
-      
-      const SizedBox(height: 20),
-      
-      // قائمة التقارير
-      ...receivedReports.map((report) => _buildReceivedReportCard(report)),
-    ],
-  );
-}
-// إحصائيات سريعة
-Widget _buildQuickStats() {
-  return Container(
-    padding: EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: _backgroundColor(context),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: _borderColor(context)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'إحصائيات سريعة',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: _primaryColor,
-          ),
-        ),
-        SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildQuickStatItem('تقارير هذا الشهر', '7', Icons.calendar_today_rounded, _primaryColor),
-            _buildQuickStatItem('إنذارات مستلمة', '12', Icons.warning_rounded, _warningColor),
-            _buildQuickStatItem('مناطق مغطاة', '5', Icons.location_on_rounded, _successColor),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-// فلتر المناطق للتقارير الواردة
-Widget _buildAreaFilterForReports() {
-  final List<String> reportAreas = [
-    'جميع المناطق',
-    'المنطقة الشرقية',
-    'حي العليا',
-    'حي الرياض',
-    'حي النخيل',
-    'حي الصفا',
-    'المنطقة الوسطى',
-  ];
-  
-  String selectedReportArea = 'جميع المناطق';
-
-  return StatefulBuilder(
-    builder: (context, setState) {
-      return Container(
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: _backgroundColor(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _borderColor(context)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'فلتر حسب المنطقة',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: _textColor(context),
-              ),
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: reportAreas.map((area) {
-                final isSelected = selectedReportArea == area;
-                return FilterChip(
-                  label: Text(
-                    area,
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      selectedReportArea = selected ? area : 'جميع المناطق';
-                    });
-                  },
-                  selectedColor: _primaryColor.withOpacity(0.2),
-                  checkmarkColor: _primaryColor,
-                  labelStyle: TextStyle(
-                    color: isSelected ? _primaryColor : _textColor(context),
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: isSelected ? _primaryColor : _borderColor(context)),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-Widget _buildQuickStatItem(String title, String value, IconData icon, Color color) {
-  return Column(
-    children: [
-      Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: color, size: 20),
-      ),
-      SizedBox(height: 8),
-      Text(
-        value,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          color: color,
-        ),
-      ),
-      SizedBox(height: 4),
-      Text(
-        title,
-        style: TextStyle(
-          fontSize: 10,
-          color: _textSecondaryColor(context),
-        ),
-        textAlign: TextAlign.center,
-      ),
-    ],
-  );
-}
-// دوال مساعدة للتقارير الواردة
-Color _getReportColor(String fileType) {
-  switch (fileType) {
-    case 'PDF':
-      return _errorColor;
-    case 'Excel':
-      return _successColor;
-    case 'Word':
-      return _primaryColor;
-    default:
-      return _accentColor;
-  }
-}
-
-IconData _getReportIcon(String fileType) {
-  switch (fileType) {
-    case 'PDF':
-      return Icons.picture_as_pdf_rounded;
-    case 'Excel':
-      return Icons.table_chart_rounded;
-    case 'Word':
-      return Icons.description_rounded;
-    default:
-      return Icons.insert_drive_file_rounded;
-  }
-}
-
-String _calculateTotalSize(List<Map<String, dynamic>> reports) {
-  double total = 0;
-  for (var report in reports) {
-    String sizeStr = report['size'];
-    if (sizeStr.contains('MB')) {
-      total += double.parse(sizeStr.replaceAll(' MB', ''));
-    } else if (sizeStr.contains('KB')) {
-      total += double.parse(sizeStr.replaceAll(' KB', '')) / 1024;
-    }
-  }
-  return total.toStringAsFixed(1);
-}
-
-void _handleReportAction(String action, Map<String, dynamic> report) {
-  switch (action) {
-    case 'view':
-      _viewReceivedReport(report);
-      break;
-    case 'download':
-      _downloadReport(report);
-      break;
-    case 'analyze':
-      _analyzeReport(report);
-      break;
-    case 'share':
-      _shareReport(report);
-      break;
-    case 'delete':
-      _deleteReport(report);
-      break;
-  }
-}
-
-void _viewReceivedReport(Map<String, dynamic> report) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: _cardColor(context),
-      title: Row(
-        children: [
-          Icon(_getReportIcon(report['fileType']), color: _getReportColor(report['fileType'])),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              report['title'],
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: _textColor(context),
-              ),
-            ),
-          ),
-        ],
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildReportDetailRow('المرسل:', report['sender']),
-            _buildReportDetailRow('المنطقة:', report['area']),
-            _buildReportDetailRow('النوع:', report['type']),
-            _buildReportDetailRow('الحجم:', report['size']),
-            _buildReportDetailRow('صيغة الملف:', report['fileType']),
-            _buildReportDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
-            _buildReportDetailRow('الحالة:', report['status']),
-            SizedBox(height: 16),
-            Divider(color: _borderColor(context)),
-            SizedBox(height: 16),
-            Text(
-              'ملخص البيانات:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: _primaryColor,
-              ),
-            ),
-            SizedBox(height: 8),
-            _buildReportDetailRow('إجمالي الاستهلاك:', '${NumberFormat('#,###').format(report['totalConsumption'])} ك.و.س'),
-            if (report['customersCount'] != null)
-              _buildReportDetailRow('عدد العملاء:', '${NumberFormat('#,###').format(report['customersCount'])}'),
-            if (report['highConsumptionAlerts'] != null)
-              _buildReportDetailRow('إنذارات استهلاك مرتفع:', '${report['highConsumptionAlerts']} إنذار'),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('إغلاق'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _primaryColor,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _downloadReport(report),
-          child: Text('تحميل'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _accentColor,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _analyzeReport(report),
-          child: Text('تحليل'),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildReportDetailRow(String label, String value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            label,
+          const SizedBox(height: 8),
+          Text(
+            'عرض وتحليل استهلاك الكهرباء الشهري حسب المناطق',
             style: TextStyle(
-              fontWeight: FontWeight.w600,
               color: _textSecondaryColor(context),
             ),
           ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value,
-            style: TextStyle(
-              color: _textColor(context),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 20),
 
-void _downloadReport(Map<String, dynamic> report) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('جاري تحميل: ${report['title']}'),
-      backgroundColor: _successColor,
-    ),
-  );
-}
+          // إحصائيات شهرية
+          _buildMonthlyStatsSummary(),
+          const SizedBox(height: 20),
 
-void _analyzeReport(Map<String, dynamic> report) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: _cardColor(context),
-      title: Row(
-        children: [
-          Icon(Icons.analytics_rounded, color: _accentColor),
-          SizedBox(width: 8),
-          Text('تحليل البيانات'),
+          // مقارنة مع الشهر السابق
+          _buildMonthlyComparison(),
+          const SizedBox(height: 20),
+
+          // قائمة الاستهلاك الشهري
+          _buildMonthlyConsumptionList(filteredData),
+          const SizedBox(height: 20),
+
+          // تحليل شهري
+          _buildMonthlyAnalysis(),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _buildMonthlyStatsSummary() {
+    final currentMonth = _monthlyConsumptionData.firstWhere(
+      (item) => item['month'] == 'يناير 2024' && item['area'] == 'جميع المناطق',
+      orElse: () => _monthlyConsumptionData[4],
+    );
+
+    final totalMonth = currentMonth['consumption'];
+    final avgDaily = currentMonth['avgDaily'];
+    final peakDay = currentMonth['peakDay'];
+
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
         children: [
-          Text(
-            'تحليل تقرير ${report['title']}',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: _textColor(context),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'إحصائيات الشهر الحالي',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: _textColor(context),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'يناير 2024',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 16),
-          _buildAnalysisItem('متوسط الاستهلاك:', '51.2 ك.و.س/عميل'),
-          _buildAnalysisItem('أعلى منطقة:', 'حي العليا (15600 ك.و.س)'),
-          _buildAnalysisItem('أدنى منطقة:', 'حي الصفا (7200 ك.و.س)'),
-          _buildAnalysisItem('نسبة الزيادة:', '+5.4% عن الفترة السابقة'),
-          _buildAnalysisItem('الاستهلاك الأعلى:', '850 ك.و.س (أحمد محمد)'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildMonthlyStatItem(
+                'إجمالي الشهر',
+                '${NumberFormat('#,###').format(totalMonth)}',
+                'ك.و.س',
+                Icons.calendar_month_rounded,
+                _electricBlue,
+              ),
+              _buildMonthlyStatItem(
+                'المتوسط اليومي',
+                '${NumberFormat('#,###').format(avgDaily)}',
+                'ك.و.س',
+                Icons.show_chart,
+                _accentColor,
+              ),
+              _buildMonthlyStatItem(
+                'أعلى يوم',
+                peakDay,
+                '',
+                Icons.trending_up_rounded,
+                _warningColor,
+              ),
+            ],
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('إغلاق'),
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildAnalysisItem(String label, String value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
+  Widget _buildMonthlyStatItem(String title, String value, String unit, IconData icon, Color color) {
+    return Column(
       children: [
-        Icon(Icons.chevron_right_rounded, size: 16, color: _primaryColor),
-        SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: _textSecondaryColor(context),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
+          child: Icon(icon, color: color, size: 20),
         ),
-        SizedBox(width: 8),
+        SizedBox(height: 8),
         Text(
           value,
           style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
             color: _textColor(context),
           ),
+          textAlign: TextAlign.center,
         ),
-      ],
-    ),
-  );
-}
-
-void _shareReport(Map<String, dynamic> report) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('مشاركة: ${report['title']}'),
-      backgroundColor: _primaryColor,
-    ),
-  );
-}
-
-void _deleteReport(Map<String, dynamic> report) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: _cardColor(context),
-      title: Row(
-        children: [
-          Icon(Icons.delete_rounded, color: _errorColor),
-          SizedBox(width: 8),
-          Text('حذف التقرير'),
-        ],
-      ),
-      content: Text(
-        'هل أنت متأكد من حذف تقرير "${report['title']}"؟',
-        style: TextStyle(
-          color: _textColor(context),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('إلغاء'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _errorColor,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('تم حذف التقرير: ${report['title']}'),
-                backgroundColor: _errorColor,
-              ),
-            );
-          },
-          child: Text('حذف'),
-        ),
-      ],
-    ),
-  );
-}
-// بناء بطاقة تقرير واردة
-Widget _buildReceivedReportCard(Map<String, dynamic> report) {
-  bool isUnread = report['status'] == 'غير مقروء';
-  
-  return Container(
-    margin: EdgeInsets.only(bottom: 12),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      color: _cardColor(context),
-      border: Border.all(color: _borderColor(context)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 8,
-          offset: Offset(0, 2),
-        ),
-      ],
-    ),
-    child: ListTile(
-      contentPadding: EdgeInsets.all(16),
-      leading: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: _getReportColor(report['fileType']).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          _getReportIcon(report['fileType']),
-          color: _getReportColor(report['fileType']),
-        ),
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              report['title'],
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: _textColor(context),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (isUnread)
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: _warningColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-        ],
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 4),
+        if (unit.isNotEmpty)
           Text(
-            'من: ${report['sender']}',
+            unit,
             style: TextStyle(
               fontSize: 12,
               color: _textSecondaryColor(context),
             ),
           ),
-          SizedBox(height: 2),
+        SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            color: _textSecondaryColor(context),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthlyComparison() {
+    final currentMonth = _monthlyConsumptionData.firstWhere(
+      (item) => item['month'] == 'يناير 2024' && item['area'] == 'جميع المناطق',
+      orElse: () => _monthlyConsumptionData[4],
+    );
+
+    final previousMonth = _monthlyConsumptionData.firstWhere(
+      (item) => item['month'] == 'ديسمبر 2023' && item['area'] == 'جميع المناطق',
+      orElse: () => _monthlyConsumptionData[4],
+    );
+
+    final changePercent = currentMonth['changePercent'];
+    final isIncrease = changePercent > 0;
+
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
-              Icon(Icons.location_on_outlined, size: 12, color: _textSecondaryColor(context)),
-              SizedBox(width: 4),
+              Icon(Icons.compare_arrows_rounded, color: _primaryColor, size: 20),
+              SizedBox(width: 8),
               Text(
-                report['area'],
+                'مقارنة مع الشهر السابق',
                 style: TextStyle(
-                  fontSize: 10,
-                  color: _textSecondaryColor(context),
-                ),
-              ),
-              SizedBox(width: 12),
-              Icon(Icons.bolt_outlined, size: 12, color: _textSecondaryColor(context)),
-              SizedBox(width: 4),
-              Text(
-                '${NumberFormat('#,###').format(report['totalConsumption'])} ك.و.س',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: _textSecondaryColor(context),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: _textColor(context),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 2),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                children: [
+                  Text(
+                    'ديسمبر 2023',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _textSecondaryColor(context),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '${NumberFormat('#,###').format(previousMonth['consumption'])}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: _textColor(context),
+                    ),
+                  ),
+                  Text(
+                    'ك.و.س',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _textSecondaryColor(context),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isIncrease ? _errorColor.withOpacity(0.1) : _successColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isIncrease ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                      color: isIncrease ? _errorColor : _successColor,
+                      size: 20,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '${changePercent.abs().toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isIncrease ? _errorColor : _successColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  Text(
+                    'يناير 2024',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _textSecondaryColor(context),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '${NumberFormat('#,###').format(currentMonth['consumption'])}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: _textColor(context),
+                    ),
+                  ),
+                  Text(
+                    'ك.و.س',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _textSecondaryColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyConsumptionList(List<Map<String, dynamic>> data) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.history_rounded, color: _primaryColor, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'سجل الاستهلاك الشهري',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: _textColor(context),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            if (data.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(Icons.inbox_rounded, color: _textSecondaryColor(context), size: 48),
+                      SizedBox(height: 8),
+                      Text(
+                        'لا توجد بيانات',
+                        style: TextStyle(color: _textSecondaryColor(context)),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...data.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          item['month'].split(' ')[0].substring(0, 3),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _primaryColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['month'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: _textColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.trending_up_rounded, size: 12, color: _textSecondaryColor(context)),
+                              SizedBox(width: 4),
+                              Text(
+                                'أعلى يوم: ${item['peakDay']}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: _textSecondaryColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${NumberFormat('#,###').format(item['consumption'])}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _textColor(context),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              item['changePercent'] > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                              size: 12,
+                              color: item['changePercent'] > 0 ? _errorColor : _successColor,
+                            ),
+                            Text(
+                              '${item['changePercent'].abs().toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: item['changePercent'] > 0 ? _errorColor : _successColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              )).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyAnalysis() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.analytics_rounded, color: _primaryColor, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'تحليل الأداء الشهري',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: _textColor(context),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            _buildAnalysisRow(
+              'أعلى منطقة استهلاكاً',
+              'حي العليا',
+              '485,000 ك.و.س',
+              Icons.bolt,
+              _warningColor,
+            ),
+            SizedBox(height: 8),
+            _buildAnalysisRow(
+              'أقل منطقة استهلاكاً',
+              'حي الصفا',
+              '223,000 ك.و.س',
+              Icons.bolt,
+              _successColor,
+            ),
+            SizedBox(height: 8),
+            _buildAnalysisRow(
+              'متوسط النمو الشهري',
+              '+3.5%',
+              'مقارنة بالشهر السابق',
+              Icons.show_chart,
+              _accentColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalysisRow(String label, String value, String subtitle, IconData icon, Color color) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _backgroundColor(context),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _textSecondaryColor(context),
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _textColor(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Text(
-            '${DateFormat('yyyy-MM-dd').format(report['date'])} • ${report['type']} • ${report['size']}',
+            subtitle,
             style: TextStyle(
               fontSize: 10,
               color: _textSecondaryColor(context),
@@ -2852,70 +2885,837 @@ Widget _buildReceivedReportCard(Map<String, dynamic> report) {
           ),
         ],
       ),
-      trailing: PopupMenuButton<String>(
-        icon: Icon(Icons.more_vert_rounded, color: _textSecondaryColor(context)),
-        onSelected: (value) {
-          _handleReportAction(value, report);
-        },
-        itemBuilder: (BuildContext context) => [
-          PopupMenuItem<String>(
-            value: 'view',
+    );
+  }
+
+  Widget _buildReportsView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // العنوان الرئيسي
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'نظام التقارير',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
+          Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: _cardColor(context),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _borderColor(context)),
+            ),
             child: Row(
               children: [
-                Icon(Icons.visibility_rounded, size: 18, color: _primaryColor),
-                SizedBox(width: 8),
-                Text('عرض التقرير'),
+                Expanded(
+                  child: _buildReportInnerTabButton('إنشاء التقارير', 0),
+                ),
+                Expanded(
+                  child: _buildReportInnerTabButton('التقارير الواردة', 1),
+                ),
               ],
             ),
           ),
-          PopupMenuItem<String>(
-            value: 'download',
-            child: Row(
-              children: [
-                Icon(Icons.download_rounded, size: 18, color: _successColor),
-                SizedBox(width: 8),
-                Text('تحميل'),
-              ],
+          const SizedBox(height: 20),
+          
+          // عرض المحتوى حسب التبويب المختار
+          _currentReportInnerTab == 0 
+              ? _buildCreateReportSection()
+              : _buildReceivedReportsSection(),
+        ],
+      ),
+    );
+  }
+
+  // زر التبويب الداخلي
+  Widget _buildReportInnerTabButton(String title, int tabIndex) {
+    bool isSelected = _currentReportInnerTab == tabIndex;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentReportInnerTab = tabIndex;
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected ? _primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? _primaryColor : Colors.transparent,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? Colors.white : _textColor(context),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
-          PopupMenuItem<String>(
-            value: 'analyze',
-            child: Row(
-              children: [
-                Icon(Icons.analytics_rounded, size: 18, color: _accentColor),
-                SizedBox(width: 8),
-                Text('تحليل البيانات'),
-              ],
+        ),
+      ),
+    );
+  }
+
+  // قسم إنشاء التقارير
+  Widget _buildCreateReportSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'إنشاء تقرير جديد',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: _textColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'اختر نوع التقرير والفترة المطلوبة',
+          style: TextStyle(
+            color: _textSecondaryColor(context),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _buildReportTypeFilter(),
+        const SizedBox(height: 20),
+        _buildReportOptions(),
+        const SizedBox(height: 20),
+        _buildGenerateReportButton(),
+        const SizedBox(height: 20),
+        
+        // إحصائيات سريعة
+        _buildQuickStats(),
+      ],
+    );
+  }
+
+  // قسم التقارير الواردة
+  Widget _buildReceivedReportsSection() {
+    // بيانات تجريبية للتقارير الواردة (خاصة بمراقبة الاستهلاك)
+    final List<Map<String, dynamic>> receivedReports = [
+      {
+        'id': 'REP-CON-2024-001',
+        'title': 'تقرير الاستهلاك الشهري',
+        'sender': 'قسم مراقبة الاستهلاك',
+        'date': DateTime.now().subtract(Duration(days: 2)),
+        'type': 'شهري',
+        'size': '1.5 MB',
+        'status': 'مستلم',
+        'fileType': 'PDF',
+        'area': 'جميع المناطق',
+        'totalConsumption': 45000,
+        'customersCount': 880,
+        'highConsumptionAlerts': 12,
+      },
+      {
+        'id': 'REP-CON-2024-002',
+        'title': 'تقرير الإنذارات الأسبوعي',
+        'sender': 'مكتب المدير العام',
+        'date': DateTime.now().subtract(Duration(days: 5)),
+        'type': 'أسبوعي',
+        'size': '920 KB',
+        'status': 'مستلم',
+        'fileType': 'PDF',
+        'area': 'المنطقة الشرقية',
+        'totalConsumption': 18500,
+        'customersCount': 350,
+        'highConsumptionAlerts': 8,
+      },
+      {
+        'id': 'REP-CON-2024-003',
+        'title': 'تقرير الاستهلاك اليومي',
+        'sender': 'فرع بغداد',
+        'date': DateTime.now().subtract(Duration(days: 1)),
+        'type': 'يومي',
+        'size': '520 KB',
+        'status': 'غير مقروء',
+        'fileType': 'Excel',
+        'area': 'حي العليا',
+        'totalConsumption': 15600,
+        'customersCount': 300,
+        'highConsumptionAlerts': 25,
+      },
+      {
+        'id': 'REP-CON-2024-004',
+        'title': 'تقرير أداء المناطق',
+        'sender': 'شؤون المناطق',
+        'date': DateTime.now().subtract(Duration(days: 7)),
+        'type': 'شهري',
+        'size': '2.3 MB',
+        'status': 'مستلم',
+        'fileType': 'PDF',
+        'area': 'جميع المناطق',
+        'totalConsumption': 125000,
+        'customersCount': 2500,
+        'highConsumptionAlerts': 48,
+      },
+      {
+        'id': 'REP-CON-2024-005',
+        'title': 'تقرير ذروة الاستهلاك',
+        'sender': 'الإدارة العليا',
+        'date': DateTime.now().subtract(Duration(days: 10)),
+        'type': 'سنوي',
+        'size': '3.8 MB',
+        'status': 'مستلم',
+        'fileType': 'PDF',
+        'area': 'المنطقة الوسطى',
+        'totalConsumption': 520000,
+        'customersCount': 4500,
+        'highConsumptionAlerts': 120,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'التقارير المستلمة',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: _textColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'عرض وإدارة جميع التقارير التي تم استلامها',
+          style: TextStyle(
+            color: _textSecondaryColor(context),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // إحصائيات سريعة
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _backgroundColor(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor(context)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Column(
+                children: [
+                  Text(
+                    receivedReports.length.toString(),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: _primaryColor,
+                    ),
+                  ),
+                  Text(
+                    'إجمالي التقارير',
+                    style: TextStyle(
+                      color: _textSecondaryColor(context),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  Text(
+                    receivedReports.where((r) => r['status'] == 'غير مقروء').length.toString(),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: _warningColor,
+                    ),
+                  ),
+                  Text(
+                    'غير مقروء',
+                    style: TextStyle(
+                      color: _textSecondaryColor(context),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  Text(
+                    '${_calculateTotalSize(receivedReports)} MB',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: _successColor,
+                    ),
+                  ),
+                  Text(
+                    'الحجم الإجمالي',
+                    style: TextStyle(
+                      color: _textSecondaryColor(context),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 20),
+        
+        // قائمة التقارير
+        ...receivedReports.map((report) => _buildReceivedReportCard(report)),
+      ],
+    );
+  }
+
+  // إحصائيات سريعة
+  Widget _buildQuickStats() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _backgroundColor(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _borderColor(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'إحصائيات سريعة',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _primaryColor,
             ),
           ),
-          PopupMenuItem<String>(
-            value: 'share',
-            child: Row(
-              children: [
-                Icon(Icons.share_rounded, size: 18, color: _secondaryColor),
-                SizedBox(width: 8),
-                Text('مشاركة'),
-              ],
+          SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildQuickStatItem('تقارير هذا الشهر', '7', Icons.calendar_today_rounded, _primaryColor),
+              _buildQuickStatItem('إنذارات مستلمة', '12', Icons.warning_rounded, _warningColor),
+              _buildQuickStatItem('مناطق مغطاة', '5', Icons.location_on_rounded, _successColor),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStatItem(String title, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: color,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            color: _textSecondaryColor(context),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  // دوال مساعدة للتقارير الواردة
+  Color _getReportColor(String fileType) {
+    switch (fileType) {
+      case 'PDF':
+        return _errorColor;
+      case 'Excel':
+        return _successColor;
+      case 'Word':
+        return _primaryColor;
+      default:
+        return _accentColor;
+    }
+  }
+
+  IconData _getReportIcon(String fileType) {
+    switch (fileType) {
+      case 'PDF':
+        return Icons.picture_as_pdf_rounded;
+      case 'Excel':
+        return Icons.table_chart_rounded;
+      case 'Word':
+        return Icons.description_rounded;
+      default:
+        return Icons.insert_drive_file_rounded;
+    }
+  }
+
+  String _calculateTotalSize(List<Map<String, dynamic>> reports) {
+    double total = 0;
+    for (var report in reports) {
+      String sizeStr = report['size'];
+      if (sizeStr.contains('MB')) {
+        total += double.parse(sizeStr.replaceAll(' MB', ''));
+      } else if (sizeStr.contains('KB')) {
+        total += double.parse(sizeStr.replaceAll(' KB', '')) / 1024;
+      }
+    }
+    return total.toStringAsFixed(1);
+  }
+
+  void _handleReportAction(String action, Map<String, dynamic> report) {
+    switch (action) {
+      case 'view':
+        _viewReceivedReport(report);
+        break;
+      case 'download':
+        _downloadReport(report);
+        break;
+      case 'analyze':
+        _analyzeReport(report);
+        break;
+      case 'share':
+        _shareReport(report);
+        break;
+      case 'delete':
+        _deleteReport(report);
+        break;
+    }
+  }
+
+  void _viewReceivedReport(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Row(
+          children: [
+            Icon(_getReportIcon(report['fileType']), color: _getReportColor(report['fileType'])),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                report['title'],
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _textColor(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildReportDetailRow('المرسل:', report['sender']),
+              _buildReportDetailRow('المنطقة:', report['area']),
+              _buildReportDetailRow('النوع:', report['type']),
+              _buildReportDetailRow('الحجم:', report['size']),
+              _buildReportDetailRow('صيغة الملف:', report['fileType']),
+              _buildReportDetailRow('التاريخ:', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+              _buildReportDetailRow('الحالة:', report['status']),
+              SizedBox(height: 16),
+              Divider(color: _borderColor(context)),
+              SizedBox(height: 16),
+              Text(
+                'ملخص البيانات:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              _buildReportDetailRow('إجمالي الاستهلاك:', '${NumberFormat('#,###').format(report['totalConsumption'])} ك.و.س'),
+              if (report['customersCount'] != null)
+                _buildReportDetailRow('عدد العملاء:', '${NumberFormat('#,###').format(report['customersCount'])}'),
+              if (report['highConsumptionAlerts'] != null)
+                _buildReportDetailRow('إنذارات استهلاك مرتفع:', '${report['highConsumptionAlerts']} إنذار'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إغلاق'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => _downloadReport(report),
+            child: Text('تحميل'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _accentColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => _analyzeReport(report),
+            child: Text('تحليل'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: _textSecondaryColor(context),
+              ),
             ),
           ),
-          PopupMenuItem<String>(
-            value: 'delete',
-            child: Row(
-              children: [
-                Icon(Icons.delete_rounded, size: 18, color: _errorColor),
-                SizedBox(width: 8),
-                Text('حذف'),
-              ],
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: _textColor(context),
+              ),
             ),
           ),
         ],
       ),
-      onTap: () {
-        _viewReceivedReport(report);
-      },
-    ),
-  );
-}
+    );
+  }
+
+  void _downloadReport(Map<String, dynamic> report) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('جاري تحميل: ${report['title']}'),
+        backgroundColor: _successColor,
+      ),
+    );
+  }
+
+  void _analyzeReport(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Row(
+          children: [
+            Icon(Icons.analytics_rounded, color: _accentColor),
+            SizedBox(width: 8),
+            Text('تحليل البيانات'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'تحليل تقرير ${report['title']}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _textColor(context),
+              ),
+            ),
+            SizedBox(height: 16),
+            _buildAnalysisItem('متوسط الاستهلاك:', '51.2 ك.و.س/عميل'),
+            _buildAnalysisItem('أعلى منطقة:', 'حي العليا (15600 ك.و.س)'),
+            _buildAnalysisItem('أدنى منطقة:', 'حي الصفا (7200 ك.و.س)'),
+            _buildAnalysisItem('نسبة الزيادة:', '+5.4% عن الفترة السابقة'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إغلاق'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _shareReport(Map<String, dynamic> report) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('مشاركة: ${report['title']}'),
+        backgroundColor: _primaryColor,
+      ),
+    );
+  }
+    Widget _buildAnalysisItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.chevron_right_rounded, size: 16, color: _primaryColor),
+          SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: _textSecondaryColor(context),
+            ),
+          ),
+          SizedBox(width: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: _textColor(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteReport(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Row(
+          children: [
+            Icon(Icons.delete_rounded, color: _errorColor),
+            SizedBox(width: 8),
+            Text('حذف التقرير'),
+          ],
+        ),
+        content: Text(
+          'هل أنت متأكد من حذف تقرير "${report['title']}"؟',
+          style: TextStyle(
+            color: _textColor(context),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _errorColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('تم حذف التقرير: ${report['title']}'),
+                  backgroundColor: _errorColor,
+                ),
+              );
+            },
+            child: Text('حذف'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // بناء بطاقة تقرير واردة
+  Widget _buildReceivedReportCard(Map<String, dynamic> report) {
+    bool isUnread = report['status'] == 'غير مقروء';
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: _cardColor(context),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.all(16),
+        leading: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: _getReportColor(report['fileType']).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            _getReportIcon(report['fileType']),
+            color: _getReportColor(report['fileType']),
+          ),
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                report['title'],
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _textColor(context),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isUnread)
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _warningColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 4),
+            Text(
+              'من: ${report['sender']}',
+              style: TextStyle(
+                fontSize: 12,
+                color: _textSecondaryColor(context),
+              ),
+            ),
+            SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined, size: 12, color: _textSecondaryColor(context)),
+                SizedBox(width: 4),
+                Text(
+                  report['area'],
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _textSecondaryColor(context),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Icon(Icons.bolt_outlined, size: 12, color: _textSecondaryColor(context)),
+                SizedBox(width: 4),
+                Text(
+                  '${NumberFormat('#,###').format(report['totalConsumption'])} ك.و.س',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _textSecondaryColor(context),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 2),
+            Text(
+              '${DateFormat('yyyy-MM-dd').format(report['date'])} • ${report['type']} • ${report['size']}',
+              style: TextStyle(
+                fontSize: 10,
+                color: _textSecondaryColor(context),
+              ),
+            ),
+          ],
+        ),
+        trailing: PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert_rounded, color: _textSecondaryColor(context)),
+          onSelected: (value) {
+            _handleReportAction(value, report);
+          },
+          itemBuilder: (BuildContext context) => [
+            PopupMenuItem<String>(
+              value: 'view',
+              child: Row(
+                children: [
+                  Icon(Icons.visibility_rounded, size: 18, color: _primaryColor),
+                  SizedBox(width: 8),
+                  Text('عرض التقرير'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'download',
+              child: Row(
+                children: [
+                  Icon(Icons.download_rounded, size: 18, color: _successColor),
+                  SizedBox(width: 8),
+                  Text('تحميل'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'analyze',
+              child: Row(
+                children: [
+                  Icon(Icons.analytics_rounded, size: 18, color: _accentColor),
+                  SizedBox(width: 8),
+                  Text('تحليل البيانات'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'share',
+              child: Row(
+                children: [
+                  Icon(Icons.share_rounded, size: 18, color: _secondaryColor),
+                  SizedBox(width: 8),
+                  Text('مشاركة'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete_rounded, size: 18, color: _errorColor),
+                  SizedBox(width: 8),
+                  Text('حذف'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        onTap: () {
+          _viewReceivedReport(report);
+        },
+      ),
+    );
+  }
+
   Widget _buildReportTypeFilter() {
     return Container(
       decoration: BoxDecoration(
@@ -2984,182 +3784,180 @@ Widget _buildReceivedReportCard(Map<String, dynamic> report) {
   }
 
   Widget _buildReportOptions() {
-  return Container(
-    decoration: BoxDecoration(
-      color: _cardColor(context),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: _borderColor(context)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 5),
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'خيارات التقرير',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _textColor(context),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_selectedReportType == 'يومي') _buildDailyOptions(),
+            if (_selectedReportType == 'أسبوعي') _buildWeeklyOptions(),
+            if (_selectedReportType == 'شهري') _buildMonthlyOptions(),
+          ],
         ),
-      ],
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // مهم: استخدم MainAxisSize.min
-        children: [
+      ),
+    );
+  }
+
+  Widget _buildDailyOptions() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ElevatedButton(
+          onPressed: _showMultiDatePicker,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.calendar_today),
+              SizedBox(width: 8),
+              Text('فتح التقويم واختيار التواريخ'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        if (_selectedDates.isNotEmpty) ...[
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _primaryColor.withOpacity(0.3)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: _successColor),
+                    SizedBox(width: 8),
+                    Text(
+                      'تم اختيار ${_selectedDates.length} يوم',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _primaryColor,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'من ${DateFormat('yyyy-MM-dd').format(_selectedDates.reduce((a, b) => a.isBefore(b) ? a : b))} '
+                  'إلى ${DateFormat('yyyy-MM-dd').format(_selectedDates.reduce((a, b) => a.isAfter(b) ? a : b))}',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 16),
+          
           Text(
-            'خيارات التقرير',
+            'التواريخ المحددة:',
             style: TextStyle(
-              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: _textColor(context),
             ),
           ),
-          const SizedBox(height: 16),
-          if (_selectedReportType == 'يومي') _buildDailyOptions(),
-          if (_selectedReportType == 'أسبوعي') _buildWeeklyOptions(),
-          if (_selectedReportType == 'شهري') _buildMonthlyOptions(),
-        ],
-      ),
-    ),
-  );
-}
-
-  Widget _buildDailyOptions() {
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      ElevatedButton(
-        onPressed: _showMultiDatePicker,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _primaryColor,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_today),
-            SizedBox(width: 8),
-            Text('فتح التقويم واختيار التواريخ'),
-          ],
-        ),
-      ),
-      const SizedBox(height: 16),
-      
-      if (_selectedDates.isNotEmpty) ...[
-        // بطاقة ملخص التواريخ
-        Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _primaryColor.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _primaryColor.withOpacity(0.3)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle, color: _successColor),
-                  SizedBox(width: 8),
-                  Text(
-                    'تم اختيار ${_selectedDates.length} يوم',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _primaryColor,
-                      fontSize: 16,
+          SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: 120),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _selectedDates.map((date) {
+                  return Chip(
+                    backgroundColor: _primaryColor,
+                    label: Text(
+                      DateFormat('yyyy-MM-dd').format(date),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                ],
+                    deleteIcon: Icon(Icons.close, color: Colors.white, size: 16),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedDates.remove(date);
+                      });
+                    },
+                  );
+                }).toList(),
               ),
-              SizedBox(height: 8),
-              Text(
-                'من ${DateFormat('yyyy-MM-dd').format(_selectedDates.reduce((a, b) => a.isBefore(b) ? a : b))} '
-                'إلى ${DateFormat('yyyy-MM-dd').format(_selectedDates.reduce((a, b) => a.isAfter(b) ? a : b))}',
-                style: TextStyle(
-                  color: _textSecondaryColor(context),
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 16),
-        
-        // عرض التواريخ المختارة
-        Text(
-          'التواريخ المحددة:',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: _textColor(context),
-          ),
-        ),
-        SizedBox(height: 8),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: 120),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _selectedDates.map((date) {
-                return Chip(
-                  backgroundColor: _primaryColor,
-                  label: Text(
-                    DateFormat('yyyy-MM-dd').format(date),
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  deleteIcon: Icon(Icons.close, color: Colors.white, size: 16),
-                  onDeleted: () {
-                    setState(() {
-                      _selectedDates.remove(date);
-                    });
-                  },
-                );
-              }).toList(),
             ),
           ),
-        ),
-      ] else ...[
-        // حالة عدم اختيار أي تواريخ
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _backgroundColor(context),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _borderColor(context)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.calendar_today_outlined, color: _textSecondaryColor(context), size: 48),
-              SizedBox(height: 12),
-              Text(
-                'لم يتم اختيار أي تواريخ',
-                style: TextStyle(
-                  color: _textSecondaryColor(context),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _backgroundColor(context),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _borderColor(context)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.calendar_today_outlined, color: _textSecondaryColor(context), size: 48),
+                SizedBox(height: 12),
+                Text(
+                  'لم يتم اختيار أي تواريخ',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'انقر على الزر أعلاه لفتح التقويم\nواختيار التواريخ المطلوبة للتقرير',
-                style: TextStyle(
-                  color: _textSecondaryColor(context),
-                  fontSize: 14,
+                SizedBox(height: 8),
+                Text(
+                  'انقر على الزر أعلاه لفتح التقويم\nواختيار التواريخ المطلوبة للتقرير',
+                  style: TextStyle(
+                    color: _textSecondaryColor(context),
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ],
-    ],
-  );
-}
+    );
+  }
+
   Widget _buildWeeklyOptions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3318,7 +4116,6 @@ Widget _buildReceivedReportCard(Map<String, dynamic> report) {
               Text('- عدد العملاء: 880', style: TextStyle(color: _textColor(context))),
               Text('- متوسط الاستهلاك: 51.1 ك.و.س/عميل', style: TextStyle(color: _textColor(context))),
               Text('- عدد الإنذارات: 12', style: TextStyle(color: _textColor(context))),
-              Text('- العملاء ذوو الاستهلاك المرتفع: 48', style: TextStyle(color: _textColor(context))),
             ],
           ),
         ),
@@ -3350,13 +4147,6 @@ Widget _buildReceivedReportCard(Map<String, dynamic> report) {
     return _alertsData.where((alert) => alert['area'] == _selectedArea).toList();
   }
 
-  List<Map<String, dynamic>> _getFilteredHighConsumptionCustomers() {
-    if (_selectedArea == 'جميع المناطق') {
-      return _highConsumptionCustomers;
-    }
-    return _highConsumptionCustomers.where((customer) => customer['area'] == _selectedArea).toList();
-  }
-
   void _handleAlert(int index) {
     setState(() {
       _alertsData[index]['status'] = 'تحت المراجعة';
@@ -3365,359 +4155,314 @@ Widget _buildReceivedReportCard(Map<String, dynamic> report) {
   }
 
   void _toggleDateSelection(DateTime date) {
-  final dateToToggle = DateTime(date.year, date.month, date.day);
-  
-  setState(() {
-    if (_selectedDates.any((selectedDate) =>
-        selectedDate.year == dateToToggle.year &&
-        selectedDate.month == dateToToggle.month &&
-        selectedDate.day == dateToToggle.day)) {
-      _selectedDates.removeWhere((selectedDate) =>
+    final dateToToggle = DateTime(date.year, date.month, date.day);
+    
+    setState(() {
+      if (_selectedDates.any((selectedDate) =>
           selectedDate.year == dateToToggle.year &&
           selectedDate.month == dateToToggle.month &&
-          selectedDate.day == dateToToggle.day);
-    } else {
-      _selectedDates.add(dateToToggle);
-    }
-    
-    _selectedDates.sort((a, b) => a.compareTo(b));
-  });
-}
-  void _showMultiDatePicker() {
-  // إنشاء قائمة مؤقتة للتواريخ المختارة
-  List<DateTime> tempSelectedDates = List.from(_selectedDates);
-
-  showDialog(
-    context: context,
-    builder: (context) {
-      // متغير لحفظ اليوم المحدد حالياً في التقويم
-      DateTime focusedDay = DateTime.now();
+          selectedDate.day == dateToToggle.day)) {
+        _selectedDates.removeWhere((selectedDate) =>
+            selectedDate.year == dateToToggle.year &&
+            selectedDate.month == dateToToggle.month &&
+            selectedDate.day == dateToToggle.day);
+      } else {
+        _selectedDates.add(dateToToggle);
+      }
       
-      return Dialog(
-        backgroundColor: _cardColor(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-            maxWidth: MediaQuery.of(context).size.width * 0.9,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // العنوان
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _primaryColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'اختر التواريخ',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    Spacer(),
-                    if (tempSelectedDates.isNotEmpty)
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${tempSelectedDates.length} يوم',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // التقويم
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _borderColor(context)),
-                          ),
-                          child: TableCalendar(
-                            firstDay: DateTime.utc(2020, 1, 1),
-                            lastDay: DateTime.utc(2030, 12, 31),
-                            focusedDay: focusedDay,
-                            
-                            // تحديد أيام محددة
-                            selectedDayPredicate: (day) {
-                              return tempSelectedDates.any((selectedDate) {
-                                return isSameDay(selectedDate, day);
-                              });
-                            },
-                            
-                            // عند اختيار يوم
-                            onDaySelected: (selectedDay, focused) {
-                              focusedDay = focused;
-                              
-                              // إزالة أو إضافة اليوم المحدد
-                              if (tempSelectedDates.any((date) => isSameDay(date, selectedDay))) {
-                                tempSelectedDates.removeWhere((date) => isSameDay(date, selectedDay));
-                              } else {
-                                tempSelectedDates.add(DateTime(selectedDay.year, selectedDay.month, selectedDay.day));
-                              }
-                              
-                              // ترتيب التواريخ
-                              tempSelectedDates.sort((a, b) => a.compareTo(b));
-                              
-                              // إعادة بناء الواجهة
-                              (context as Element).markNeedsBuild();
-                            },
-                            
-                            // تخصيص المظهر
-                            calendarStyle: CalendarStyle(
-  // الحد الأدنى من الإعدادات
-  defaultTextStyle: TextStyle(color: _textColor(context)),
-  todayTextStyle: TextStyle(
-    color: _textColor(context),
-    fontWeight: FontWeight.bold,
-  ),
-  selectedTextStyle: TextStyle(
-    color: Colors.white,
-    fontWeight: FontWeight.bold,
-  ),
-  todayDecoration: BoxDecoration(
-    color: _accentColor.withOpacity(0.3),
-    shape: BoxShape.circle, // إذا أردت دوائر
-  ),
-  selectedDecoration: BoxDecoration(
-    color: _primaryColor,
-    shape: BoxShape.circle, // إذا أردت دوائر
-  ),
-),
-                            
-                            // رأس التقويم
-                            headerStyle: HeaderStyle(
-                              formatButtonVisible: false,
-                              titleCentered: true,
-                              titleTextStyle: TextStyle(
-                                color: _primaryColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                              leftChevronIcon: Icon(Icons.chevron_left, color: _primaryColor),
-                              rightChevronIcon: Icon(Icons.chevron_right, color: _primaryColor),
-                              headerPadding: EdgeInsets.symmetric(vertical: 8),
-                              headerMargin: EdgeInsets.only(bottom: 8),
-                            ),
-                            
-                            // أيام الأسبوع
-                            daysOfWeekStyle: DaysOfWeekStyle(
-                              weekdayStyle: TextStyle(
-                                color: _textColor(context),
-                                fontWeight: FontWeight.w600,
-                              ),
-                              weekendStyle: TextStyle(
-                                color: _errorColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            
-                            daysOfWeekHeight: 30,
-                            weekendDays: [DateTime.friday, DateTime.saturday],
-                          ),
-                        ),
-                        
-                        SizedBox(height: 20),
-                        
-                        // قسم التواريخ المختارة
-                        if (tempSelectedDates.isNotEmpty)
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: _backgroundColor(context),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: _borderColor(context)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.date_range_rounded, color: _primaryColor, size: 20),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'التواريخ المختارة',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: _primaryColor,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 12),
-                                
-                                // عرض التواريخ
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: tempSelectedDates.map((date) {
-                                    return Chip(
-                                      backgroundColor: _primaryColor,
-                                      label: Text(
-                                        DateFormat('yyyy-MM-dd').format(date),
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      deleteIcon: Icon(Icons.close, color: Colors.white, size: 16),
-                                      onDeleted: () {
-                                        tempSelectedDates.remove(date);
-                                        (context as Element).markNeedsBuild();
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                                
-                                SizedBox(height: 12),
-                                
-                                // نطاق التواريخ
-                                if (tempSelectedDates.length > 1)
-                                  Text(
-                                    'من ${DateFormat('yyyy-MM-dd').format(tempSelectedDates.first)} '
-                                    'إلى ${DateFormat('yyyy-MM-dd').format(tempSelectedDates.last)} '
-                                    '(${tempSelectedDates.length} يوم)',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: _textSecondaryColor(context),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        
-                        // رسالة عند عدم اختيار تواريخ
-                        if (tempSelectedDates.isEmpty)
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: _backgroundColor(context),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: _borderColor(context)),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.touch_app_rounded, 
-                                     size: 40, 
-                                     color: _textSecondaryColor(context)),
-                                SizedBox(height: 12),
-                                Text(
-                                  'انقر على الأيام في التقويم',
-                                  style: TextStyle(
-                                    color: _textColor(context),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'اختر الأيام المطلوبة للتقرير',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _textSecondaryColor(context),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              
-              // الأزرار
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: _borderColor(context))),
-                  color: _cardColor(context),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _errorColor,
-                          side: BorderSide(color: _errorColor),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text('إلغاء'),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _selectedDates = List.from(tempSelectedDates);
-                          });
-                          Navigator.pop(context);
-                          _showSuccessSnackbar('تم اختيار ${_selectedDates.length} يوم');
-                        },
-                        child: Text('تم الاختيار'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-  // حل بديل أبسط
-Widget _buildCalendar() {
-  // يمكنك إزالة هذه الدالة أو تركها فارغة لأننا نستخدم التقويم داخل الـ Dialog فقط
-  return Container(
-    padding: EdgeInsets.all(16),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.calendar_today, size: 48, color: _primaryColor),
-        SizedBox(height: 16),
-        Text(
-          'انقر على الزر أعلاه لفتح التقويم',
-          style: TextStyle(color: _textSecondaryColor(context)),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    ),
-  );
-}
+      _selectedDates.sort((a, b) => a.compareTo(b));
+    });
+  }
 
+  void _showMultiDatePicker() {
+    List<DateTime> tempSelectedDates = List.from(_selectedDates);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        DateTime focusedDay = DateTime.now();
+        
+        return Dialog(
+          backgroundColor: _cardColor(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _primaryColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'اختر التواريخ',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Spacer(),
+                      if (tempSelectedDates.isNotEmpty)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${tempSelectedDates.length} يوم',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _borderColor(context)),
+                            ),
+                            child: TableCalendar(
+                              firstDay: DateTime.utc(2020, 1, 1),
+                              lastDay: DateTime.utc(2030, 12, 31),
+                              focusedDay: focusedDay,
+                              selectedDayPredicate: (day) {
+                                return tempSelectedDates.any((selectedDate) {
+                                  return isSameDay(selectedDate, day);
+                                });
+                              },
+                              onDaySelected: (selectedDay, focused) {
+                                focusedDay = focused;
+                                
+                                if (tempSelectedDates.any((date) => isSameDay(date, selectedDay))) {
+                                  tempSelectedDates.removeWhere((date) => isSameDay(date, selectedDay));
+                                } else {
+                                  tempSelectedDates.add(DateTime(selectedDay.year, selectedDay.month, selectedDay.day));
+                                }
+                                
+                                tempSelectedDates.sort((a, b) => a.compareTo(b));
+                                (context as Element).markNeedsBuild();
+                              },
+                              calendarStyle: CalendarStyle(
+                                defaultTextStyle: TextStyle(color: _textColor(context)),
+                                todayTextStyle: TextStyle(
+                                  color: _textColor(context),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                selectedTextStyle: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                todayDecoration: BoxDecoration(
+                                  color: _accentColor.withOpacity(0.3),
+                                  shape: BoxShape.circle,
+                                ),
+                                selectedDecoration: BoxDecoration(
+                                  color: _primaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              headerStyle: HeaderStyle(
+                                formatButtonVisible: false,
+                                titleCentered: true,
+                                titleTextStyle: TextStyle(
+                                  color: _primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                leftChevronIcon: Icon(Icons.chevron_left, color: _primaryColor),
+                                rightChevronIcon: Icon(Icons.chevron_right, color: _primaryColor),
+                                headerPadding: EdgeInsets.symmetric(vertical: 8),
+                                headerMargin: EdgeInsets.only(bottom: 8),
+                              ),
+                              daysOfWeekStyle: DaysOfWeekStyle(
+                                weekdayStyle: TextStyle(
+                                  color: _textColor(context),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                weekendStyle: TextStyle(
+                                  color: _errorColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              daysOfWeekHeight: 30,
+                              weekendDays: [DateTime.friday, DateTime.saturday],
+                            ),
+                          ),
+                          
+                          SizedBox(height: 20),
+                          
+                          if (tempSelectedDates.isNotEmpty)
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: _backgroundColor(context),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: _borderColor(context)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.date_range_rounded, color: _primaryColor, size: 20),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'التواريخ المختارة',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: _primaryColor,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: tempSelectedDates.map((date) {
+                                      return Chip(
+                                        backgroundColor: _primaryColor,
+                                        label: Text(
+                                          DateFormat('yyyy-MM-dd').format(date),
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        deleteIcon: Icon(Icons.close, color: Colors.white, size: 16),
+                                        onDeleted: () {
+                                          tempSelectedDates.remove(date);
+                                          (context as Element).markNeedsBuild();
+                                        },
+                                      );
+                                    }).toList(),
+                                  ),
+                                  if (tempSelectedDates.length > 1)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12),
+                                      child: Text(
+                                        'من ${DateFormat('yyyy-MM-dd').format(tempSelectedDates.first)} '
+                                        'إلى ${DateFormat('yyyy-MM-dd').format(tempSelectedDates.last)} '
+                                        '(${tempSelectedDates.length} يوم)',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: _textSecondaryColor(context),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          
+                          if (tempSelectedDates.isEmpty)
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: _backgroundColor(context),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: _borderColor(context)),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.touch_app_rounded, 
+                                       size: 40, 
+                                       color: _textSecondaryColor(context)),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'انقر على الأيام في التقويم',
+                                    style: TextStyle(
+                                      color: _textColor(context),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'اختر الأيام المطلوبة للتقرير',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: _textSecondaryColor(context),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: _borderColor(context))),
+                    color: _cardColor(context),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _errorColor,
+                            side: BorderSide(color: _errorColor),
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: Text('إلغاء'),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _selectedDates = List.from(tempSelectedDates);
+                            });
+                            Navigator.pop(context);
+                            _showSuccessSnackbar('تم اختيار ${_selectedDates.length} يوم');
+                          },
+                          child: Text('تم الاختيار'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   void _generateReport() {
     if (_selectedReportType == 'يومي' && _selectedDates.isEmpty) {
@@ -3817,82 +4562,14 @@ Widget _buildCalendar() {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: _backgroundColor(context),
-    appBar: AppBar(
-      title: const Text('مراقبة استهلاك الكهرباء'),
-      backgroundColor: _primaryColor,
-      elevation: 2,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [_gradientStart(context), _gradientEnd(context)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-      ),
-      iconTheme: const IconThemeData(color: Colors.white),
-      actionsIconTheme: const IconThemeData(color: Colors.white),
-      actions: [
-        IconButton(
-          icon: Stack(
-            children: [
-              Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  padding: EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: BoxConstraints(minWidth: 16, minHeight: 16),
-                  child: Text(
-                    '3',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => MonitoringNotificationsScreen()),
-            );
-          },
-        ),
-      ],
-    ),
-
-    drawer: _buildDrawer(context),
-    body: Column(
-      children: [
-        _buildTabBar(),
-        // عرض حقل البحث فقط في تبويبي لوحة التحكم والاستهلاك المرتفع
-        if (_selectedTab == 0 || _selectedTab == 1) _buildAreaFilter(),
-        Expanded(child: _buildCurrentView()),
-      ],
-    ),
-  );
-}
-
-// إعادة دالة بناء القائمة المنسدلة
-Widget _buildDrawer(BuildContext context) {
-  return Drawer(
-    backgroundColor: _cardColor(context),
-    child: ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        DrawerHeader(
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _backgroundColor(context),
+      appBar: AppBar(
+        title: const Text('مراقبة استهلاك الكهرباء'),
+        backgroundColor: _primaryColor,
+        elevation: 2,
+        flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [_gradientStart(context), _gradientEnd(context)],
@@ -3900,530 +4577,182 @@ Widget _buildDrawer(BuildContext context) {
               end: Alignment.bottomRight,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                child: Icon(Icons.person, color: Colors.white, size: 32),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'سالم العلي',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'مراقب استهلاك - المنطقة الشرقية',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
         ),
-        _buildDrawerItem(3, Icons.settings, 'الإعدادات', _selectedTab == 3),
-        _buildDrawerItem(4, Icons.help, 'المساعدة والدعم', _selectedTab == 4),
-        const Divider(color: Color(0xFFD1E0E8)),
-        ListTile(
-           leading: Icon(Icons.exit_to_app, color: _errorColor),
-            title: Text('تسجيل الخروج', style: TextStyle(color: _textColor(context))),
-            onTap: () {
-             _logout(context); // استدعاء دالة تسجيل الخروج
-           },
-        ),
-      ],
-    ),
-  );
-}
-void _logout(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: _cardColor(context),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Row(
-        children: [
-          Icon(Icons.logout, color: _errorColor),
-          SizedBox(width: 8),
-          Text('تسجيل الخروج', style: TextStyle(color: _textColor(context))),
-        ],
-      ),
-      content: Text(
-        'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
-        style: TextStyle(color: _textColor(context)),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('إلغاء', style: TextStyle(color: _textSecondaryColor(context))),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            // إغلاق جميع الشاشات والعودة لشاشة تسجيل الدخول
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              'esignin_screen', // استبدل هذا باسم route شاشة تسجيل الدخول الفعلي
-              (route) => false,
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _errorColor,
-            foregroundColor: Colors.white,
-          ),
-          child: Text('تسجيل الخروج'),
-        ),
-      ],
-    ),
-  );
-}
-// إعادة دالة عنصر القائمة المنسدلة
-Widget _buildDrawerItem(int index, IconData icon, String title, bool isSelected) {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: isSelected ? _primaryColor.withOpacity(0.1) : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      border: isSelected ? Border.all(color: _primaryColor.withOpacity(0.3)) : null,
-    ),
-    child: ListTile(
-      leading: Icon(icon, color: isSelected ? _primaryColor : _textSecondaryColor(context)),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? _primaryColor : _textColor(context),
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      onTap: () {
-        setState(() {
-          _selectedTab = index;
-        });
-        Navigator.pop(context);
-      },
-    ),
-  );
-}
-}
-
-// شاشة محادثة الدعم
-class SupportChatScreen extends StatefulWidget {
-  final bool isDarkMode;
-  final Color primaryColor;
-  final Color secondaryColor;
-  final Color accentColor;
-  final Color darkCardColor;
-  final Color cardColor;
-  final Color darkTextColor;
-  final Color textColor;
-  final Color darkTextSecondaryColor;
-  final Color textSecondaryColor;
-
-  const SupportChatScreen({
-    Key? key,
-    required this.isDarkMode,
-    required this.primaryColor,
-    required this.secondaryColor,
-    required this.accentColor,
-    required this.darkCardColor,
-    required this.cardColor,
-    required this.darkTextColor,
-    required this.textColor,
-    required this.darkTextSecondaryColor,
-    required this.textSecondaryColor,
-  }) : super(key: key);
-
-  @override
-  _SupportChatScreenState createState() => _SupportChatScreenState();
-}
-
-class _SupportChatScreenState extends State<SupportChatScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'text': 'مرحباً! كيف يمكنني مساعدتك اليوم؟',
-      'isUser': false,
-      'time': 'الآن',
-      'sender': 'موظف الدعم'
-    }
-  ];
-
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
-
-    setState(() {
-      _messages.add({
-        'text': _messageController.text,
-        'isUser': true,
-        'time': 'الآن',
-        'sender': 'أنت'
-      });
-    });
-
-    _messageController.clear();
-
-    Future.delayed(Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _messages.add({
-            'text': 'شكراً لتواصلكم. سأقوم بمساعدتك في حل هذه المشكلة. هل يمكنك تقديم مزيد من التفاصيل؟',
-            'isUser': false,
-            'time': 'الآن',
-            'sender': 'موظف الدعم'
-          });
-        });
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'محادثة الدعم الفني',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              'متصل الآن',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: widget.primaryColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert_rounded, color: Colors.white),
-            onSelected: (value) {
-              if (value == 'end_chat') {
-                _endChat(context);
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem<String>(
-                value: 'end_chat',
-                child: Row(
-                  children: [
-                    Icon(Icons.close_rounded, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('إنهاء المحادثة'),
-                  ],
+          IconButton(
+            icon: Stack(
+              children: [
+                Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      '3',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MonitoringNotificationsScreen()),
+              );
+            },
           ),
         ],
       ),
+
+      drawer: _buildDrawer(context),
       body: Column(
         children: [
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: widget.primaryColor.withOpacity(0.05),
-              border: Border(
-                bottom: BorderSide(color: widget.primaryColor.withOpacity(0.1)),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: widget.primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 20),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'فاضل علي - موظف الدعم',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: widget.isDarkMode ? widget.darkTextColor : widget.textColor,
-                        ),
-                      ),
-                      Text(
-                        'متخصص في نظام مراقبة الاستهلاك',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: widget.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'متصل',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(16),
-              reverse: false,
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessageBubble(message);
-              },
-            ),
-          ),
-
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: widget.isDarkMode ? widget.darkCardColor : widget.cardColor,
-              border: Border(
-                top: BorderSide(color: widget.primaryColor.withOpacity(0.1)),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: widget.isDarkMode ? Colors.white10 : Colors.grey[50],
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'اكتب رسالتك هنا...',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        suffixIcon: IconButton(
-                          icon: Icon(Icons.attach_file_rounded, color: widget.primaryColor),
-                          onPressed: () => _showAttachmentOptions(context),
-                        ),
-                      ),
-                      maxLines: null,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                CircleAvatar(
-                  backgroundColor: widget.primaryColor,
-                  child: IconButton(
-                    icon: Icon(Icons.send_rounded, color: Colors.white),
-                    onPressed: _sendMessage,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildTabBar(),
+          if (_selectedTab == 0 || _selectedTab == 1 || _selectedTab == 2) _buildAreaFilter(),
+          Expanded(child: _buildCurrentView()),
         ],
       ),
     );
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> message) {
-    final bool isUser = message['isUser'] as bool;
-    
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: _cardColor(context),
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          if (!isUser)
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: widget.primaryColor,
-                shape: BoxShape.circle,
+          DrawerHeader(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_gradientStart(context), _gradientEnd(context)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 16),
             ),
-          SizedBox(width: 8),
-          Flexible(
             child: Column(
-              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!isUser)
-                  Text(
-                    message['sender'],
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: widget.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isUser 
-                        ? widget.primaryColor 
-                        : (widget.isDarkMode ? Colors.white10 : Colors.grey[100]),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    message['text'],
-                    style: TextStyle(
-                      color: isUser ? Colors.white : (widget.isDarkMode ? widget.darkTextColor : widget.textColor),
-                    ),
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  child: Icon(Icons.person, color: Colors.white, size: 32),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'سالم العلي',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  message['time'],
+                  'مراقب استهلاك - المنطقة الشرقية',
                   style: TextStyle(
-                    fontSize: 10,
-                    color: widget.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-          if (isUser)
-            SizedBox(width: 8),
-          if (isUser)
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: widget.secondaryColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.person_rounded, color: Colors.white, size: 16),
-            ),
+          const Divider(color: Color(0xFFD1E0E8)),
+          ListTile(
+            leading: Icon(Icons.exit_to_app, color: _errorColor),
+            title: Text('تسجيل الخروج', style: TextStyle(color: _textColor(context))),
+            onTap: () {
+              _logout(context);
+            },
+          ),
         ],
       ),
     );
   }
 
-  void _showAttachmentOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: widget.isDarkMode ? widget.darkCardColor : widget.cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'إرفاق ملف',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: widget.isDarkMode ? widget.darkTextColor : widget.textColor,
-              ),
-            ),
-            SizedBox(height: 16),
-            _buildAttachmentOption(Icons.photo_rounded, 'صورة', () {}),
-            _buildAttachmentOption(Icons.description_rounded, 'ملف', () {}),
-            _buildAttachmentOption(Icons.receipt_rounded, 'تقرير', () {}),
-            _buildAttachmentOption(Icons.location_on_rounded, 'موقع', () {}),
-            SizedBox(height: 8),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('إلغاء'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAttachmentOption(IconData icon, String text, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: widget.primaryColor),
-      title: Text(text),
-      onTap: onTap,
-    );
-  }
-
-  void _endChat(BuildContext context) {
+  void _logout(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: widget.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        backgroundColor: _cardColor(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.close_rounded, color: Colors.red),
+            Icon(Icons.logout, color: _errorColor),
             SizedBox(width: 8),
-            Text('إنهاء المحادثة'),
+            Text('تسجيل الخروج', style: TextStyle(color: _textColor(context))),
           ],
         ),
         content: Text(
-          'هل أنت متأكد من أنك تريد إنهاء المحادثة؟',
-          style: TextStyle(
-            color: widget.isDarkMode ? widget.darkTextColor : widget.textColor,
-          ),
+          'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
+          style: TextStyle(color: _textColor(context)),
         ),
-        actions: [
+        actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('البقاء في المحادثة'),
+            child: Text('إلغاء', style: TextStyle(color: _textSecondaryColor(context))),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('تم إنهاء المحادثة بنجاح'),
-                  backgroundColor: widget.primaryColor,
-                ),
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                'esignin_screen',
+                (route) => false,
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: _errorColor,
               foregroundColor: Colors.white,
             ),
-            child: Text('إنهاء المحادثة'),
+            child: Text('تسجيل الخروج'),
           ),
         ],
       ),
     );
   }
-}
 
+  Widget _buildDrawerItem(int index, IconData icon, String title, bool isSelected) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor.withOpacity(0.1) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: isSelected ? Border.all(color: _primaryColor.withOpacity(0.3)) : null,
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: isSelected ? _primaryColor : _textSecondaryColor(context)),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? _primaryColor : _textColor(context),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        selected: isSelected,
+        onTap: () {
+          setState(() {
+            _selectedTab = index;
+          });
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+}
 // شاشة الإشعارات للمراقب
 class MonitoringNotificationsScreen extends StatefulWidget {
   static const String routeName = '/monitoring-notifications';
