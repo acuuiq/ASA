@@ -19,15 +19,6 @@ import 'events_screen.dart';
 import '../Water/water_problem_report_screen.dart';
 import '../Electricity/electricity_problem_report_screen.dart';
 import '../Waste/waste_problem_report_screen.dart';
-// استيراد ملفات الطوارئ الجديدة
-import '../service_delete/water_emergency_screen.dart';
-import '../Electricity/electricity_emergency_screen.dart';
-import '../service_delete/waste_emergency_screen.dart';
-// استيراد الملفات الجديدة:
-import '../service_delete/electricity_paid_services.dart';
-import '../service_delete/water_paid_services.dart';
-import '../service_delete/waste_paid_services.dart';
-
 class UserMainScreen extends StatefulWidget {
   static const String screenRoot = 'user_main';
 
