@@ -283,7 +283,6 @@ final List<Map<String, dynamic>> _notifications = [
   },
 ];
 
-  // بيانات تجريبية لسجل استبدال النقاط - مع إضافة منطقة قلعة سكر
   final List<Map<String, dynamic>> _redemptionHistory = [
     {
       'id': 'RDM-001',

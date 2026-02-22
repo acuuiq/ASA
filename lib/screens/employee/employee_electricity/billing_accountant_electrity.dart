@@ -9,8 +9,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'dart:typed_data';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 class BillingAccountantScreen extends StatefulWidget {
   static const String screenRoute = '/billing-accountant';
   
@@ -33,15 +31,6 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   int _currentReportTab = 0;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  // أضف هذه المتغيرات مع المتغيرات الموجودة
-final supabase = Supabase.instance.client;
-List<Map<String, dynamic>> _dbCitizens = [];
-List<Map<String, dynamic>> _dbBills = [];
-List<Map<String, dynamic>> _dbPaymentMethods = [];
-List<Map<String, dynamic>> _dbPayments = [];
-bool _isLoading = true;
-String? _currentEmployeeId;
-String? _errorMessage;
   String _transferSearchQuery = '';
   final TextEditingController _transferSearchController = TextEditingController();
   String _selectedPaymentMethodFilter = 'الكل'; 
@@ -3507,7 +3496,7 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
                     },
                     isDarkMode: isDarkMode,
                   ),
-                   // تسجيل الخروج
+
                   _buildDrawerMenuItem(
                     icon: Icons.logout_rounded,
                     title: 'تسجيل الخروج',
@@ -5458,7 +5447,6 @@ void _showSettingsScreen(BuildContext context, bool isDarkMode) {
     ),
   );
 }
-
 // ⬅️ دوال الرسائل
 void _showSuccessSnackbar(String message) {
   ScaffoldMessenger.of(context).showSnackBar(

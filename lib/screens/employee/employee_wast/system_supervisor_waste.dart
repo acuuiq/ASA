@@ -12,11 +12,7 @@ class _SystemSupervisorWasteScreenState
     extends State<SystemSupervisorWasteScreen> {
   // الألوان الأساسية
   final Color _primaryColor = const Color(0xFF2E7D32);
-  final Color _secondaryColor = const Color(0xFF4CAF50);
-  final Color _accentColor = const Color(0xFF8BC34A);
-  final Color _warningColor = const Color(0xFFFF9800);
-  final Color _dangerColor = const Color(0xFFD32F2F);
-  final Color _infoColor = const Color(0xFF2196F3);
+
   final Color _backgroundGradientStart = const Color(0xFFF8FFF9);
   final Color _backgroundGradientEnd = const Color(0xFFE8F5E9);
   final Color _darkBackgroundStart = const Color(0xFF1B5E20);
@@ -31,11 +27,6 @@ class _SystemSupervisorWasteScreenState
   String _selectedStatus = 'الكل';
   String _selectedReportType = 'الكل';
   
-  // متغيرات تفاعلية
-  Map<String, dynamic>? _selectedRouteForDetails;
-  Map<String, dynamic>? _selectedReportForUpdate;
-  bool _showImagePreview = false;
-  String? _selectedImageForPreview;
   bool _isLoading = false;
   
   // متغيرات نموذج طلب التقرير
@@ -61,33 +52,6 @@ class _SystemSupervisorWasteScreenState
   bool _showDatePickerScreen = false;
   
   // المتغيرات الجديدة لاختيار التاريخ
-  DateTime? _selectedDate;
-  
-  // متغيرات مؤقتة لتحويل التواريخ
-  final Map<int, String> _monthNames = {
-    1: 'يناير',
-    2: 'فبراير',
-    3: 'مارس',
-    4: 'أبريل',
-    5: 'مايو',
-    6: 'يونيو',
-    7: 'يوليو',
-    8: 'أغسطس',
-    9: 'سبتمبر',
-    10: 'أكتوبر',
-    11: 'نوفمبر',
-    12: 'ديسمبر'
-  };
-  
-  final Map<int, String> _dayNames = {
-    1: 'الاثنين',
-    2: 'الثلاثاء',
-    3: 'الأربعاء',
-    4: 'الخميس',
-    5: 'الجمعة',
-    6: 'السبت',
-    7: 'الأحد'
-  };
 
   // === متغيرات الإعدادات ===
   bool _notificationsEnabled = true;
@@ -347,7 +311,6 @@ class _SystemSupervisorWasteScreenState
   void initState() {
     super.initState();
     // تعيين التاريخ الحالي كقيمة افتراضية
-    _selectedDate = DateTime.now();
     // تعيين القيم الافتراضية لاختيار التاريخ اليدوي
     _selectedDay = DateTime.now().day.toString();
     _selectedMonth = _months[DateTime.now().month - 1];
@@ -4783,7 +4746,7 @@ class _SystemSupervisorWasteScreenState
       'employeeName': employee['name'] as String,
       'reportType': _selectedReportTypeForRequest,
       'period': periodText,
-      'selectedDate': selectedDateTime?.toIso8601String(),
+      'selectedDate': selectedDateTime.toIso8601String(),
       'selectedDay': _selectedDay,
       'selectedMonth': _selectedMonth,
       'selectedYear': _selectedYear,

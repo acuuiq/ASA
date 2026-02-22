@@ -7,7 +7,6 @@ import '../Waste/waste_schedule_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
 import 'signin_screen.dart';
-import 'points_service.dart';
 
 import '../Electricity/monthly_consumption_electricity.dart'; // أضف هذا
 import '../Water/monthly_consumption_water.dart'; // أضف هذا
@@ -19,14 +18,6 @@ import 'events_screen.dart';
 import '../Water/water_problem_report_screen.dart';
 import '../Electricity/electricity_problem_report_screen.dart';
 import '../Waste/waste_problem_report_screen.dart';
-// استيراد ملفات الطوارئ الجديدة
-import '../service_delete/water_emergency_screen.dart';
-import '../Electricity/electricity_emergency_screen.dart';
-import '../service_delete/waste_emergency_screen.dart';
-// استيراد الملفات الجديدة:
-import '../service_delete/electricity_paid_services.dart';
-import '../service_delete/water_paid_services.dart';
-import '../service_delete/waste_paid_services.dart';
 
 class UserMainScreen extends StatefulWidget {
   static const String screenRoot = 'user_main';
@@ -50,18 +41,14 @@ class _UserMainScreenState extends State<UserMainScreen>
   // معلومات المستخدم الافتراضية
   Map<String, dynamic>? _userProfile;
   bool _isLoading = true;
-  bool _isAccountApproved = false;
 
   // الألوان الجديدة للتصميم الرسمي الحكومي
   final Color _primaryColor = const Color(0xFF0D47A1); // أزبل حكومي داكن
-  final Color _secondaryColor = const Color(0xFF1976D2); // أزرق حكومي
-  final Color _accentColor = const Color(0xFF64B5F6); // أزرق فاتح
   final Color _backgroundColor = const Color(0xFFF8F9FA); // خلفية رمادية فاتحة
   final Color _cardColor = Colors.white;
   final Color _textColor = const Color(0xFF212121);
   final Color _textSecondaryColor = const Color(0xFF757575);
   final Color _successColor = const Color(0xFF2E7D32);
-  final Color _warningColor = const Color(0xFFF57C00);
   final Color _errorColor = const Color(0xFFD32F2F);
   final Color _borderColor = const Color(0xFFE0E0E0);
 
@@ -119,7 +106,7 @@ class _UserMainScreenState extends State<UserMainScreen>
       // في دالة _checkUserStatus()
       setState(() {
         _userProfile = userData;
-        _isAccountApproved = true; // جعل جميع الحسابات معتمدة تلقائياً
+// جعل جميع الحسابات معتمدة تلقائياً
         _isLoading = false;
       });
     } catch (e) {
@@ -802,7 +789,6 @@ class _UserMainScreenState extends State<UserMainScreen>
 
     final currentService = _services[_currentIndex];
     final serviceColor = currentService['color'] as Color;
-    final serviceGradient = currentService['gradient'] as List<Color>;
 
     return WillPopScope(
       onWillPop: _onWillPop,

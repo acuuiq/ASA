@@ -197,72 +197,77 @@ class _WaterMaintenanceTechnicianScreenState
         return _textLightColor;
     }
   }
+@override
+Widget build(BuildContext context) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
 
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'فني صيانة المياه', 
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 20,
-          )
-        ),
-        backgroundColor: isDarkMode ? _darkPrimaryColor : _primaryColor,
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 4,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.7),
-          labelStyle: TextStyle(
-            fontWeight: FontWeight.bold, 
-            fontSize: 14,
-            color: Colors.white
-          ),
-          unselectedLabelStyle: TextStyle(
-            fontSize: 13,
-            color: Colors.white.withOpacity(0.7)
-          ),
-          tabs: [
-            Tab(
-              icon: Icon(Icons.engineering, size: 20, color: Colors.white),
-              text: 'قيد التنفيذ',
-            ),
-            Tab(
-              icon: Icon(Icons.timer_off, size: 20, color: Colors.white),
-              text: 'متأخرة',
-            ),
-            Tab(
-              icon: Icon(Icons.task_alt, size: 20, color: Colors.white),
-              text: 'مكتملة',
-            ),
-            Tab(
-              icon: Icon(Icons.assessment, size: 20, color: Colors.white),
-              text: 'التقارير',
-            ),
-          ],
-        ),
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(
+        'فني صيانة المياه', 
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white, // Title color
+          fontSize: 20,
+        )
       ),
-      body: TabBarView(
+      backgroundColor: isDarkMode ? _darkPrimaryColor : _primaryColor,
+      centerTitle: true,
+      iconTheme: IconThemeData(
+        color: Colors.white, 
+      ),
+      actionsIconTheme: IconThemeData(
+        color: Colors.white,
+      ),
+      
+      bottom: TabBar(
         controller: _tabController,
-        children: [
-          _buildActiveTasksView(isDarkMode),
-          _buildDelayedTasksView(isDarkMode),
-          _buildCompletedTasksView(isDarkMode),
-          _buildReportsView(isDarkMode),
+        indicatorColor: Colors.white,
+        indicatorWeight: 4,
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white.withOpacity(0.7),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.bold, 
+          fontSize: 14,
+          color: Colors.white
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 13,
+          color: Colors.white.withOpacity(0.7)
+        ),
+        tabs: [
+          Tab(
+            icon: Icon(Icons.engineering, size: 20, color: Colors.white),
+            text: 'قيد التنفيذ',
+          ),
+          Tab(
+            icon: Icon(Icons.timer_off, size: 20, color: Colors.white),
+            text: 'متأخرة',
+          ),
+          Tab(
+            icon: Icon(Icons.task_alt, size: 20, color: Colors.white),
+            text: 'مكتملة',
+          ),
+          Tab(
+            icon: Icon(Icons.assessment, size: 20, color: Colors.white),
+            text: 'التقارير',
+          ),
         ],
       ),
-      drawer: _buildDrawer(context, isDarkMode),
-    );
-  }
-
+    ),
+    body: TabBarView(
+      controller: _tabController,
+      children: [
+        _buildActiveTasksView(isDarkMode),
+        _buildDelayedTasksView(isDarkMode),
+        _buildCompletedTasksView(isDarkMode),
+        _buildReportsView(isDarkMode),
+      ],
+    ),
+    drawer: _buildDrawer(context, isDarkMode),
+  );
+}
   Widget _buildActiveTasksView(bool isDarkMode) {
     final activeTasksList = activeTasks.where((task) => task['status'] != 'مكتملة').toList();
     
@@ -2386,17 +2391,6 @@ void _deleteMaintenanceReport(Map<String, dynamic> report) {
                       },
                       isDarkMode: isDarkMode,
                     ),
-                    
-                    // المساعدة والدعم
-                    _buildDrawerMenuItem(
-                      icon: Icons.help_rounded,
-                      title: 'المساعدة والدعم',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showHelpSupportScreen(context, isDarkMode);
-                      },
-                      isDarkMode: isDarkMode,
-                    ),
                     // تسجيل الخروج
                     _buildDrawerMenuItem(
                       icon: Icons.logout_rounded,
@@ -2571,27 +2565,6 @@ void _deleteMaintenanceReport(Map<String, dynamic> report) {
       ),
     );
   }
-
-  void _showHelpSupportScreen(BuildContext context, bool isDarkMode) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WaterTechnicianHelpSupportScreen(
-          isDarkMode: isDarkMode,
-          primaryColor: _primaryColor,
-          secondaryColor: _secondaryColor,
-          accentColor: _accentColor,
-          darkCardColor: _darkCardColor,
-          cardColor: _cardColor,
-          darkTextColor: _darkTextColor,
-          textColor: _textColor,
-          darkTextSecondaryColor: _darkTextSecondaryColor,
-          textSecondaryColor: _textSecondaryColor,
-        ),
-      ),
-    );
-  }
-
   void _showSuccessSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -2714,7 +2687,7 @@ class _WaterTechnicianSettingsScreenState extends State<WaterTechnicianSettingsS
                   ? LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
+                      colors: [Color.fromARGB(255, 237, 234, 234), Color(0xFF1A1A1A)],
                     )
                   : LinearGradient(
                       begin: Alignment.topCenter,
@@ -2908,354 +2881,5 @@ class _WaterTechnicianSettingsScreenState extends State<WaterTechnicianSettingsS
         ],
       ),
     );
-  }
-}
-
-// شاشة المساعدة والدعم لفني صيانة المياه
-class WaterTechnicianHelpSupportScreen extends StatelessWidget {
-  final bool isDarkMode;
-  final Color primaryColor;
-  final Color secondaryColor;
-  final Color accentColor;
-  final Color darkCardColor;
-  final Color cardColor;
-  final Color darkTextColor;
-  final Color textColor;
-  final Color darkTextSecondaryColor;
-  final Color textSecondaryColor;
-  
-  const WaterTechnicianHelpSupportScreen({
-    Key? key,
-    required this.isDarkMode,
-    required this.primaryColor,
-    required this.secondaryColor,
-    required this.accentColor,
-    required this.darkCardColor,
-    required this.cardColor,
-    required this.darkTextColor,
-    required this.textColor,
-    required this.darkTextSecondaryColor,
-    required this.textSecondaryColor,
-  }) : super(key: key);
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'المساعدة والدعم - فني صيانة المياه',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: primaryColor,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: isDarkMode
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
-                )
-              : LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF8F9FA), Color(0xFFE8F4FD)],
-                ),
-        ),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // بطاقة جهات الاتصال
-              _buildContactCard(context),
-
-              SizedBox(height: 24),
-
-              // الأسئلة الشائعة
-              _buildSectionTitle('الأسئلة الشائعة'),
-              ..._buildFAQItems(),
-
-              SizedBox(height: 24),
-              
-              // معلومات التطبيق
-              _buildSectionTitle('معلومات التطبيق'),
-              _buildAppInfoCard(),
-
-              SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildContactCard(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: isDarkMode ? darkCardColor : cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Icon(Icons.water_damage_rounded, color: primaryColor, size: 28),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'مركز دعم فني صيانة المياه',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? darkTextColor : textColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-          _buildContactItem(Icons.phone_rounded, 'رقم الدعم الفني', '07701234567', true, context),
-          _buildContactItem(Icons.phone_rounded, 'رقم الطوارئ', '07809876543', true, context),
-          _buildContactItem(Icons.email_rounded, 'البريد الإلكتروني', 'maintenance@water.gov.iq', false, context),
-          _buildContactItem(Icons.access_time_rounded, 'ساعات العمل', '7:00 ص - 4:00 م', false, context),
-          _buildContactItem(Icons.location_on_rounded, 'العنوان', 'بغداد - وزارة الموارد المائية', false, context),
-          SizedBox(height: 16),
-          
-          // أزرار الاتصال
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _makePhoneCall('07701234567', context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  icon: Icon(Icons.phone_rounded, size: 20),
-                  label: Text('اتصال فوري'),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _sendEmail(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: secondaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  icon: Icon(Icons.email_rounded, size: 20),
-                  label: Text('إرسال بريد'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildContactItem(IconData icon, String title, String value, bool isPhone, BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: primaryColor, size: 20),
-          SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? darkTextColor : textColor,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: GestureDetector(
-              onTap: isPhone ? () => _makePhoneCall(value, context) : null,
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: isPhone ? primaryColor : (isDarkMode ? darkTextSecondaryColor : textSecondaryColor),
-                  decoration: isPhone ? TextDecoration.underline : TextDecoration.none,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: isDarkMode ? darkTextColor : textColor,
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildFAQItems() {
-    List<Map<String, String>> faqs = [
-      {
-        'question': 'كيف يمكنني الإبلاغ عن تسرب مياه؟',
-        'answer': 'اذهب إلى تبويب "المهام النشطة" → انقر على المهمة → اختر حالة جديدة (بدء العمل، تأجيل، إنهاء)'
-      },
-      {
-        'question': 'كيف أتعامل مع حالات الطوارئ المائية؟',
-        'answer': 'اتصل برقم الطوارئ 07809876543 فوراً وأبلغ عن الموقع الدقيق'
-      },
-      {
-        'question': 'ما هي معدات السلامة المطلوبة؟',
-        'answer': 'ارتداء القفازات، الأحذية الواقية، والنظارات عند التعامل مع المواد الكيميائية'
-      },
-      {
-        'question': 'كيف أتحقق من جودة المياه؟',
-        'answer': 'استخدم أجهزة الفحص المحمولة أو أرسل عينات للمختبر المركزي'
-      },
-      {
-        'question': 'كيف أبلغ عن استهلاك غير طبيعي؟',
-        'answer': 'سجل قراءة العداد والتاريخ في التقرير اليومي وأبلغ الإدارة'
-      },
-    ];
-
-    return faqs.map((faq) {
-      return _buildExpandableItem(faq['question']!, faq['answer']!);
-    }).toList();
-  }
-
-  Widget _buildExpandableItem(String question, String answer) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: isDarkMode ? darkCardColor : cardColor,
-      ),
-      child: ExpansionTile(
-        leading: Icon(Icons.help_outline_rounded, color: primaryColor),
-        title: Text(
-          question,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: isDarkMode ? darkTextColor : textColor,
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              answer,
-              style: TextStyle(
-                color: isDarkMode ? darkTextSecondaryColor : textSecondaryColor,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppInfoCard() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: isDarkMode ? darkCardColor : cardColor,
-      ),
-      child: Column(
-        children: [
-          _buildInfoRow('الإصدار', '1.0.0'),
-          _buildInfoRow('تاريخ البناء', '2024-03-20'),
-          _buildInfoRow('المطور', 'وزارة الموارد المائية - قسم الصيانة'),
-          _buildInfoRow('رقم الترخيص', 'MWR-MNT-2024-001'),
-          _buildInfoRow('آخر تحديث', '2024-03-15'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: isDarkMode ? darkTextColor : textColor,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: isDarkMode ? darkTextSecondaryColor : textSecondaryColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _makePhoneCall(String phoneNumber, BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('جاري الاتصال بـ $phoneNumber'),
-        backgroundColor: primaryColor,
-        duration: Duration(seconds: 2),
-      ),
-    );
-    launch('tel:07725252103');
-  }
-
-  void _sendEmail(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('جاري فتح تطبيق البريد الإلكتروني'),
-        backgroundColor: primaryColor,
-        duration: Duration(seconds: 2),
-      ),
-    );
-    launch('mailto:07862268894');
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mang_mu/screens/employee/Shared Services/esignin_screen.dart';
 import 'package:mang_mu/screens/employee/employee_electricity/billing_accountant_electrity.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -58,13 +57,11 @@ class WasteBillingOfficerScreenState extends State<WasteBillingOfficerScreen>
   final Color _darkTextSecondaryColor = Color(0xFFB0B0B0);
 
   // ========== نظام التقارير الجديد ==========
-  String _selectedArea = 'جميع المناطق';
   String _selectedReportTypeSystem = 'يومي';
   List<DateTime> _selectedDates = [];
   String? _selectedWeek;
   String? _selectedMonth;
   DateTime? _lastSelectedDate; // Track last clicked date for highlighting
-  final List<String> _areas = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
   final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
   final List<String> _weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
   final List<String> _months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];

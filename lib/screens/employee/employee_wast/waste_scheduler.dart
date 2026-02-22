@@ -7,14 +7,14 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:typed_data';
 import 'package:table_calendar/table_calendar.dart';
 
-class EmployeeScheduleScreen extends StatefulWidget {
-  const EmployeeScheduleScreen({super.key});
+class WasteSchedulerApp extends StatefulWidget {
+  const WasteSchedulerApp({super.key});
 
   @override
-  State<EmployeeScheduleScreen> createState() => _EmployeeScheduleScreenState();
+  State<WasteSchedulerApp> createState() => _WasteSchedulerAppState();
 }
 
-class _EmployeeScheduleScreenState extends State<EmployeeScheduleScreen> 
+class _WasteSchedulerAppState extends State<WasteSchedulerApp> 
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
