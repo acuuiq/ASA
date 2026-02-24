@@ -18,7 +18,6 @@ import 'events_screen.dart';
 import '../Water/water_problem_report_screen.dart';
 import '../Electricity/electricity_problem_report_screen.dart';
 import '../Waste/waste_problem_report_screen.dart';
-
 class UserMainScreen extends StatefulWidget {
   static const String screenRoot = 'user_main';
 
