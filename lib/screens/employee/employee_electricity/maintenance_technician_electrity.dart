@@ -172,7 +172,7 @@ class _MaintenanceTechnicianScreenState
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       setState(() {
       });
@@ -215,6 +215,13 @@ Widget build(BuildContext context) {
       ),
       backgroundColor: isDarkMode ? _darkPrimaryColor : _primaryColor,
       centerTitle: true,
+      iconTheme: IconThemeData(
+        color: Colors.white, 
+      ),
+      actionsIconTheme: IconThemeData(
+        color: Colors.white,
+      ),
+      
       bottom: TabBar(
         controller: _tabController,
         indicatorColor: Colors.white,
@@ -223,7 +230,7 @@ Widget build(BuildContext context) {
         unselectedLabelColor: Colors.white.withOpacity(0.7),
         labelStyle: TextStyle(
           fontWeight: FontWeight.bold, 
-          fontSize: 14,
+          fontSize: 10,
           color: Colors.white
         ),
         unselectedLabelStyle: TextStyle(
@@ -247,6 +254,10 @@ Widget build(BuildContext context) {
             icon: Icon(Icons.assessment, size: 20, color: Colors.white),
             text: 'التقارير',
           ),
+          Tab(  // التبويب الخامس الجديد
+      icon: Icon(Icons.notifications_active, size: 20, color: Colors.white),
+      text: 'البلاغات',
+    ),
         ],
       ),
     ),
@@ -257,9 +268,740 @@ Widget build(BuildContext context) {
         _buildDelayedTasksView(isDarkMode),
         _buildCompletedTasksView(isDarkMode),
         _buildReportsView(),
+        _buildNewReportsView(), // التبويب الخامس الجديد
+
       ],
     ),
     drawer: _buildDrawer(context, isDarkMode),
+  );
+}
+// ========== دوال التبويب الخامس - البلاغات الجديدة ==========
+
+// بيانات تجريبية للبلاغات الجديدة
+final List<Map<String, dynamic>> newReports = [
+  {
+    'id': 'REP-2024-001',
+    'title': 'انقطاع تيار كهربائي',
+    'location': 'المنطقة الخضراء، بغداد',
+    'customerName': 'علي حسين',
+    'customerPhone': '07701234567',
+    'reportDate': DateTime.now().subtract(Duration(minutes: 30)),
+    'priority': 'عاجل',
+    'type': 'انقطاع كامل',
+    'status': 'جديد',
+    'description': 'انقطاع تيار كهربائي كامل في المنطقة منذ ساعتين',
+    'affectedArea': 'شارع 42، المنطقة الخضراء',
+    'meterNumber': 'MTR-2024-001',
+    'images': 3,
+    'voltage': '0 V',
+  },
+  {
+    'id': 'REP-2024-002',
+    'title': 'انخفاض الجهد الكهربائي',
+    'location': 'حي الجامعة، البصرة',
+    'customerName': 'سميرة عبدالله',
+    'customerPhone': '07807654321',
+    'reportDate': DateTime.now().subtract(Duration(hours: 2)),
+    'priority': 'متوسط',
+    'type': 'انخفاض الجهد',
+    'status': 'جديد',
+    'description': 'انخفاض شديد في الجهد الكهربائي يصل إلى 150 فولت',
+    'affectedArea': 'مجمع 5، حي الجامعة',
+    'meterNumber': 'MTR-2024-045',
+    'images': 2,
+    'voltage': '150 V',
+  },
+  {
+    'id': 'REP-2024-003',
+    'title': 'تماس كهربائي',
+    'location': 'شارع فلسطين، الموصل',
+    'customerName': 'حسن كريم',
+    'customerPhone': '07701122334',
+    'reportDate': DateTime.now().subtract(Duration(hours: 5)),
+    'priority': 'عاجل',
+    'type': 'تماس كهربائي',
+    'status': 'قيد المعالجة',
+    'description': 'تماس كهربائي في عمود الإنارة الرئيسي مع تصاعد دخان',
+    'affectedArea': 'تقاطع فلسطين، الموصل',
+    'meterNumber': 'MTR-2024-078',
+    'images': 4,
+    'voltage': 'غير مستقر',
+  },
+  {
+    'id': 'REP-2024-004',
+    'title': 'تلف العداد الكهربائي',
+    'location': 'حي القادسية، كربلاء',
+    'customerName': 'خالد إبراهيم',
+    'customerPhone': '07651234567',
+    'reportDate': DateTime.now().subtract(Duration(hours: 8)),
+    'priority': 'منخفض',
+    'type': 'تلف عداد',
+    'status': 'جديد',
+    'description': 'العداد لا يعمل ولا يسجل الاستهلاك',
+    'affectedArea': 'شارع 7، حي القادسية',
+    'meterNumber': 'MTR-2024-156',
+    'images': 1,
+    'voltage': '220 V',
+  },
+  {
+    'id': 'REP-2024-005',
+    'title': 'سقوط أسلاك كهربائية',
+    'location': 'شارع السعدون، بغداد',
+    'customerName': 'سعد محمد',
+    'customerPhone': '07705556677',
+    'reportDate': DateTime.now().subtract(Duration(hours: 12)),
+    'priority': 'عاجل',
+    'type': 'سقوط أسلاك',
+    'status': 'قيد المعالجة',
+    'description': 'سقوط أسلاك كهربائية على الطريق بسبب الرياح',
+    'affectedArea': 'مقابل مستشفى السعدون',
+    'meterNumber': '-',
+    'images': 5,
+    'voltage': 'خطير',
+  },
+];
+
+// دالة بناء واجهة البلاغات الجديدة
+Widget _buildNewReportsView() {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
+
+  return DefaultTabController(
+    length: 3,
+    child: Column(
+      children: [
+        // شريط التبويبات الداخلية
+        Container(
+          margin: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDarkMode ? _darkCardColor : _cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+          ),
+          child: TabBar(
+            indicator: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: _primaryColor,
+            ),
+            labelColor: Colors.white,
+            unselectedLabelColor: isDarkMode ? _darkTextColor : _textColor,
+            tabs: [
+              Tab(text: 'جديد (${newReports.where((r) => r['status'] == 'جديد').length})'),
+              Tab(text: 'قيد المعالجة (${newReports.where((r) => r['status'] == 'قيد المعالجة').length})'),
+              Tab(text: 'الكل (${newReports.length})'),
+            ],
+          ),
+        ),
+        
+        // عرض البلاغات حسب التبويب
+        Expanded(
+          child: TabBarView(
+            children: [
+              _buildFilteredReportsList('جديد', isDarkMode),
+              _buildFilteredReportsList('قيد المعالجة', isDarkMode),
+              _buildAllReportsList(isDarkMode),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// دالة عرض البلاغات المصفاة حسب الحالة
+Widget _buildFilteredReportsList(String status, bool isDarkMode) {
+  final filteredReports = newReports.where((r) => r['status'] == status).toList();
+  
+  return filteredReports.isEmpty
+      ? _buildEmptyReportsState('لا توجد بلاغات $status', Icons.notifications_off, isDarkMode)
+      : ListView.builder(
+          padding: EdgeInsets.all(16),
+          itemCount: filteredReports.length,
+          itemBuilder: (context, index) {
+            return _buildReportCard(filteredReports[index], isDarkMode);
+          },
+        );
+}
+
+// دالة عرض جميع البلاغات
+Widget _buildAllReportsList(bool isDarkMode) {
+  return newReports.isEmpty
+      ? _buildEmptyReportsState('لا توجد بلاغات', Icons.notifications_off, isDarkMode)
+      : ListView.builder(
+          padding: EdgeInsets.all(16),
+          itemCount: newReports.length,
+          itemBuilder: (context, index) {
+            return _buildReportCard(newReports[index], isDarkMode);
+          },
+        );
+}
+
+// دالة بناء بطاقة البلاغ
+Widget _buildReportCard(Map<String, dynamic> report, bool isDarkMode) {
+  Color priorityColor = _getReportPriorityColor(report['priority']);
+  String timeAgo = _getTimeAgo(report['reportDate']);
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: isDarkMode ? _darkCardColor : _cardColor,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: report['status'] == 'جديد'
+            ? _warningColor.withOpacity(0.5)
+            : (isDarkMode ? Colors.white24 : _borderColor),
+        width: report['status'] == 'جديد' ? 2 : 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      children: [
+        // رأس البطاقة
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isDarkMode ? Colors.white24 : _borderColor,
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // أيقونة الحالة
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+    color: _getReportTypeIcon(report['type']).value.withOpacity(0.1), // استخدم .value
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                     _getReportTypeIcon(report['type']).key, // استخدم .key
+    color: _getReportTypeIcon(report['type']).value, // استخدم .value
+                  size: 28,
+                ),
+              ),
+              SizedBox(width: 12),
+              
+              // المحتوى الرئيسي
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            report['title'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDarkMode ? _darkTextColor : _textColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (report['status'] == 'جديد')
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _warningColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'جديد',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      report['location'],
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        // أولوية البلاغ
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: priorityColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: priorityColor.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            report['priority'],
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: priorityColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        // الوقت
+                        Row(
+                          children: [
+                            Icon(Icons.access_time_rounded,
+                                size: 14,
+                                color: isDarkMode ? _darkTextLightColor : _textLightColor),
+                            SizedBox(width: 4),
+                            Text(
+                              timeAgo,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDarkMode ? _darkTextLightColor : _textLightColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // تفاصيل إضافية
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // معلومات العميل
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildReportInfoChip(
+                      icon: Icons.person_rounded,
+                      label: report['customerName'],
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildReportInfoChip(
+                      icon: Icons.phone_rounded,
+                      label: report['customerPhone'],
+                      isDarkMode: isDarkMode,
+                      isPhone: true,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              
+              // معلومات إضافية
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildReportInfoChip(
+                      icon: Icons.electrical_services_rounded,
+                      label: 'الجهد: ${report['voltage']}',
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildReportInfoChip(
+                      icon: Icons.image_rounded,
+                      label: '${report['images']} صور',
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                ],
+              ),
+              if (report['meterNumber'] != '-') ...[
+                SizedBox(height: 8),
+                _buildReportInfoChip(
+                  icon: Icons.confirmation_number_rounded,
+                  label: 'رقم العداد: ${report['meterNumber']}',
+                  isDarkMode: isDarkMode,
+                  fullWidth: true,
+                ),
+              ],
+              
+              SizedBox(height: 12),
+              
+              // أزرار الإجراءات
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showReportDetails(report, isDarkMode),
+                      icon: Icon(Icons.visibility_rounded, size: 18),
+                      label: Text('عرض التفاصيل'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _acceptReport(report, isDarkMode),
+                      icon: Icon(Icons.check_circle_rounded, size: 18),
+                      label: Text('قبول البلاغ'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _successColor,
+                        side: BorderSide(color: _successColor),
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// دالة بناء شريحة معلومات
+Widget _buildReportInfoChip({
+  required IconData icon,
+  required String label,
+  required bool isDarkMode,
+  bool isPhone = false,
+  bool fullWidth = false,
+}) {
+  return Container(
+    width: fullWidth ? double.infinity : null,
+    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    decoration: BoxDecoration(
+      color: isDarkMode ? _darkBackgroundColor : _backgroundColor,
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+    ),
+    child: Row(
+      mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: isPhone ? _successColor : (isDarkMode ? _darkTextColor : _textColor),
+        ),
+        SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isPhone
+                  ? _successColor
+                  : (isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// دالة عرض تفاصيل البلاغ
+void _showReportDetails(Map<String, dynamic> report, bool isDarkMode) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? _darkCardColor : _cardColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // العنوان
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: _primaryColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.report_rounded, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'تفاصيل البلاغ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            
+            // المحتوى
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow('رقم البلاغ:', report['id'], isDarkMode),
+                    _buildDetailRow('العنوان:', report['title'], isDarkMode),
+                    _buildDetailRow('الموقع:', report['location'], isDarkMode),
+                    _buildDetailRow('المنطقة المتأثرة:', report['affectedArea'], isDarkMode),
+                    _buildDetailRow('اسم العميل:', report['customerName'], isDarkMode),
+                    _buildDetailRow('رقم الهاتف:', report['customerPhone'], isDarkMode),
+                    _buildDetailRow('رقم العداد:', report['meterNumber'], isDarkMode),
+                    _buildDetailRow('الجهد:', report['voltage'], isDarkMode),
+                    _buildDetailRow('الأولوية:', report['priority'], isDarkMode),
+                    _buildDetailRow('الحالة:', report['status'], isDarkMode),
+                    _buildDetailRow('عدد الصور:', '${report['images']} صور', isDarkMode),
+                    _buildDetailRow('تاريخ البلاغ:', DateFormat('yyyy-MM-dd HH:mm').format(report['reportDate']), isDarkMode),
+                    SizedBox(height: 16),
+                    Text(
+                      'وصف البلاغ:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _primaryColor,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? _darkBackgroundColor : _backgroundColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isDarkMode ? Colors.white24 : _borderColor),
+                      ),
+                      child: Text(
+                        report['description'],
+                        style: TextStyle(
+                          color: isDarkMode ? _darkTextColor : _textColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // الأزرار
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: isDarkMode ? Colors.white24 : _borderColor,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('إغلاق'),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _acceptReport(report, isDarkMode);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _successColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text('قبول البلاغ'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// دالة قبول البلاغ
+void _acceptReport(Map<String, dynamic> report, bool isDarkMode) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Icon(Icons.check_circle_rounded, color: _successColor),
+          SizedBox(width: 8),
+          Text(
+            'قبول البلاغ',
+            style: TextStyle(
+              color: isDarkMode ? _darkTextColor : _textColor,
+            ),
+          ),
+        ],
+      ),
+      content: Text(
+        'هل أنت متأكد من قبول البلاغ رقم ${report['id']}؟',
+        style: TextStyle(
+          color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _successColor,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+            setState(() {
+              report['status'] = 'قيد المعالجة';
+            });
+            _showSuccessSnackbar('تم قبول البلاغ بنجاح');
+          },
+          child: Text('قبول'),
+        ),
+      ],
+    ),
+  );
+}
+
+// دالة الحصول على لون الأولوية
+Color _getReportPriorityColor(String priority) {
+  switch (priority) {
+    case 'عاجل':
+      return _errorColor;
+    case 'متوسط':
+      return _warningColor;
+    case 'منخفض':
+      return _successColor;
+    default:
+      return _accentColor;
+  }
+}
+// دالة الحصول على أيقونة نوع البلاغ (بدون استخدام Records)
+MapEntry<IconData, Color> _getReportTypeIcon(String type) {
+  switch (type) {
+    case 'انقطاع كامل':
+      return MapEntry(Icons.power_off_rounded, _errorColor);
+    case 'انخفاض الجهد':
+      return MapEntry(Icons.electric_meter_rounded, _warningColor);
+    case 'تماس كهربائي':
+      return MapEntry(Icons.electrical_services_rounded, Colors.orange);
+    case 'تلف عداد':
+      return MapEntry(Icons.confirmation_number_rounded, _accentColor);
+    case 'سقوط أسلاك':
+      return MapEntry(Icons.warning_rounded, Colors.red);
+    default:
+      return MapEntry(Icons.report_rounded, _primaryColor);
+  }
+}
+
+// دالة حساب الوقت المنقضي
+String _getTimeAgo(DateTime dateTime) {
+  final now = DateTime.now();
+  final difference = now.difference(dateTime);
+
+  if (difference.inMinutes < 1) {
+    return 'الآن';
+  } else if (difference.inMinutes < 60) {
+    return 'منذ ${difference.inMinutes} دقيقة';
+  } else if (difference.inHours < 24) {
+    return 'منذ ${difference.inHours} ساعة';
+  } else {
+    return 'منذ ${difference.inDays} يوم';
+  }
+}
+
+// دالة حالة عدم وجود بلاغات
+Widget _buildEmptyReportsState(String message, IconData icon, bool isDarkMode) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: isDarkMode ? _darkCardColor : _backgroundColor,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 60,
+            color: isDarkMode ? _darkTextLightColor : _textLightColor,
+          ),
+        ),
+        SizedBox(height: 24),
+        Text(
+          message,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? _darkTextColor : _textColor,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'سيتم إشعارك عند وصول بلاغات جديدة',
+          style: TextStyle(
+            fontSize: 14,
+            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+          ),
+        ),
+      ],
+    ),
   );
 }
 

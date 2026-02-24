@@ -1811,7 +1811,7 @@ Widget build(BuildContext context) {
         ),
         labelColor: Colors.white,
         unselectedLabelColor: Colors.white.withOpacity(0.7),
-        labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 8),
         unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 10),
         tabs: [
           Tab(
@@ -3284,20 +3284,6 @@ Widget _buildGovernmentDrawer(BuildContext context, bool isDarkMode) {
                     },
                     isDarkMode: isDarkMode,
                   ),
-                  
-                  // المساعدة والدعم
-                  _buildDrawerMenuItem(
-                    icon: Icons.help_rounded,
-                    title: 'المساعدة والدعم',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showHelpSupportScreen(context, isDarkMode);
-                    },
-                    isDarkMode: isDarkMode,
-                  ),
-
-                  SizedBox(height: 30),
-                  
                   // تسجيل الخروج
                   _buildDrawerMenuItem(
                     icon: Icons.logout_rounded,
@@ -4839,16 +4825,6 @@ void _showSettingsScreen(BuildContext context, bool isDarkMode) {
     ),
   );
 }
-
-// شاشة المساعدة والدعم
-void _showHelpSupportScreen(BuildContext context, bool isDarkMode) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => widget,
-    ),
-  );
-}
 }
 
 // شاشة البلاغات الكاملة
@@ -5352,6 +5328,3 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
     );
   }
 }
-
-// باقي الكود يبقى كما هو (NotificationsScreen, SettingsScreen, HelpSupportScreen, SupportChatScreen)
-// يجب نسخ نفس الكود الموجود مسبقاً لهذه الكلاسات

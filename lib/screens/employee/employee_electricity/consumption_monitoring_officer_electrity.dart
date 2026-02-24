@@ -7,7 +7,6 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:typed_data';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ConsumptionMonitoringOfficerScreen extends StatefulWidget {
   const ConsumptionMonitoringOfficerScreen({super.key});
@@ -69,14 +68,8 @@ class ConsumptionMonitoringOfficerScreenState
   int _currentReportInnerTab = 0; // 0 = إنشاء التقارير, 1 = التقارير الواردة
 
   // متغيرات الإعدادات
-  bool _notificationsEnabled = true;
-  bool _soundEnabled = true;
-  bool _vibrationEnabled = false;
 
-  String _language = 'العربية';
-  final List<String> _languages = ['العربية', 'English'];
 
-  final List<String> _areas = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
   final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
   final List<String> _weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
   final List<String> _months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -276,575 +269,6 @@ class ConsumptionMonitoringOfficerScreenState
 
   // بيانات المناطق للاختيار
   final List<String> _areasForSelection = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
-
-  // ========== دوال الإعدادات ==========
-  void _resetToDefaults() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: _cardColor(context),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Icon(Icons.restart_alt_rounded, color: _primaryColor),
-              SizedBox(width: 8),
-              Text('إعادة التعيين', style: TextStyle(color: _textColor(context))),
-            ],
-          ),
-          content: Text(
-            'هل أنت متأكد من أنك تريد إعادة جميع الإعدادات إلى القيم الافتراضية؟',
-            style: TextStyle(color: _textColor(context)),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('إلغاء', style: TextStyle(color: _textSecondaryColor(context))),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _notificationsEnabled = true;
-                  _soundEnabled = true;
-                  _vibrationEnabled = false;
-                  _language = 'العربية';
-                });
-                
-                themeProvider.toggleTheme(false);
-                
-                Navigator.pop(context);
-                _showSuccessSnackbar('تم إعادة التعيين إلى الإعدادات الافتراضية');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryColor,
-                foregroundColor: Colors.white,
-              ),
-              child: Text('تأكيد'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ========== دوال واجهة الإعدادات ==========
-
-  Widget _buildSettingsSection(String title, IconData icon, ThemeProvider themeProvider) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: _primaryColor, size: 22),
-          ),
-          SizedBox(width: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: themeProvider.isDarkMode ? Colors.white : _textColor(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: themeProvider.isDarkMode ? Colors.white10 : _cardColor(context),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: themeProvider.isDarkMode ? Colors.amber.withOpacity(0.2) : Colors.grey.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              themeProvider.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-              color: themeProvider.isDarkMode ? Colors.amber : Colors.grey,
-              size: 22,
-            ),
-          ),
-          SizedBox(width: 12),
-          
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'الوضع الداكن',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: themeProvider.isDarkMode ? Colors.white : _textColor(context),
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  themeProvider.isDarkMode ? 'مفعل - استمتع بتجربة مريحة للعين' : 'معطل - استمتع بالمظهر الافتراضي',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: themeProvider.isDarkMode ? Colors.white70 : _textSecondaryColor(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          Switch(
-            value: themeProvider.isDarkMode,
-            onChanged: (value) {
-              themeProvider.toggleTheme(value);
-            },
-            activeColor: Colors.amber,
-            activeTrackColor: Colors.amber.withOpacity(0.5),
-            inactiveThumbColor: Colors.grey,
-            inactiveTrackColor: Colors.grey.withOpacity(0.5),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingSwitch(String title, String subtitle, bool value, Function(bool) onChanged, ThemeProvider themeProvider) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: themeProvider.isDarkMode ? Colors.white10 : _cardColor(context),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: themeProvider.isDarkMode ? Colors.white : _textColor(context),
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: themeProvider.isDarkMode ? Colors.white70 : _textSecondaryColor(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: _primaryColor,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingDropdown(String title, String value, List<String> items, Function(String?) onChanged, ThemeProvider themeProvider) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: themeProvider.isDarkMode ? Colors.white10 : _cardColor(context),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: themeProvider.isDarkMode ? Colors.white : _textColor(context),
-              ),
-            ),
-          ),
-          SizedBox(width: 12),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: themeProvider.isDarkMode ? Colors.white10 : Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _primaryColor.withOpacity(0.3)),
-            ),
-            child: DropdownButton<String>(
-              value: value,
-              onChanged: onChanged,
-              items: items.map<DropdownMenuItem<String>>((String item) {
-                return DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(
-                    item,
-                    style: TextStyle(
-                      color: themeProvider.isDarkMode ? Colors.white : _textColor(context),
-                    ),
-                  ),
-                );
-              }).toList(),
-              underline: SizedBox(),
-              icon: Icon(Icons.arrow_drop_down_rounded, color: _primaryColor),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAboutCard(ThemeProvider themeProvider) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: themeProvider.isDarkMode ? Colors.white10 : _cardColor(context),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildAboutRow('الإصدار', '1.0.0', themeProvider),
-          _buildAboutRow('تاريخ البناء', '2024-03-20', themeProvider),
-          _buildAboutRow('المطور', 'وزارة الكهرباء - العراق', themeProvider),
-          _buildAboutRow('رقم الترخيص', 'MOE-2024-001', themeProvider),
-          _buildAboutRow('آخر تحديث', '2024-03-15', themeProvider),
-          _buildAboutRow('البريد الإلكتروني', 'support@electric.gov.iq', themeProvider),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAboutRow(String title, String value, ThemeProvider themeProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: themeProvider.isDarkMode ? Colors.white : _textColor(context),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: themeProvider.isDarkMode ? Colors.white70 : _textSecondaryColor(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ========== دوال المساعدة والدعم ==========
-
-  Widget _buildContactCard() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: isDarkMode ? Colors.white10 : _cardColor(context),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.support_agent_rounded, color: _primaryColor, size: 28),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'مركز الدعم الفني',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : _textColor(context),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-          _buildContactItem(Icons.phone_rounded, 'رقم الدعم الفني', '07725252103', true),
-          _buildContactItem(Icons.phone_rounded, 'رقم الطوارئ', '07862268894', true),
-          _buildContactItem(Icons.email_rounded, 'البريد الإلكتروني', 'fadhilali402@gmail.com', false),
-          _buildContactItem(Icons.access_time_rounded, 'ساعات العمل', '8:00 ص - 4:00 م', false),
-          _buildContactItem(Icons.location_on_rounded, 'العنوان', 'بغداد - وزارة الكهرباء', false),
-          SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _makePhoneCall('07725252103'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  icon: Icon(Icons.phone_rounded, size: 20),
-                  label: Text('اتصال فوري'),
-                ),
-              ),
-              SizedBox(width: 12),
-              
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContactItem(IconData icon, String title, String value, bool isPhone) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: _primaryColor, size: 20),
-          SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : _textColor(context),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: GestureDetector(
-              onTap: isPhone ? () => _makePhoneCall(value) : null,
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: isPhone ? _primaryColor : (isDarkMode ? Colors.white70 : _textSecondaryColor(context)),
-                  decoration: isPhone ? TextDecoration.underline : TextDecoration.none,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: isDarkMode ? Colors.white : _textColor(context),
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildFAQItems() {
-    Provider.of<ThemeProvider>(context, listen: false);
-
-    List<Map<String, String>> faqs = [
-      {
-        'question': 'كيف يمكنني مراقبة الاستهلاك المرتفع؟',
-        'answer': 'اذهب إلى قسم "الاستهلاك اليومي" أو "الاستهلاك الشهري" → استعرض البيانات حسب المنطقة → انقر على أي منطقة لعرض التفاصيل'
-      },
-      {
-        'question': 'كيف أعرض تقرير الاستهلاك الشهري؟',
-        'answer': 'انتقل إلى قسم "التقارير" → اختر "شهري" → حدد الشهر المطلوب → انقر على "إنشاء التقرير"'
-      },
-      {
-        'question': 'كيف أتعامل مع الإنذارات؟',
-        'answer': 'اذهب إلى قسم "الإنذارات" → استعرض قائمة الإنذارات → انقر على زر "معالجة" بجانب كل إنذار → اتبع الإجراءات المطلوبة'
-      },
-      {
-        'question': 'كيف أتحقق من استهلاك منطقة معينة؟',
-        'answer': 'استخدم فلتر المنطقة في أعلى الشاشة → اختر المنطقة المطلوبة → سيتم عرض جميع البيانات المتعلقة بتلك المنطقة'
-      },
-      {
-        'question': 'كيف أقوم بتصدير التقارير؟',
-        'answer': 'انتقل إلى قسم التقارير → اختر نوع التقرير والفترة → انقر على "إنشاء التقرير" → اختر "تصدير PDF" لحفظ أو مشاركة التقرير'
-      },
-    ];
-
-    return faqs.map((faq) {
-      return _buildExpandableItem(faq['question']!, faq['answer']!);
-    }).toList();
-  }
-
-  Widget _buildExpandableItem(String question, String answer) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: isDarkMode ? Colors.white10 : _cardColor(context),
-      ),
-      child: ExpansionTile(
-        leading: Icon(Icons.help_outline_rounded, color: _primaryColor),
-        title: Text(
-          question,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: isDarkMode ? Colors.white : _textColor(context),
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              answer,
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : _textSecondaryColor(context),
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppInfoCard() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: isDarkMode ? Colors.white10 : _cardColor(context),
-      ),
-      child: Column(
-        children: [
-          _buildInfoRow('الإصدار', '1.0.0', isDarkMode),
-          _buildInfoRow('تاريخ البناء', '2024-03-20', isDarkMode),
-          _buildInfoRow('المطور', 'وزارة الكهرباء', isDarkMode),
-          _buildInfoRow('رقم الترخيص', 'MOE-2024-001', isDarkMode),
-          _buildInfoRow('آخر تحديث', '2024-03-15', isDarkMode),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String title, String value, bool isDarkMode) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: isDarkMode ? Colors.white : _textColor(context),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: isDarkMode ? Colors.white70 : _textSecondaryColor(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ========== دوال التفاعل ==========
-
-  void _makePhoneCall(String phoneNumber) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('جاري الاتصال بـ $phoneNumber'),
-        backgroundColor: _primaryColor,
-        duration: Duration(seconds: 2),
-      ),
-    );
-    launch('tel:9647862268894');
-  }
   // ========== دوال PDF والتقارير ==========
 
   Future<void> _generatePdfReport(String period) async {
@@ -1264,139 +688,21 @@ class ConsumptionMonitoringOfficerScreenState
   // ========== دوال الواجهة الرئيسية ==========
 
   Widget _buildCurrentView() {
-    switch (_selectedTab) {
-      case 0:
-        return _buildDashboardView();
-      case 1:
-        return _buildDailyConsumptionView();
-      case 2:
-        return _buildMonthlyConsumptionView();
-      case 3:
-        return _buildReportsView();
-      case 4:
-        return _buildSettingsView();
-      case 5:
-        return _buildHelpView();
-      default:
-        return _buildDashboardView();
-    }
+  switch (_selectedTab) {
+    case 0:
+      return _buildDashboardView();
+    case 1:
+      return _buildDailyConsumptionView();
+    case 2:
+      return _buildMonthlyConsumptionView();
+    case 3:
+      return _buildReportsView();
+    case 4:
+      return _buildIncomingReportsView(); // التبويب الجديد للبلاغات
+    default:
+      return _buildDashboardView();
   }
-
-  Widget _buildSettingsView() {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final isDarkMode = themeProvider.isDarkMode;
-
-        return Container(
-          decoration: BoxDecoration(
-            gradient: isDarkMode
-                ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
-                  )
-                : LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF5F5F5), Color(0xFFE8F5E8)],
-                  ),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSettingsSection('الإشعارات', Icons.notifications_rounded, themeProvider),
-                _buildSettingSwitch(
-                  'تفعيل الإشعارات',
-                  'استلام إشعارات حول الاستهلاك والإنذارات',
-                  _notificationsEnabled,
-                  (bool value) => setState(() => _notificationsEnabled = value),
-                  themeProvider,
-                ),
-                _buildSettingSwitch(
-                  'الصوت',
-                  'تشغيل صوت للإشعارات الواردة',
-                  _soundEnabled,
-                  (bool value) => setState(() => _soundEnabled = value),
-                  themeProvider,
-                ),
-                _buildSettingSwitch(
-                  'الاهتزاز',
-                  'اهتزاز الجهاز عند استلام الإشعارات',
-                  _vibrationEnabled,
-                  (bool value) => setState(() => _vibrationEnabled = value),
-                  themeProvider,
-                ),
-
-                SizedBox(height: 24),
-                _buildSettingsSection('المظهر', Icons.palette_rounded, themeProvider),
-                
-                _buildDarkModeSwitch(themeProvider),
-                
-                _buildSettingDropdown(
-                  'اللغة',
-                  _language,
-                  _languages,
-                  (String? value) => setState(() => _language = value!),
-                  themeProvider,
-                ),
-                
-                SizedBox(height: 24),
-                _buildSettingsSection('حول التطبيق', Icons.info_rounded, themeProvider),
-                _buildAboutCard(themeProvider),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHelpView() {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final isDarkMode = themeProvider.isDarkMode;
-
-        return Container(
-          decoration: BoxDecoration(
-            gradient: isDarkMode
-                ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
-                  )
-                : LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF5F5F5), Color(0xFFE8F5E8)],
-                  ),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildContactCard(),
-
-                SizedBox(height: 24),
-
-                _buildSectionTitle('الأسئلة الشائعة'),
-                ..._buildFAQItems(),
-
-                SizedBox(height: 24),
-                _buildSectionTitle('معلومات التطبيق'),
-                _buildAppInfoCard(),
-
-                SizedBox(height: 32),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
+}
   Widget _buildAreaFilter() {
     return Container(
       margin: const EdgeInsets.all(12),
@@ -1435,29 +741,769 @@ class ConsumptionMonitoringOfficerScreenState
   }
 
   Widget _buildTabBar() {
+  return Container(
+    decoration: BoxDecoration(
+      color: _cardColor(context),
+      border: Border(
+        bottom: BorderSide(color: _borderColor(context)),
+      ),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildTabItem(0, Icons.dashboard, 'لوحة التحكم'),
+          _buildTabItem(1, Icons.today_rounded, 'الاستهلاك اليومي'),
+          _buildTabItem(2, Icons.calendar_month_rounded, 'الاستهلاك الشهري'),
+          _buildTabItem(3, Icons.assignment, 'التقارير'),
+          _buildTabItem(4, Icons.assignment_late_rounded, 'البلاغات'),
+        ],
+      ),
+    ),
+  );
+}
+    // ========== قسم البلاغات الواردة (التبويب الخامس) ==========
+  
+  // بيانات تجريبية للبلاغات الواردة
+  final List<Map<String, dynamic>> _incomingReports = [
+    {
+      'id': 'INC-2024-001',
+      'title': 'بلاغ عطل في العدالة',
+      'reporter': 'أحمد محمد',
+      'phone': '07712345678',
+      'area': 'حي الرياض',
+      'address': 'شارع الملك فهد - بناء 12',
+      'type': 'عطل فني',
+      'priority': 'عالي',
+      'status': 'جديد',
+      'date': DateTime.now().subtract(Duration(hours: 2)),
+      'description': 'العدالة لا تعمل ولا يسجل الاستهلاك',
+      'assignedTo': 'غير معين',
+      'images': 2,
+    },
+    {
+      'id': 'INC-2024-002',
+      'title': 'استهلاك غير طبيعي',
+      'reporter': 'سارة عبدالله',
+      'phone': '07798765432',
+      'area': 'حي النخيل',
+      'address': 'شارع الزهور - فيلا 45',
+      'type': 'استهلاك مرتفع',
+      'priority': 'متوسط',
+      'status': 'قيد المعالجة',
+      'date': DateTime.now().subtract(Duration(days: 1)),
+      'description': 'فواتير مرتفعة بشكل غير طبيعي خلال الشهرين الماضيين',
+      'assignedTo': 'مهندس صالح',
+      'images': 1,
+    },
+    {
+      'id': 'INC-2024-003',
+      'title': 'انقطاع التيار',
+      'reporter': 'خالد العمري',
+      'phone': '07755555555',
+      'area': 'حي العليا',
+      'address': 'شارع التخصصي - عمارة 8',
+      'type': 'انقطاع',
+      'priority': 'عالي',
+      'status': 'تمت المعالجة',
+      'date': DateTime.now().subtract(Duration(days: 3)),
+      'description': 'انقطاع متكرر للتيار الكهربائي عدة مرات في اليوم',
+      'assignedTo': 'فني محمد',
+      'images': 0,
+    },
+    {
+      'id': 'INC-2024-004',
+      'title': 'شكوى فاتورة',
+      'reporter': 'فاطمة الزهراء',
+      'phone': '07744444444',
+      'area': 'حي الصفا',
+      'address': 'شارع الأندلس - شقة 302',
+      'type': 'شكوى',
+      'priority': 'منخفض',
+      'status': 'جديد',
+      'date': DateTime.now().subtract(Duration(hours: 5)),
+      'description': 'خطأ في قراءة العدالة والفاتورة مرتفعة',
+      'assignedTo': 'غير معين',
+      'images': 3,
+    },
+    {
+      'id': 'INC-2024-005',
+      'title': 'تلف في الأسلاك',
+      'reporter': 'عبدالله السالم',
+      'phone': '07733333333',
+      'area': 'حي الرياض',
+      'address': 'شارع البترجي - منزل 22',
+      'type': 'عطل فني',
+      'priority': 'عالي',
+      'status': 'قيد المعالجة',
+      'date': DateTime.now().subtract(Duration(hours: 8)),
+      'description': 'أسلاك كهربائية مكشوفة تشكل خطر على المارة',
+      'assignedTo': 'فريق الطوارئ',
+      'images': 4,
+    },
+  ];
+
+  Widget _buildIncomingReportsView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // العنوان الرئيسي
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.assignment_late_rounded, color: _primaryColor, size: 24),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'البلاغات الواردة',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'عرض وإدارة البلاغات المقدمة من المواطنين',
+            style: TextStyle(
+              color: _textSecondaryColor(context),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+
+          // قائمة البلاغات
+          _buildIncomingReportsList(),
+        ],
+      ),
+    );
+  }
+  Widget _buildStatCircle(String label, String value, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: _textSecondaryColor(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  Widget _buildFilterChip(String label, bool isSelected, Function(bool) onSelected) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: onSelected,
+      selectedColor: _primaryColor.withOpacity(0.2),
+      checkmarkColor: _primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? _primaryColor : _textColor(context),
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: isSelected ? _primaryColor : _borderColor(context)),
+      ),
+    );
+  }
+
+  Widget _buildPriorityChip(String label, bool isSelected, Color color) {
     return Container(
-      decoration: BoxDecoration(
-        color: _cardColor(context),
-        border: Border(
-          bottom: BorderSide(color: _borderColor(context)),
+      margin: EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (selected) {},
+        selectedColor: color.withOpacity(0.2),
+        labelStyle: TextStyle(
+          color: isSelected ? color : _textSecondaryColor(context),
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: isSelected ? color : _borderColor(context)),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
+    );
+  }
+
+  Widget _buildIncomingReportsList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: _incomingReports.length,
+      itemBuilder: (context, index) {
+        final report = _incomingReports[index];
+        return _buildIncomingReportCard(report);
+      },
+    );
+  }
+
+  Widget _buildIncomingReportCard(Map<String, dynamic> report) {
+    Color priorityColor = report['priority'] == 'عالي' ? _errorColor :
+                         report['priority'] == 'متوسط' ? _warningColor : _successColor;
+    
+    Color statusColor = report['status'] == 'جديد' ? _errorColor :
+                       report['status'] == 'قيد المعالجة' ? _warningColor : _successColor;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showReportDetails(report),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: priorityColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.report_problem_rounded,
+                        color: priorityColor,
+                        size: 20,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            report['title'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: _textColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.person_outline, size: 12, color: _textSecondaryColor(context)),
+                              SizedBox(width: 4),
+                              Text(
+                                report['reporter'],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _textSecondaryColor(context),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Icon(Icons.phone_outlined, size: 12, color: _textSecondaryColor(context)),
+                              SizedBox(width: 4),
+                              Text(
+                                report['phone'],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _textSecondaryColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 12),
+                
+                Row(
+                  children: [
+                    Icon(Icons.location_on_outlined, size: 14, color: _textSecondaryColor(context)),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        report['address'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _textSecondaryColor(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 8),
+                
+                Row(
+                  children: [
+                    Icon(Icons.description_outlined, size: 14, color: _textSecondaryColor(context)),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        report['description'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _textSecondaryColor(context),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 12),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: priorityColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: priorityColor.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.priority_high_rounded,
+                                size: 12,
+                                color: priorityColor,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                report['priority'],
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: priorityColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: statusColor.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            report['status'],
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (report['images'] > 0) ...[
+                          SizedBox(width: 8),
+                          Row(
+                            children: [
+                              Icon(Icons.image_outlined, size: 12, color: _primaryColor),
+                              SizedBox(width: 2),
+                              Text(
+                                '${report['images']}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: _primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                    
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_rounded, size: 12, color: _textSecondaryColor(context)),
+                        SizedBox(width: 4),
+                        Text(
+                          _getTimeAgo(report['date']),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _textSecondaryColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                if (report['assignedTo'] != 'غير معين') ...[
+                  SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _backgroundColor(context),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_rounded, size: 14, color: _primaryColor),
+                        SizedBox(width: 4),
+                        Text(
+                          'مسند إلى: ${report['assignedTo']}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showReportDetails(Map<String, dynamic> report) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: BoxDecoration(
+          color: _cardColor(context),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
           children: [
-            _buildTabItem(0, Icons.dashboard, 'لوحة التحكم'),
-            _buildTabItem(1, Icons.today_rounded, 'الاستهلاك اليومي'),
-            _buildTabItem(2, Icons.calendar_month_rounded, 'الاستهلاك الشهري'),
-            _buildTabItem(3, Icons.assignment, 'التقارير'),
-            _buildTabItem(4, Icons.settings, 'الإعدادات'),
-            _buildTabItem(5, Icons.help, 'المساعدة'),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _primaryColor,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.report_rounded, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'تفاصيل البلاغ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailSection('معلومات البلاغ', [
+                      _buildDetailRow('رقم البلاغ', report['id']),
+                      _buildDetailRow('العنوان', report['title']),
+                      _buildDetailRow('النوع', report['type']),
+                      _buildDetailRow('التاريخ', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+                    ]),
+                    
+                    SizedBox(height: 16),
+                    
+                    _buildDetailSection('معلومات المبلغ', [
+                      _buildDetailRow('الاسم', report['reporter']),
+                      _buildDetailRow('رقم الهاتف', report['phone']),
+                      _buildDetailRow('المنطقة', report['area']),
+                      _buildDetailRow('العنوان', report['address']),
+                    ]),
+                    
+                    SizedBox(height: 16),
+                    
+                    _buildDetailSection('تفاصيل البلاغ', [
+                      _buildDetailRow('الوصف', report['description'], isMultiline: true),
+                      _buildDetailRow('الأولوية', report['priority']),
+                      _buildDetailRow('الحالة', report['status']),
+                      _buildDetailRow('مسند إلى', report['assignedTo']),
+                      if (report['images'] > 0)
+                        _buildDetailRow('المرفقات', '$report[images] صورة'),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+            
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _cardColor(context),
+                border: Border(top: BorderSide(color: _borderColor(context))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _assignReport(report);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text('تسليم البلاغ'),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _updateReportStatus(report);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _successColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text('تحديث الحالة'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildDetailSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        SizedBox(height: 12),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool isMultiline = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              label + ':',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _textSecondaryColor(context),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                color: _textColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _assignReport(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Text('تسليم البلاغ', style: TextStyle(color: _primaryColor)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('اختر الموظف لتسليم البلاغ إليه:'),
+            SizedBox(height: 16),
+            DropdownButtonFormField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'اختر الموظف',
+              ),
+              items: ['مهندس أحمد', 'فني محمد', 'مهندس سارة', 'فريق الصيانة']
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (value) {},
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showSuccessSnackbar('تم تسليم البلاغ بنجاح');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('تسليم'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateReportStatus(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Text('تحديث حالة البلاغ', style: TextStyle(color: _primaryColor)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('الحالة الحالية: ${report['status']}'),
+            SizedBox(height: 16),
+            DropdownButtonFormField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'الحالة الجديدة',
+              ),
+              value: report['status'],
+              items: ['جديد', 'قيد المعالجة', 'تمت المعالجة', 'مغلق']
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (value) {},
+            ),
+            SizedBox(height: 16),
+            TextField(
+              maxLines: 3,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'ملاحظات',
+                hintText: 'أضف ملاحظات حول التحديث...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showSuccessSnackbar('تم تحديث حالة البلاغ');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _successColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('تحديث'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getTimeAgo(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 0) {
+      return 'منذ ${difference.inDays} يوم';
+    } else if (difference.inHours > 0) {
+      return 'منذ ${difference.inHours} ساعة';
+    } else if (difference.inMinutes > 0) {
+      return 'منذ ${difference.inMinutes} دقيقة';
+    } else {
+      return 'الآن';
+    }
+  }
   Widget _buildTabItem(int index, IconData icon, String title) {
     bool isSelected = _selectedTab == index;
     return GestureDetector(
@@ -4628,61 +4674,93 @@ class ConsumptionMonitoringOfficerScreenState
       ),
     );
   }
-
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      backgroundColor: _cardColor(context),
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_gradientStart(context), _gradientEnd(context)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+Widget _buildDrawer(BuildContext context) {
+  return Drawer(
+    backgroundColor: _cardColor(context),
+    child: ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        DrawerHeader(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_gradientStart(context), _gradientEnd(context)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.white.withOpacity(0.2),
+                child: Icon(Icons.person, color: Colors.white, size: 32),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  child: Icon(Icons.person, color: Colors.white, size: 32),
+              const SizedBox(height: 12),
+              Text(
+                'سالم العلي',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'سالم العلي',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'مراقب استهلاك - المنطقة الشرقية',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 14,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'مراقب استهلاك - المنطقة الشرقية',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const Divider(color: Color(0xFFD1E0E8)),
-          ListTile(
-            leading: Icon(Icons.exit_to_app, color: _errorColor),
-            title: Text('تسجيل الخروج', style: TextStyle(color: _textColor(context))),
-            onTap: () {
-              _logout(context);
-            },
-          ),
-        ],
+        ),
+        // قسم الإعدادات في القائمة الجانبية
+        ListTile(
+          leading: Icon(Icons.settings, color: _primaryColor),
+          title: Text('الإعدادات', style: TextStyle(color: _textColor(context), fontWeight: FontWeight.bold)),
+          onTap: () {
+            Navigator.pop(context);
+            _showSettingsScreen(context, false); // فتح الإعدادات كنافذة منبثقة
+          },
+        ),
+        
+        
+        ListTile(
+          leading: Icon(Icons.exit_to_app, color: _errorColor),
+          title: Text('تسجيل الخروج', style: TextStyle(color: _errorColor)),
+          onTap: () {
+            _logout(context);
+          },
+        ),
+      ],
+    ),
+  );
+}
+// شاشة الإعدادات
+void _showSettingsScreen(BuildContext context, bool isDarkMode) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SettingsScreen(
+        primaryColor: _primaryColor,
+        secondaryColor: _secondaryColor,
+        accentColor: _accentColor,
+        darkCardColor: Color(0xFF1E1E1E),
+        cardColor: Colors.white,
+        darkTextColor: Colors.white,
+        textColor: Color(0xFF212121),
+        darkTextSecondaryColor: Colors.white70,
+        textSecondaryColor: Color(0xFF757575),
+        onSettingsChanged: (settings) {
+          print('الإعدادات المحدثة: $settings');
+        },
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   void _logout(BuildContext context) {
     showDialog(
@@ -5234,6 +5312,515 @@ class _MonitoringNotificationsScreenState extends State<MonitoringNotificationsS
             'لا توجد إشعارات في التبويب المحدد',
             style: TextStyle(
               color: _textSecondaryColor(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// شاشة الإعدادات الكاملة
+class SettingsScreen extends StatefulWidget {
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color accentColor;
+  final Color darkCardColor;
+  final Color cardColor;
+  final Color darkTextColor;
+  final Color textColor;
+  final Color darkTextSecondaryColor;
+  final Color textSecondaryColor;
+  final Function(Map<String, dynamic>) onSettingsChanged;
+
+  const SettingsScreen({
+    Key? key,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.accentColor,
+    required this.darkCardColor,
+    required this.cardColor,
+    required this.darkTextColor,
+    required this.textColor,
+    required this.darkTextSecondaryColor,
+    required this.textSecondaryColor,
+    required this.onSettingsChanged,
+  }) : super(key: key);
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _notificationsEnabled = true;
+  bool _soundEnabled = true;
+  bool _vibrationEnabled = false;
+  bool _autoBackup = true;
+  bool _biometricAuth = false;
+  bool _autoSync = true;
+  String _language = 'العربية';
+  final List<String> _languages = ['العربية', 'English'];
+
+  void _saveSettings() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final Map<String, dynamic> settings = {
+      'notificationsEnabled': _notificationsEnabled,
+      'soundEnabled': _soundEnabled,
+      'vibrationEnabled': _vibrationEnabled,
+      'darkMode': themeProvider.isDarkMode,
+      'autoBackup': _autoBackup,
+      'biometricAuth': _biometricAuth,
+      'autoSync': _autoSync,
+      'language': _language,
+    };
+    
+    widget.onSettingsChanged(settings);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم حفظ الإعدادات بنجاح'),
+        backgroundColor: widget.primaryColor,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _resetToDefaults() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+        return AlertDialog(
+          backgroundColor: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.restart_alt_rounded, color: widget.primaryColor),
+              SizedBox(width: 8),
+              Text('إعادة التعيين'),
+            ],
+          ),
+          content: Text(
+            'هل أنت متأكد من أنك تريد إعادة جميع الإعدادات إلى القيم الافتراضية؟',
+            style: TextStyle(
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء', style: TextStyle(color: widget.textSecondaryColor)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _notificationsEnabled = true;
+                  _soundEnabled = true;
+                  _vibrationEnabled = false;
+                  _autoBackup = true;
+                  _biometricAuth = false;
+                  _autoSync = true;
+                  _language = 'العربية';
+                });
+                
+                themeProvider.toggleTheme(false);
+                
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('تم إعادة التعيين إلى الإعدادات الافتراضية'),
+                    backgroundColor: widget.primaryColor,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: widget.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('تأكيد'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'الإعدادات',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: widget.primaryColor,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            _saveSettings();
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save_rounded, color: Colors.white),
+            onPressed: _saveSettings,
+          ),
+        ],
+      ),
+      body: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: themeProvider.isDarkMode
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFF5F5F5), Color(0xFFE8F5E8)],
+                    ),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSettingsSection('الإشعارات', Icons.notifications_rounded, themeProvider),
+                  _buildSettingSwitch(
+                    'تفعيل الإشعارات',
+                    'استلام إشعارات حول الفواتير والتحديثات',
+                    _notificationsEnabled,
+                    (bool value) => setState(() => _notificationsEnabled = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'الصوت',
+                    'تشغيل صوت للإشعارات الواردة',
+                    _soundEnabled,
+                    (bool value) => setState(() => _soundEnabled = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'الاهتزاز',
+                    'اهتزاز الجهاز عند استلام الإشعارات',
+                    _vibrationEnabled,
+                    (bool value) => setState(() => _vibrationEnabled = value),
+                    themeProvider,
+                  ),
+
+                  SizedBox(height: 24),
+                  _buildSettingsSection('المظهر', Icons.palette_rounded, themeProvider),
+                  
+                  _buildDarkModeSwitch(themeProvider),
+                  
+                  _buildSettingDropdown(
+                    'اللغة',
+                    _language,
+                    _languages,
+                    (String? value) => setState(() => _language = value!),
+                    themeProvider,
+                  ),
+                  
+                  SizedBox(height: 24),
+                  _buildSettingsSection('حول التطبيق', Icons.info_rounded, themeProvider),
+                  _buildAboutCard(themeProvider),
+
+                  SizedBox(height: 32),
+                  Center(
+                    child: Column(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _saveSettings,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text('حفظ الإعدادات'),
+                        ),
+                        SizedBox(height: 12),
+                        TextButton(
+                          onPressed: _resetToDefaults,
+                          child: Text(
+                            'إعادة التعيين إلى الإعدادات الافتراضية',
+                            style: TextStyle(color: widget.textSecondaryColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+                      ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: themeProvider.isDarkMode ? Colors.amber.withOpacity(0.2) : Colors.grey.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              themeProvider.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              color: themeProvider.isDarkMode ? Colors.amber : Colors.grey,
+              size: 22,
+            ),
+          ),
+          SizedBox(width: 12),
+          
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'الوضع الداكن',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  themeProvider.isDarkMode ? 'مفعل - استمتع بتجربة مريحة للعين' : 'معطل - استمتع بالمظهر الافتراضي',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          Switch(
+            value: themeProvider.isDarkMode,
+            onChanged: (value) {
+              themeProvider.toggleTheme(value);
+            },
+            activeColor: Colors.amber,
+            activeTrackColor: Colors.amber.withOpacity(0.5),
+            inactiveThumbColor: Colors.grey,
+            inactiveTrackColor: Colors.grey.withOpacity(0.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(String title, IconData icon, ThemeProvider themeProvider) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: widget.primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: widget.primaryColor, size: 22),
+          ),
+          SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingSwitch(String title, String subtitle, bool value, Function(bool) onChanged, ThemeProvider themeProvider) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: widget.primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingDropdown(String title, String value, List<String> items, Function(String?) onChanged, ThemeProvider themeProvider) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: themeProvider.isDarkMode ? Colors.white10 : Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: widget.primaryColor.withOpacity(0.3)),
+            ),
+            child: DropdownButton<String>(
+              value: value,
+              onChanged: onChanged,
+              items: items.map<DropdownMenuItem<String>>((String item) {
+                return DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                    ),
+                  ),
+                );
+              }).toList(),
+              underline: SizedBox(),
+              icon: Icon(Icons.arrow_drop_down_rounded, color: widget.primaryColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutCard(ThemeProvider themeProvider) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildAboutRow('الإصدار', '1.0.0', themeProvider),
+          _buildAboutRow('تاريخ البناء', '2024-03-20', themeProvider),
+          _buildAboutRow('المطور', 'وزارة الكهرباء - العراق', themeProvider),
+          _buildAboutRow('رقم الترخيص', 'MOE-2024-001', themeProvider),
+          _buildAboutRow('آخر تحديث', '2024-03-15', themeProvider),
+          _buildAboutRow('البريد الإلكتروني', 'support@electric.gov.iq', themeProvider),
+        ],
+      ),
+    );
+  }
+  Widget _buildAboutRow(String title, String value, ThemeProvider themeProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
             ),
           ),
         ],

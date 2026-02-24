@@ -73,7 +73,7 @@ class WaterConsumptionMonitorScreenState
 
   String _language = 'العربية';
   final List<String> _languages = ['العربية', 'English'];
-
+  
   final List<String> _areas = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
   final List<String> _reportTypes = ['يومي', 'أسبوعي', 'شهري'];
   final List<String> _weeks = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
@@ -288,6 +288,7 @@ class WaterConsumptionMonitorScreenState
       'pressure': 1.8,
     },
   ];
+
 
   // بيانات المناطق للاختيار
   final List<String> _areasForSelection = ['جميع المناطق', 'حي الرياض', 'حي النخيل', 'حي العليا', 'حي الصفا'];
@@ -1552,9 +1553,7 @@ class WaterConsumptionMonitorScreenState
       case 3:
         return _buildReportsView();
       case 4:
-        return _buildSettingsView();
-      case 5:
-        return _buildHelpView();
+        return _buildIncomingReportsView(); // التبويب الجديد للبلاغات
       default:
         return _buildDashboardView();
     }
@@ -1694,7 +1693,7 @@ class WaterConsumptionMonitorScreenState
             _buildTabItem(0, Icons.dashboard, 'لوحة التحكم'),
             _buildTabItem(1, Icons.today_rounded, 'الاستهلاك اليومي'),
             _buildTabItem(2, Icons.calendar_month_rounded, 'الاستهلاك الشهري'),
-            _buildTabItem(3, Icons.assignment, 'التقارير'),
+            _buildTabItem(3, Icons.assignment, 'التقارير'),                  _buildTabItem(4, Icons.assignment_late_rounded, 'البلاغات'),
           ],
         ),
       ),
@@ -1957,9 +1956,9 @@ class WaterConsumptionMonitorScreenState
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'أداء المناطق - استهلاك المياه',
+                  'أداء المناطق-استهلاك المياه',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: _textColor(context),
                   ),
@@ -2000,7 +1999,790 @@ class WaterConsumptionMonitorScreenState
       ),
     );
   }
+    // ========== قسم البلاغات الواردة (التبويب الخامس) ==========
+  
+  // بيانات تجريبية للبلاغات الواردة للمياه
+  final List<Map<String, dynamic>> _incomingWaterReports = [
+    {
+      'id': 'WTR-INC-2024-001',
+      'title': 'بلاغ عطل في العدالة',
+      'reporter': 'أحمد محمد',
+      'phone': '07712345678',
+      'area': 'حي الرياض',
+      'address': 'شارع الملك فهد - بناء 12',
+      'type': 'عطل فني',
+      'priority': 'عالي',
+      'status': 'جديد',
+      'date': DateTime.now().subtract(Duration(hours: 2)),
+      'description': 'عدالة المياه لا تعمل ولا يسجل الاستهلاك',
+      'assignedTo': 'غير معين',
+      'images': 2,
+    },
+    {
+      'id': 'WTR-INC-2024-002',
+      'title': 'استهلاك غير طبيعي',
+      'reporter': 'سارة عبدالله',
+      'phone': '07798765432',
+      'area': 'حي النخيل',
+      'address': 'شارع الزهور - فيلا 45',
+      'type': 'استهلاك مرتفع',
+      'priority': 'متوسط',
+      'status': 'قيد المعالجة',
+      'date': DateTime.now().subtract(Duration(days: 1)),
+      'description': 'فواتير المياه مرتفعة بشكل غير طبيعي خلال الشهرين الماضيين',
+      'assignedTo': 'مهندس صالح',
+      'images': 1,
+    },
+    {
+      'id': 'WTR-INC-2024-003',
+      'title': 'تسريب مياه',
+      'reporter': 'خالد العمري',
+      'phone': '07755555555',
+      'area': 'حي العليا',
+      'address': 'شارع التخصصي - عمارة 8',
+      'type': 'تسريب',
+      'priority': 'عالي',
+      'status': 'تمت المعالجة',
+      'date': DateTime.now().subtract(Duration(days: 3)),
+      'description': 'تسريب مياه من الأنبوب الرئيسي أمام العمارة',
+      'assignedTo': 'فريق الصيانة',
+      'images': 3,
+    },
+    {
+      'id': 'WTR-INC-2024-004',
+      'title': 'شكوى فاتورة',
+      'reporter': 'فاطمة الزهراء',
+      'phone': '07744444444',
+      'area': 'حي الصفا',
+      'address': 'شارع الأندلس - شقة 302',
+      'type': 'شكوى',
+      'priority': 'منخفض',
+      'status': 'جديد',
+      'date': DateTime.now().subtract(Duration(hours: 5)),
+      'description': 'خطأ في قراءة العدالة والفاتورة مرتفعة',
+      'assignedTo': 'غير معين',
+      'images': 2,
+    },
+    {
+      'id': 'WTR-INC-2024-005',
+      'title': 'انقطاع المياه',
+      'reporter': 'عبدالله السالم',
+      'phone': '07733333333',
+      'area': 'حي الرياض',
+      'address': 'شارع البترجي - منزل 22',
+      'type': 'انقطاع',
+      'priority': 'عالي',
+      'status': 'قيد المعالجة',
+      'date': DateTime.now().subtract(Duration(hours: 8)),
+      'description': 'انقطاع المياه عن الحي منذ الصباح',
+      'assignedTo': 'فريق الطوارئ',
+      'images': 0,
+    },
+    {
+      'id': 'WTR-INC-2024-006',
+      'title': 'جودة المياه',
+      'reporter': 'محمد العلي',
+      'phone': '07722222222',
+      'area': 'حي النخيل',
+      'address': 'شارع النخيل - مجمع 5',
+      'type': 'جودة',
+      'priority': 'متوسط',
+      'status': 'جديد',
+      'date': DateTime.now().subtract(Duration(hours: 12)),
+      'description': 'لون المياه مائل للصفرة ورائحة غير طبيعية',
+      'assignedTo': 'غير معين',
+      'images': 2,
+    },
+  ];
 
+  Widget _buildIncomingReportsView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // العنوان الرئيسي
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.assignment_late_rounded, color: _primaryColor, size: 24),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'البلاغات الواردة',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'عرض وإدارة البلاغات المقدمة من المواطنين',
+            style: TextStyle(
+              color: _textSecondaryColor(context),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // إحصائيات سريعة للبلاغات
+          _buildIncomingStats(),
+
+          const SizedBox(height: 20),
+
+          // قائمة البلاغات
+          _buildIncomingWaterReportsList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIncomingStats() {
+    int newCount = _incomingWaterReports.where((r) => r['status'] == 'جديد').length;
+    int inProgressCount = _incomingWaterReports.where((r) => r['status'] == 'قيد المعالجة').length;
+    int completedCount = _incomingWaterReports.where((r) => r['status'] == 'تمت المعالجة').length;
+    int highPriorityCount = _incomingWaterReports.where((r) => r['priority'] == 'عالي').length;
+
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStatCircle('جديد', newCount.toString(), _errorColor),
+              _buildStatCircle('قيد المعالجة', inProgressCount.toString(), _warningColor),
+              _buildStatCircle('منتهي', completedCount.toString(), _successColor),
+              _buildStatCircle('عالي', highPriorityCount.toString(), _errorColor),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCircle(String label, String value, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: _textSecondaryColor(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIncomingWaterReportsList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: _incomingWaterReports.length,
+      itemBuilder: (context, index) {
+        final report = _incomingWaterReports[index];
+        return _buildIncomingWaterReportCard(report);
+      },
+    );
+  }
+
+  Widget _buildIncomingWaterReportCard(Map<String, dynamic> report) {
+    Color priorityColor = report['priority'] == 'عالي' ? _errorColor :
+                         report['priority'] == 'متوسط' ? _warningColor : _successColor;
+    
+    Color statusColor = report['status'] == 'جديد' ? _errorColor :
+                       report['status'] == 'قيد المعالجة' ? _warningColor : _successColor;
+
+    // تحديد الأيقونة حسب نوع البلاغ
+    IconData typeIcon;
+    switch (report['type']) {
+      case 'عطل فني':
+        typeIcon = Icons.build_rounded;
+        break;
+      case 'تسريب':
+        typeIcon = Icons.plumbing_rounded;
+        break;
+      case 'استهلاك مرتفع':
+        typeIcon = Icons.trending_up_rounded;
+        break;
+      case 'انقطاع':
+        typeIcon = Icons.water_damage_rounded;
+        break;
+      case 'جودة':
+        typeIcon = Icons.science_rounded;
+        break;
+      case 'شكوى':
+        typeIcon = Icons.feedback_rounded;
+        break;
+      default:
+        typeIcon = Icons.report_problem_rounded;
+    }
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showWaterReportDetails(report),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: priorityColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        typeIcon,
+                        color: priorityColor,
+                        size: 20,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            report['title'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: _textColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.person_outline, size: 12, color: _textSecondaryColor(context)),
+                              SizedBox(width: 4),
+                              Text(
+                                report['reporter'],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _textSecondaryColor(context),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Icon(Icons.phone_outlined, size: 12, color: _textSecondaryColor(context)),
+                              SizedBox(width: 4),
+                              Text(
+                                report['phone'],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _textSecondaryColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 12),
+                
+                Row(
+                  children: [
+                    Icon(Icons.location_on_outlined, size: 14, color: _textSecondaryColor(context)),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        report['address'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _textSecondaryColor(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 8),
+                
+                Row(
+                  children: [
+                    Icon(Icons.description_outlined, size: 14, color: _textSecondaryColor(context)),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        report['description'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _textSecondaryColor(context),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 12),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: priorityColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: priorityColor.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.priority_high_rounded,
+                                size: 12,
+                                color: priorityColor,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                report['priority'],
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: priorityColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: statusColor.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            report['status'],
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (report['images'] > 0) ...[
+                          SizedBox(width: 8),
+                          Row(
+                            children: [
+                              Icon(Icons.image_outlined, size: 12, color: _primaryColor),
+                              SizedBox(width: 2),
+                              Text(
+                                '${report['images']}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: _primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                    
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_rounded, size: 12, color: _textSecondaryColor(context)),
+                        SizedBox(width: 4),
+                        Text(
+                          _getTimeAgo(report['date']),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _textSecondaryColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                if (report['assignedTo'] != 'غير معين') ...[
+                  SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _backgroundColor(context),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_rounded, size: 14, color: _primaryColor),
+                        SizedBox(width: 4),
+                        Text(
+                          'مسند إلى: ${report['assignedTo']}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWaterReportDetails(Map<String, dynamic> report) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: BoxDecoration(
+          color: _cardColor(context),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _primaryColor,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.report_rounded, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'تفاصيل البلاغ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildWaterDetailSection('معلومات البلاغ', [
+                      _buildWaterDetailRow('رقم البلاغ', report['id']),
+                      _buildWaterDetailRow('العنوان', report['title']),
+                      _buildWaterDetailRow('النوع', report['type']),
+                      _buildWaterDetailRow('التاريخ', DateFormat('yyyy-MM-dd HH:mm').format(report['date'])),
+                    ]),
+                    
+                    SizedBox(height: 16),
+                    
+                    _buildWaterDetailSection('معلومات المبلغ', [
+                      _buildWaterDetailRow('الاسم', report['reporter']),
+                      _buildWaterDetailRow('رقم الهاتف', report['phone']),
+                      _buildWaterDetailRow('المنطقة', report['area']),
+                      _buildWaterDetailRow('العنوان', report['address']),
+                    ]),
+                    
+                    SizedBox(height: 16),
+                    
+                    _buildWaterDetailSection('تفاصيل البلاغ', [
+                      _buildWaterDetailRow('الوصف', report['description'], isMultiline: true),
+                      _buildWaterDetailRow('الأولوية', report['priority']),
+                      _buildWaterDetailRow('الحالة', report['status']),
+                      _buildWaterDetailRow('مسند إلى', report['assignedTo']),
+                      if (report['images'] > 0)
+                        _buildWaterDetailRow('المرفقات', '$report[images] صورة'),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+            
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _cardColor(context),
+                border: Border(top: BorderSide(color: _borderColor(context))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _assignWaterReport(report);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text('تسليم البلاغ'),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _updateWaterReportStatus(report);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _successColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text('تحديث الحالة'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaterDetailSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        SizedBox(height: 12),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _buildWaterDetailRow(String label, String value, {bool isMultiline = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              label + ':',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _textSecondaryColor(context),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                color: _textColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _assignWaterReport(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Text('تسليم البلاغ', style: TextStyle(color: _primaryColor)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('اختر الموظف لتسليم البلاغ إليه:'),
+            SizedBox(height: 16),
+            DropdownButtonFormField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'اختر الموظف',
+              ),
+              items: ['مهندس أحمد', 'فني محمد', 'مهندس سارة', 'فريق الصيانة', 'فريق الطوارئ']
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (value) {},
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showSuccessSnackbar('تم تسليم البلاغ بنجاح');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('تسليم'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateWaterReportStatus(Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardColor(context),
+        title: Text('تحديث حالة البلاغ', style: TextStyle(color: _primaryColor)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('الحالة الحالية: ${report['status']}'),
+            SizedBox(height: 16),
+            DropdownButtonFormField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'الحالة الجديدة',
+              ),
+              value: report['status'],
+              items: ['جديد', 'قيد المعالجة', 'تمت المعالجة', 'مغلق']
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (value) {},
+            ),
+            SizedBox(height: 16),
+            TextField(
+              maxLines: 3,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'ملاحظات',
+                hintText: 'أضف ملاحظات حول التحديث...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showSuccessSnackbar('تم تحديث حالة البلاغ');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _successColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('تحديث'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getTimeAgo(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 0) {
+      return 'منذ ${difference.inDays} يوم';
+    } else if (difference.inHours > 0) {
+      return 'منذ ${difference.inHours} ساعة';
+    } else if (difference.inMinutes > 0) {
+      return 'منذ ${difference.inMinutes} دقيقة';
+    } else {
+      return 'الآن';
+    }
+  }
   Widget _buildAreaPerformanceItem(Map<String, dynamic> areaData) {
     final isIncrease = areaData['changePercent'] > 0;
 
@@ -4801,14 +5583,15 @@ class WaterConsumptionMonitorScreenState
 
   @override
 Widget build(BuildContext context) {
-  bool isMainPage = _selectedTab >= 0 && _selectedTab <= 3;
-  bool showTabs = isMainPage; // إظهار التبويبات فقط في الصفحات الرئيسية
+  // غيّر هذا السطر ليشمل التبويب الرابع (البلاغات) أيضاً
+  bool isMainPage = _selectedTab >= 0 && _selectedTab <= 4; // كان 3 والآن 4
+  bool showTabs = isMainPage; // إظهار التبويبات في الصفحات الرئيسية والبلاغات
 
   return Scaffold(
     backgroundColor: _backgroundColor(context),
     appBar: AppBar(
       title: Text(
-        _selectedTab == 4 ? 'الإعدادات' : 
+        _selectedTab == 4 ? 'البلاغات الواردة' : // أضف هذا الشرط
         _selectedTab == 5 ? 'المساعدة' : 
         'مراقبة استهلاك المياه'
       ),

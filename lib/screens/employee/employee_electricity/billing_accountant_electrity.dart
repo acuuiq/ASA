@@ -29,6 +29,8 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   String? _selectedWeek;
   String? _selectedMonth;
   int _currentReportTab = 0;
+  String _complaintTypeFilter = 'الكل';
+String _complaintStatusFilter = 'الكل';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   String _transferSearchQuery = '';
@@ -433,31 +435,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
       'bankName': 'الرافدين',
       'accountNumber': '5566778899',
     },
-    {
-      'id': 'TRF-2024-006',
-      'paymentMethodId': 'alrasheed',
-      'citizenName': 'ليلى أحمد',
-      'amount': 189000,
-      'currency': 'دينار عراقي',
-      'transferDate': DateTime.now().subtract(Duration(days: 2)),
-      'status': 'معلق',
-      'referenceNumber': 'REF-001239',
-      'bankName': 'الرشيد',
-      'accountNumber': '3344556677',
-    },
-    {
-      'id': 'TRF-2024-007',
-      'paymentMethodId': 'cash',
-      'citizenName': 'علي كريم',
-      'amount': 95000,
-      'currency': 'دينار عراقي',
-      'transferDate': DateTime.now().subtract(Duration(hours: 2)),
-      'status': 'مكتمل',
-      'referenceNumber': 'REF-001240',
-      'paymentLocation': 'مكتب الخدمة - الكرخ',
-    },
   ];
-
   // دالة للبحث في المواطنين
   List<Map<String, dynamic>> get filteredCitizens {
     if (_searchQuery.isEmpty) {
@@ -574,7 +552,7 @@ class BillingAccountantScreenState extends State<BillingAccountantScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // ⬅️ تغيير من 3 إلى 4
+    _tabController = TabController(length: 5, vsync: this); // ⬅️ تغيير من 3 إلى 4
     _tabController.addListener(() {
       setState(() {});
     });
@@ -708,6 +686,10 @@ Widget build(BuildContext context) {
                   icon: Icon(Icons.payment_rounded, size: 22),
                   text: 'طرق الدفع',
                 ),
+                Tab( // التبويب الخامس الجديد
+    icon: Icon(Icons.report_problem_rounded, size: 22),
+    text: 'البلاغات',
+  ),
               ],
             ),
           ),
@@ -742,6 +724,8 @@ Widget build(BuildContext context) {
                 _buildBillsView(isDarkMode, screenWidth, screenHeight),
                 _buildReportsView(isDarkMode, screenWidth, screenHeight), // ⬅️ شاشة التقارير الجديدة
                 _buildPaymentMethodsView(isDarkMode, screenWidth, screenHeight),
+                _buildComplaintsView(isDarkMode, screenWidth, screenHeight), // التبويب الجديد
+
               ],
             );
           },
@@ -750,7 +734,1595 @@ Widget build(BuildContext context) {
       drawer: _buildGovernmentDrawer(context, isDarkMode),
     );
   }
+  Widget _buildComplaintBillCard(Map<String, dynamic> complaint, bool isDarkMode) {
+  Color priorityColor = _getComplaintPriorityColor(complaint['priority']);
+  Color statusColor = _getComplaintStatusColor(complaint['status']);
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: _cardColor(context),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+      border: Border.all(
+        color: _borderColor(context),
+        width: 1,
+      ),
+    ),
+    child: InkWell(
+      onTap: () {
+        _showComplaintBillDetails(complaint, isDarkMode);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // السطر العلوي: النوع والحالة
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: priorityColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: priorityColor.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    complaint['type'],
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: priorityColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    complaint['status'],
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Spacer(),
+                Text(
+                  DateFormat('yyyy-MM-dd').format(complaint['date']),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _textSecondaryColor(context),
+                  ),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 12),
+            
+            // اسم المواطن ورقم الفاتورة
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    complaint['citizenName'],
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: _textColor(context),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'فاتورة: ${complaint['billId']}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 8),
+            
+            // عنوان البلاغ
+            Text(
+              complaint['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: _textColor(context),
+              ),
+            ),
+            
+            SizedBox(height: 4),
+            
+            // وصف مختصر
+            Text(
+              complaint['description'],
+              style: TextStyle(
+                fontSize: 12,
+                color: _textSecondaryColor(context),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            
+            SizedBox(height: 12),
+            
+            // معلومات الفاتورة
+            Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _backgroundColor(context),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _borderColor(context)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'المبلغ:',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _textSecondaryColor(context),
+                          ),
+                        ),
+                        Text(
+                          _formatCurrency(complaint['billAmount']),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _errorColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'الاستهلاك:',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _textSecondaryColor(context),
+                          ),
+                        ),
+                        Text(
+                          complaint['consumption'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _textColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'رقم العداد:',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _textSecondaryColor(context),
+                          ),
+                        ),
+                        Text(
+                          complaint['meterNumber'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _textColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            if (complaint['priority'] == 'عالية جداً' || complaint['priority'] == 'عالية') ...[
+              SizedBox(height: 8),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _errorColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: _errorColor, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'بلاغ عالي الأولوية - يحتاج متابعة فورية',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: _errorColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+}
+void _showComplaintBillDetails(Map<String, dynamic> complaint, bool isDarkMode) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.all(16),
+      child: Container(
+        width: double.infinity,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        decoration: BoxDecoration(
+          color: _cardColor(context),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            // رأس النافذة
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _primaryColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'تفاصيل بلاغ الفاتورة',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      complaint['id'],
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // محتوى النافذة
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // حالة وأولوية البلاغ
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildComplaintDetailChip(
+                            'الحالة: ${complaint['status']}',
+                            _getComplaintStatusColor(complaint['status']),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: _buildComplaintDetailChip(
+                            'الأولوية: ${complaint['priority']}',
+                            _getComplaintPriorityColor(complaint['priority']),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    
+                    // معلومات الفاتورة
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _primaryColor.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _primaryColor.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'معلومات الفاتورة',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: _primaryColor,
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          _buildComplaintDetailRow('رقم الفاتورة:', complaint['billId']),
+                          _buildComplaintDetailRow('المبلغ:', _formatCurrency(complaint['billAmount'])),
+                          _buildComplaintDetailRow('رقم العداد:', complaint['meterNumber']),
+                          _buildComplaintDetailRow('الاستهلاك:', complaint['consumption']),
+                          _buildComplaintDetailRow('القراءة السابقة:', complaint['previousReading'].toString()),
+                          _buildComplaintDetailRow('القراءة الحالية:', complaint['currentReading'].toString()),
+                        ],
+                      ),
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
+                    // تفاصيل البلاغ
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _backgroundColor(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _borderColor(context)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'تفاصيل البلاغ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: _textColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          _buildComplaintDetailRow('نوع البلاغ:', complaint['type']),
+                          _buildComplaintDetailRow('العنوان:', complaint['title']),
+                          SizedBox(height: 8),
+                          Text(
+                            'الوصف:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: _textSecondaryColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            complaint['description'],
+                            style: TextStyle(
+                              color: _textColor(context),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
+                    // معلومات المواطن
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _backgroundColor(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _borderColor(context)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'معلومات المواطن',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: _textColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          _buildComplaintDetailRow('الاسم:', complaint['citizenName']),
+                          _buildComplaintDetailRow('رقم الهاتف:', complaint['phone']),
+                          _buildComplaintDetailRow('العنوان:', complaint['address']),
+                        ],
+                      ),
+                    ),
+                    
+                    // المرفقات
+                    if (complaint['attachments'].isNotEmpty) ...[
+                      SizedBox(height: 16),
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _backgroundColor(context),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _borderColor(context)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'المرفقات',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: _textColor(context),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            ...complaint['attachments'].map((attachment) => Container(
+                              margin: EdgeInsets.only(bottom: 8),
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _cardColor(context),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: _borderColor(context)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.attach_file_rounded, color: _primaryColor, size: 20),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      attachment,
+                                      style: TextStyle(
+                                        color: _textColor(context),
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.download_rounded, color: _primaryColor, size: 20),
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('جاري تحميل: $attachment'),
+                                          backgroundColor: _primaryColor,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            )).toList(),
+                          ],
+                        ),
+                      ),
+                    ],
+                    
+                    // معلومات الحل (إذا كان مغلق)
+                    if (complaint['resolution'] != null) ...[
+                      SizedBox(height: 16),
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _successColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _successColor.withOpacity(0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.check_circle_rounded, color: _successColor, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'تم حل البلاغ',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: _successColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              complaint['resolution'],
+                              style: TextStyle(
+                                color: _textColor(context),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            _buildComplaintDetailRow('تم الحل بواسطة:', complaint['assignedTo']),
+                            _buildComplaintDetailRow('تاريخ الحل:', DateFormat('yyyy-MM-dd').format(complaint['resolvedDate'])),
+                          ],
+                        ),
+                      ),
+                    ],
+                    
+                    SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+            
+            // أزرار الإجراءات
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: _borderColor(context))),
+              ),
+              child: Row(
+                children: [
+                  if (complaint['status'] != 'مغلقة') ...[
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _assignComplaint(complaint);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('تعيين للموظفين'),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _resolveComplaint(complaint);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _successColor,
+                          side: BorderSide(color: _successColor),
+                        ),
+                        child: Text('حل البلاغ'),
+                      ),
+                    ),
+                  ] else ...[
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // إعادة فتح البلاغ
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _accentColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('إعادة فتح البلاغ'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+// أضف هذه الدوال المساعدة
+IconData _getComplaintTypeIcon(String type) {
+  switch (type) {
+    case 'مبلغ مبالغ فيه':
+      return Icons.money_off_rounded;
+    case 'قراءة خاطئة':
+      return Icons.numbers_rounded;
+    case 'تأخر الفاتورة':
+      return Icons.schedule_rounded;
+    case 'فاتورة مكررة':
+      return Icons.copy_rounded;
+    case 'زيادة غير مبررة':
+      return Icons.trending_up_rounded;
+    case 'استفسار عن الحساب':
+      return Icons.help_rounded;
+    default:
+      return Icons.receipt_long_rounded;
+  }
+}
 
+Color _getComplaintTypeColor(String type) {
+  switch (type) {
+    case 'مبلغ مبالغ فيه':
+      return Colors.red;
+    case 'قراءة خاطئة':
+      return Colors.orange;
+    case 'تأخر الفاتورة':
+      return Colors.amber;
+    case 'فاتورة مكررة':
+      return Colors.purple;
+    case 'زيادة غير مبررة':
+      return Colors.deepOrange;
+    case 'استفسار عن الحساب':
+      return Colors.blue;
+    default:
+      return _accentColor;
+  }
+}
+  Widget _buildComplaintsView(bool isDarkMode, double screenWidth, double screenHeight) {
+  return Container(
+    width: screenWidth,
+    height: screenHeight,
+    child: Column(
+      children: [
+        // إحصائيات سريعة للبلاغات
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _cardColor(context),
+            border: Border(bottom: BorderSide(color: _borderColor(context))),
+          ),
+        ),
+        // قائمة البلاغات
+        Expanded(
+          child: complaintBills.isEmpty
+              ? _buildNoComplaintsMessage(isDarkMode)
+              : ListView.builder(
+                  padding: EdgeInsets.all(16),
+                  itemCount: complaintBills.length,
+                  itemBuilder: (context, index) {
+                    return _buildComplaintBillCard(complaintBills[index], isDarkMode);
+                  },
+                ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildComplaintTypeFilterChip(String label, String filter, bool isDarkMode) {
+  bool isSelected = _complaintTypeFilter == filter;
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _complaintTypeFilter = filter;
+      });
+    },
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : _cardColor(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? _primaryColor : _borderColor(context),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : _textColor(context),
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildComplaintStatusFilterChip(String label, String filter, bool isDarkMode) {
+  bool isSelected = _complaintStatusFilter == filter;
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _complaintStatusFilter = filter;
+      });
+    },
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : _cardColor(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? _primaryColor : _borderColor(context),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : _textColor(context),
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildComplaintStat(String title, String value, IconData icon, Color color) {
+  return GestureDetector(
+    onTap: () {
+      // تصفية حسب هذه الإحصائية
+      setState(() {
+        // يمكن إضافة منطق التصفية هنا
+      });
+    },
+    child: Column(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            color: _textSecondaryColor(context),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildComplaintFilterChip(String label, String filter, bool isDarkMode) {
+  bool isSelected = _billFilter == filter; // يمكنك استخدام متغير منفصل للبلاغات
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        // تغيير الفلتر
+      });
+    },
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? _primaryColor : _cardColor(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? _primaryColor : _borderColor(context),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : _textColor(context),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildComplaintCard(Map<String, dynamic> complaint, bool isDarkMode) {
+  Color priorityColor = _getComplaintPriorityColor(complaint['priority']);
+  Color statusColor = _getComplaintStatusColor(complaint['status']);
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: _cardColor(context),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+      ],
+      border: Border.all(
+        color: _borderColor(context),
+        width: 1,
+      ),
+    ),
+    child: ListTile(
+      contentPadding: EdgeInsets.all(16),
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: priorityColor.withOpacity(0.1),
+          shape: BoxShape.circle,
+          border: Border.all(color: priorityColor, width: 1),
+        ),
+        child: Icon(
+          _getComplaintTypeIcon(complaint['type']),
+          color: priorityColor,
+          size: 24,
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              complaint['title'],
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: _textColor(context),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (complaint['priority'] == 'عالية جداً' || complaint['priority'] == 'طوارئ')
+            Container(
+              margin: EdgeInsets.only(left: 8),
+              padding: EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: _errorColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.warning_rounded, color: Colors.white, size: 12),
+            ),
+        ],
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 4),
+          Text(
+            complaint['citizenName'],
+            style: TextStyle(
+              fontSize: 14,
+              color: _textSecondaryColor(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            complaint['description'],
+            style: TextStyle(
+              fontSize: 12,
+              color: _textSecondaryColor(context),
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  complaint['status'],
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: priorityColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  complaint['priority'],
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: priorityColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Text(
+                DateFormat('yyyy-MM-dd HH:mm').format(complaint['date']),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: _textSecondaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      trailing: Icon(Icons.arrow_back_ios_new_rounded, 
+                   color: _textSecondaryColor(context), 
+                   size: 16),
+      onTap: () {
+        _showComplaintDetails(complaint, isDarkMode);
+      },
+    ),
+  );
+}
+
+Widget _buildNoComplaintsMessage(bool isDarkMode) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.report_problem_outlined, 
+             size: 64, 
+             color: _textSecondaryColor(context)),
+        SizedBox(height: 16),
+        Text(
+          'لا توجد بلاغات',
+          style: TextStyle(
+            fontSize: 18,
+            color: _textSecondaryColor(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'لم يتم استلام أي بلاغات جديدة',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _textSecondaryColor(context),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Color _getComplaintPriorityColor(String priority) {
+  switch (priority) {
+    case 'عالية جداً':
+    case 'طوارئ':
+      return _errorColor;
+    case 'عالية':
+      return Colors.orange;
+    case 'متوسطة':
+      return _warningColor;
+    case 'منخفضة':
+      return _successColor;
+    default:
+      return _accentColor;
+  }
+}
+
+Color _getComplaintStatusColor(String status) {
+  switch (status) {
+    case 'جديد':
+      return _errorColor;
+    case 'قيد المراجعة':
+      return _warningColor;
+    case 'مغلقة':
+      return _successColor;
+    default:
+      return _accentColor;
+  }
+}
+
+void _showComplaintDetails(Map<String, dynamic> complaint, bool isDarkMode) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.all(16),
+      child: Container(
+        width: double.infinity,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: _cardColor(context),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            // رأس النافذة
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _primaryColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'تفاصيل البلاغ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      complaint['id'],
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // محتوى النافذة
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // حالة وأولوية البلاغ
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildComplaintDetailChip(
+                            'الحالة: ${complaint['status']}',
+                            _getComplaintStatusColor(complaint['status']),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: _buildComplaintDetailChip(
+                            'الأولوية: ${complaint['priority']}',
+                            _getComplaintPriorityColor(complaint['priority']),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    
+                    // عنوان البلاغ
+                    Text(
+                      complaint['title'],
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: _textColor(context),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    
+                    // وصف البلاغ
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _backgroundColor(context),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _borderColor(context)),
+                      ),
+                      child: Text(
+                        complaint['description'],
+                        style: TextStyle(
+                          color: _textColor(context),
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    
+                    // معلومات المواطن
+                    Text(
+                      'معلومات المواطن',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _primaryColor,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    _buildComplaintDetailRow('الاسم:', complaint['citizenName']),
+                    _buildComplaintDetailRow('رقم الهاتف:', complaint['phone']),
+                    _buildComplaintDetailRow('العنوان:', complaint['address']),
+                    
+                    // المرفقات
+                    if (complaint['attachments'].isNotEmpty) ...[
+                      SizedBox(height: 16),
+                      Text(
+                        'المرفقات',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _primaryColor,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      ...complaint['attachments'].map((attachment) => Container(
+                        margin: EdgeInsets.only(bottom: 8),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _backgroundColor(context),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _borderColor(context)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.attach_file_rounded, color: _primaryColor, size: 20),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                attachment,
+                                style: TextStyle(
+                                  color: _textColor(context),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.download_rounded, color: _primaryColor, size: 20),
+                              onPressed: () {
+                                // تحميل المرفق
+                              },
+                            ),
+                          ],
+                        ),
+                      )).toList(),
+                    ],
+                    
+                    // معلومات الحل (إذا كان مغلق)
+                    if (complaint['resolution'] != null) ...[
+                      SizedBox(height: 16),
+                      Text(
+                        'الحل',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _successColor,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _successColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _successColor.withOpacity(0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              complaint['resolution'],
+                              style: TextStyle(
+                                color: _textColor(context),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'تم الحل بواسطة: ${complaint['assignedTo']}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _textSecondaryColor(context),
+                              ),
+                            ),
+                            Text(
+                              'تاريخ الحل: ${DateFormat('yyyy-MM-dd').format(complaint['resolvedDate'])}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _textSecondaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            
+            // أزرار الإجراءات
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: _borderColor(context))),
+              ),
+              child: Row(
+                children: [
+                  if (complaint['status'] != 'مغلقة') ...[
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _assignComplaint(complaint);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('تعيين للموظفين'),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _resolveComplaint(complaint);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _successColor,
+                          side: BorderSide(color: _successColor),
+                        ),
+                        child: Text('حل البلاغ'),
+                      ),
+                    ),
+                  ] else ...[
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _accentColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('إعادة فتح البلاغ'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildComplaintDetailChip(String text, Color color) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: color.withOpacity(0.3)),
+    ),
+    child: Center(
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildComplaintDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: _textSecondaryColor(context),
+              fontSize: 12,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: _textColor(context),
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _assignComplaint(Map<String, dynamic> complaint) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(context),
+      title: Text('تعيين البلاغ'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('اختر الموظف المسؤول عن البلاغ:'),
+          SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: _borderColor(context)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButton<String>(
+              value: null,
+              hint: Text('اختر موظف...'),
+              items: ['أحمد الجبوري', 'محمد العبيدي', 'علي كريم'].map((name) {
+                return DropdownMenuItem(
+                  value: name,
+                  child: Text(name),
+                );
+              }).toList(),
+              onChanged: (value) {},
+              isExpanded: true,
+              underline: SizedBox(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('تم تعيين البلاغ بنجاح'),
+                backgroundColor: _successColor,
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('تعيين'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _resolveComplaint(Map<String, dynamic> complaint) {
+  final TextEditingController resolutionController = TextEditingController();
+  
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(context),
+      title: Text('حل البلاغ'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('أدخل تفاصيل الحل:'),
+          SizedBox(height: 16),
+          TextField(
+            controller: resolutionController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'اكتب تفاصيل الحل هنا...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('تم حل البلاغ بنجاح'),
+                backgroundColor: _successColor,
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _successColor,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('تأكيد الحل'),
+        ),
+      ],
+    ),
+  );
+}
+  // بيانات البلاغات - خاصة بالفواتير فقط
+final List<Map<String, dynamic>> complaintBills = [
+  {
+    'id': 'CMP-BILL-2024-001',
+    'citizenName': 'أحمد محمد',
+    'citizenId': 'CIT-2024-001',
+    'billId': 'INV-2024-001',
+    'billAmount': 91018,
+    'title': 'فاتورة مبالغ فيها',
+    'description': 'قيمة الفاتورة لهذا الشهر 91,018 دينار بينما استهلاكي الشهري المعتاد لا يتجاوز 50,000 دينار. أرجو مراجعة القراءات.',
+    'type': 'مبلغ مبالغ فيه',
+    'priority': 'عالية',
+    'status': 'جديد',
+    'date': DateTime.now().subtract(Duration(hours: 5)),
+    'address': 'حي الرياض - شارع الملك فهد',
+    'phone': '077235477514',
+    'meterNumber': 'MTR-001234',
+    'previousReading': 1250,
+    'currentReading': 1500,
+    'consumption': '250 ك.و.س',
+    'attachments': ['صورة_العداد.jpg'],
+    'assignedTo': null,
+  },
+  {
+    'id': 'CMP-BILL-2024-002',
+    'citizenName': 'فاطمة علي',
+    'citizenId': 'CIT-2024-002',
+    'billId': 'INV-2024-002',
+    'billAmount': 112945,
+    'title': 'فاتورة غير صحيحة',
+    'description': 'الفاتورة تتضمن قراءات غير صحيحة، حيث أن العداد كان معطلاً خلال هذه الفترة',
+    'type': 'قراءة خاطئة',
+    'priority': 'عالية جداً',
+    'status': 'قيد المراجعة',
+    'date': DateTime.now().subtract(Duration(days: 2)),
+    'address': 'حي النخيل - شارع الأمير محمد',
+    'phone': '07827534903',
+    'meterNumber': 'MTR-001235',
+    'previousReading': 2100,
+    'currentReading': 2420,
+    'consumption': '320 ك.و.س',
+    'attachments': ['تقرير_الصيانة.pdf', 'صورة_العداد.jpg'],
+    'assignedTo': 'محمد العبيدي',
+  },
+  {
+    'id': 'CMP-BILL-2024-003',
+    'citizenName': 'خالد إبراهيم',
+    'citizenId': 'CIT-2024-003',
+    'billId': 'INV-2024-003',
+    'billAmount': 154473,
+    'title': 'تأخر صدور الفاتورة',
+    'description': 'فاتورة هذا الشهر صدرت متأخرة مما تسبب في تراكم المبالغ وغرامات التأخير',
+    'type': 'تأخر الفاتورة',
+    'priority': 'متوسطة',
+    'status': 'جديد',
+    'date': DateTime.now().subtract(Duration(hours: 12)),
+    'address': 'حي العليا - شارع العروبة',
+    'phone': '07758888999',
+    'meterNumber': 'MTR-001236',
+    'previousReading': 3200,
+    'currentReading': 3480,
+    'consumption': '280 ك.و.س',
+    'attachments': [],
+    'assignedTo': null,
+  },
+  {
+    'id': 'CMP-BILL-2024-004',
+    'citizenName': 'سارة عبدالله',
+    'citizenId': 'CIT-2024-004',
+    'billId': 'INV-2024-004',
+    'billAmount': 95795,
+    'title': 'فاتورة مكررة',
+    'description': 'استلمت فاتورتين لنفس الشهر بنفس الرقم والمبلغ، أرجو توضيح الأمر',
+    'type': 'فاتورة مكررة',
+    'priority': 'عالية',
+    'status': 'جديد',
+    'date': DateTime.now().subtract(Duration(minutes: 30)),
+    'address': 'حي الزهور - شارع 14',
+    'phone': '07712345678',
+    'meterNumber': 'MTR-001237',
+    'previousReading': 1760,
+    'currentReading': 2020,
+    'consumption': '260 ك.و.س',
+    'attachments': ['الفاتورة_المكررة.pdf'],
+    'assignedTo': null,
+  },
+  {
+    'id': 'CMP-BILL-2024-005',
+    'citizenName': 'محمد حسن',
+    'citizenId': 'CIT-2024-005',
+    'billId': 'INV-2024-005',
+    'billAmount': 125000,
+    'title': 'استفسار عن طريقة الحساب',
+    'description': 'كيف تم حساب قيمة الفاتورة هذا الشهر؟ أريد توضيحاً لبنود الفاتورة',
+    'type': 'استفسار عن الحساب',
+    'priority': 'منخفضة',
+    'status': 'مغلقة',
+    'date': DateTime.now().subtract(Duration(days: 5)),
+    'address': 'حي المنصور - شارع 42',
+    'phone': '07987654321',
+    'meterNumber': 'MTR-001238',
+    'previousReading': 4500,
+    'currentReading': 4750,
+    'consumption': '250 ك.و.س',
+    'attachments': [],
+    'assignedTo': 'أحمد الجبوري',
+    'resolution': 'تم شرح طريقة الحساب عبر الهاتف وإرسال تفاصيل الفاتورة عبر الواتساب',
+    'resolvedDate': DateTime.now().subtract(Duration(days: 4)),
+  },
+  {
+    'id': 'CMP-BILL-2024-006',
+    'citizenName': 'نور الهدى',
+    'citizenId': 'CIT-2024-006',
+    'billId': 'INV-2024-006',
+    'billAmount': 182000,
+    'title': 'اعتراض على زيادة الفاتورة',
+    'description': 'الفاتورة ارتفعت بشكل كبير مقارنة بالشهر الماضي بدون زيادة في الاستهلاك',
+    'type': 'زيادة غير مبررة',
+    'priority': 'عالية جداً',
+    'status': 'قيد المراجعة',
+    'date': DateTime.now().subtract(Duration(days: 1)),
+    'address': 'حي الأندلس - شارع 7',
+    'phone': '07811223344',
+    'meterNumber': 'MTR-001239',
+    'previousReading': 5800,
+    'currentReading': 6100,
+    'consumption': '300 ك.و.س',
+    'attachments': ['صورة_العداد.jpg', 'الفاتورة_السابقة.pdf'],
+    'assignedTo': 'فاطمة الزهراء',
+  },
+];
   Widget _buildCitizensView(bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
       width: screenWidth,
@@ -5953,7 +7525,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
   Widget _buildAboutRow(String title, String value, ThemeProvider themeProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),

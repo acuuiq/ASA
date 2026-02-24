@@ -580,7 +580,8 @@ actions: [
                 Tab(icon: Icon(Icons.receipt_long_rounded, size: 22), text: 'الفواتير'),
                 Tab(icon: Icon(Icons.analytics_rounded, size: 22), text: 'الاستهلاك'),
                 Tab(icon: Icon(Icons.engineering_rounded, size: 22), text: 'الصيانة'),
-                Tab(icon: Icon(Icons.report_problem_rounded, size: 22), text: 'البلاغات'),
+                Tab(icon: Icon(Icons.report_problem_rounded, size: 22), text: 'البلاغات'), // التبويب الجديد
+
               ],
             ),
           ),
@@ -593,7 +594,7 @@ actions: [
           _buildBillsTab(isDarkMode),
           _buildConsumptionTab(isDarkMode),
           _buildMaintenanceTab(isDarkMode),
-          _buildReportsTab(isDarkMode),
+          _buildReportsTab(isDarkMode), 
         ],
       ),
     );
@@ -1180,6 +1181,527 @@ void _sendBillsReportRequest(String reportType) {
   });
   
   _showSuccessMessage('تم إرسال طلب التقرير $reportType بنجاح');
+}
+// =============== دوال تبويب البلاغات الجديدة ===============
+
+Widget _buildReportsTab(bool isDarkMode) {
+  return SingleChildScrollView(
+    padding: EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildReportsStats(),
+        SizedBox(height: 20),
+        _buildReportsFilter(),
+        SizedBox(height: 20),
+        _buildReportsList(),
+      ],
+    ),
+  );
+}
+
+Widget _buildReportsStats() {
+  int newReports = _reports.where((r) => r['status'] == 'جديد').length;
+  int urgentReports = _reports.where((r) => r['priority'] == 'عاجل').length;
+  int inProgressReports = _reports.where((r) => r['status'] == 'قيد المعالجة').length;
+  int totalReports = _reports.length;
+  
+  return Container(
+    decoration: BoxDecoration(
+      color: _cardColor(),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _borderColor()),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.report_problem_rounded, color: _primaryColor, size: 24),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'إحصائيات البلاغات',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _primaryColor),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatCard('إجمالي البلاغات', totalReports.toString(), Icons.receipt_rounded, _primaryColor),
+              _buildStatCard('بلاغات جديدة', newReports.toString(), Icons.fiber_new_rounded, _warningColor),
+            ],
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatCard('عاجلة', urgentReports.toString(), Icons.priority_high_rounded, _errorColor),
+              _buildStatCard('قيد المعالجة', inProgressReports.toString(), Icons.hourglass_bottom_rounded, _accentColor),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildReportsFilter() {
+  List<String> filters = ['الكل', 'جديد', 'قيد المعالجة', 'تمت المعالجة'];
+  String _selectedReportFilter = 'الكل';
+  
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: filters.map((filter) {
+        bool isSelected = _selectedReportFilter == filter;
+        return Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: FilterChip(
+            label: Text(filter),
+            selected: isSelected,
+            onSelected: (selected) {
+              setState(() {
+                _selectedReportFilter = filter;
+              });
+            },
+            selectedColor: _primaryColor.withOpacity(0.2),
+            checkmarkColor: _primaryColor,
+            labelStyle: TextStyle(
+              color: isSelected ? _primaryColor : _textColor(),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: isSelected ? _primaryColor : _borderColor()),
+            ),
+          ),
+        );
+      }).toList(),
+    ),
+  );
+}
+
+Widget _buildReportsList() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'البلاغات الواردة',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _primaryColor),
+      ),
+      SizedBox(height: 12),
+      ..._reports.map((report) => _buildReportCard(report)).toList(),
+    ],
+  );
+}
+
+Widget _buildReportCard(Map<String, dynamic> report) {
+  Color statusColor = _getReportStatusColor(report['status']);
+  Color priorityColor = _getReportPriorityColor(report['priority']);
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      color: _cardColor(),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _borderColor()),
+    ),
+    child: ExpansionTile(
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: statusColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(_getReportIcon(report['type']), color: statusColor, size: 24),
+      ),
+      title: Text(
+        report['title'],
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _textColor()),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 4),
+          Text('المواطن: ${report['citizenName']}', style: TextStyle(fontSize: 12, color: _textSecondaryColor())),
+          SizedBox(height: 2),
+          Text(report['location'], style: TextStyle(fontSize: 11, color: _textSecondaryColor())),
+        ],
+      ),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: priorityColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: priorityColor.withOpacity(0.3)),
+            ),
+            child: Text(
+              report['priority'],
+              style: TextStyle(fontSize: 10, color: priorityColor, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(height: 4),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              report['status'],
+              style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildReportDetailRow('رقم البلاغ:', report['id']),
+              _buildReportDetailRow('المواطن:', report['citizenName']),
+              _buildReportDetailRow('رقم الهاتف:', report['phone']),
+              _buildReportDetailRow('الموقع:', report['location']),
+              _buildReportDetailRow('تاريخ البلاغ:', '${report['date']} ${report['time']}'),
+              _buildReportDetailRow('نوع البلاغ:', report['type']),
+              _buildReportDetailRow('الوصف:', report['description']),
+              if (report['assignedTo'] != null && report['assignedTo'].isNotEmpty)
+                _buildReportDetailRow('المسند إلى:', report['assignedTo']),
+              if (report['responseTime'] != null && report['responseTime'].isNotEmpty)
+                _buildReportDetailRow('وقت الاستجابة:', report['responseTime']),
+              if (report['completedDate'] != null)
+                _buildReportDetailRow('تاريخ الإنجاز:', report['completedDate']),
+              if (report['images'] > 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.image_rounded, size: 16, color: _primaryColor),
+                      SizedBox(width: 4),
+                      Text('عدد الصور: ${report['images']}', style: TextStyle(color: _primaryColor)),
+                    ],
+                  ),
+                ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  if (report['status'] == 'جديد')
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _assignReport(report),
+                        icon: Icon(Icons.assignment_ind_rounded, size: 18),
+                        label: Text('إسناد البلاغ'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (report['status'] == 'جديد') SizedBox(width: 8),
+                  if (report['status'] == 'قيد المعالجة')
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _completeReport(report),
+                        icon: Icon(Icons.check_circle_rounded, size: 18),
+                        label: Text('تأكيد الإنجاز'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _successColor,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (report['status'] == 'قيد المعالجة') SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _viewReportDetails(report),
+                      icon: Icon(Icons.visibility_rounded, size: 18),
+                      label: Text('عرض التفاصيل'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _accentColor,
+                        side: BorderSide(color: _accentColor),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildReportDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 100,
+          child: Text(
+            label,
+            style: TextStyle(fontWeight: FontWeight.w600, color: _textColor()),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(color: _textSecondaryColor()),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Color _getReportStatusColor(String status) {
+  switch (status) {
+    case 'جديد': return _warningColor;
+    case 'قيد المعالجة': return _primaryColor;
+    case 'تمت المعالجة': return _successColor;
+    default: return _textSecondaryColor();
+  }
+}
+
+Color _getReportPriorityColor(String priority) {
+  switch (priority) {
+    case 'عاجل': return _errorColor;
+    case 'عالي': return _warningColor;
+    case 'متوسط': return _accentColor;
+    case 'منخفض': return _successColor;
+    default: return _textSecondaryColor();
+  }
+}
+
+IconData _getReportIcon(String type) {
+  switch (type) {
+    case 'انقطاع': return Icons.power_off_rounded;
+    case 'عطل فني': return Icons.build_rounded;
+    case 'عداد': return Icons.speed_rounded;
+    case 'جودة': return Icons.electric_bolt_rounded;
+    case 'طوارئ': return Icons.warning_rounded;
+    default: return Icons.report_problem_rounded;
+  }
+}
+
+void _assignReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(),
+      title: Row(
+        children: [
+          Icon(Icons.assignment_ind_rounded, color: _primaryColor),
+          SizedBox(width: 8),
+          Text('إسناد البلاغ', style: TextStyle(color: _textColor())),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('اختر الفني لإسناد البلاغ:', style: TextStyle(color: _textColor())),
+          SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: _backgroundColor(),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _borderColor()),
+            ),
+            child: DropdownButton<String>(
+              value: 'فني صيانة',
+              isExpanded: true,
+              underline: SizedBox(),
+              icon: Icon(Icons.arrow_drop_down_rounded, color: _primaryColor),
+              items: ['فني صيانة', 'محاسب قواتير', 'مراقب استهلاك'].map((tech) {
+                return DropdownMenuItem(
+                  value: tech,
+                  child: Text(tech, style: TextStyle(color: _textColor())),
+                );
+              }).toList(),
+              onChanged: (value) {},
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              report['status'] = 'قيد المعالجة';
+              report['assignedTo'] = 'فني صيانة';
+            });
+            Navigator.pop(context);
+            _showSuccessMessage('تم إسناد البلاغ بنجاح');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('إسناد'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _completeReport(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: _cardColor(),
+      title: Row(
+        children: [
+          Icon(Icons.check_circle_rounded, color: _successColor),
+          SizedBox(width: 8),
+          Text('تأكيد إنجاز البلاغ', style: TextStyle(color: _textColor())),
+        ],
+      ),
+      content: Text('هل أنت متأكد من إنجاز البلاغ "${report['title']}"؟'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              report['status'] = 'تمت المعالجة';
+              report['completedDate'] = DateFormat('yyyy-MM-dd').format(DateTime.now());
+            });
+            Navigator.pop(context);
+            _showSuccessMessage('تم تأكيد إنجاز البلاغ');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _successColor,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('تأكيد الإنجاز'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _viewReportDetails(Map<String, dynamic> report) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: _cardColor(),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _primaryColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.report_problem_rounded, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'تفاصيل البلاغ',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(report['title'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: _textColor())),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _getReportPriorityColor(report['priority']).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _getReportPriorityColor(report['priority']).withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.priority_high_rounded, color: _getReportPriorityColor(report['priority'])),
+                          SizedBox(width: 8),
+                          Text('الأولوية: ${report['priority']}', style: TextStyle(fontWeight: FontWeight.bold, color: _getReportPriorityColor(report['priority']))),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    _buildDetailRow('رقم البلاغ:', report['id']),
+                    _buildDetailRow('المواطن:', report['citizenName']),
+                    _buildDetailRow('رقم الهاتف:', report['phone']),
+                    _buildDetailRow('الموقع:', report['location']),
+                    _buildDetailRow('تاريخ البلاغ:', '${report['date']} ${report['time']}'),
+                    _buildDetailRow('نوع البلاغ:', report['type']),
+                    _buildDetailRow('الحالة:', report['status']),
+                    _buildDetailRow('الوصف:', report['description']),
+                    if (report['assignedTo'] != null && report['assignedTo'].isNotEmpty)
+                      _buildDetailRow('المسند إلى:', report['assignedTo']),
+                    if (report['responseTime'] != null && report['responseTime'].isNotEmpty)
+                      _buildDetailRow('وقت الاستجابة:', report['responseTime']),
+                    if (report['completedDate'] != null)
+                      _buildDetailRow('تاريخ الإنجاز:', report['completedDate']),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: _borderColor())),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('إغلاق'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 Widget _buildBillsReceivedReportsSection() {
   return Container(
@@ -3310,21 +3832,6 @@ Widget _buildYearlyItem(Map<String, dynamic> year) {
       child: Column(children: [Icon(Icons.inbox_rounded, size: 48, color: _textSecondaryColor()), SizedBox(height: 12), Text('لا توجد تقارير واردة', style: TextStyle(fontSize: 16, color: _textSecondaryColor(), fontWeight: FontWeight.bold)), SizedBox(height: 8), Text('سيظهر هنا التقارير المرسلة من فني الصيانة', textAlign: TextAlign.center, style: TextStyle(color: _textSecondaryColor()))]),
     );
   }
-
-  Widget _buildReportsTab(bool isDarkMode) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildReportsList(),
-          SizedBox(height: 20),
-          _buildAddReportButton(),
-        ],
-      ),
-    );
-  }
-
   final List<Map<String, dynamic>> _reports = [
     {
       'id': 'RPT-001',
@@ -3407,176 +3914,7 @@ Widget _buildYearlyItem(Map<String, dynamic> year) {
       'assignedTo': 'فريق الطوارئ',
       'responseTime': '15 دقيقة',
     },
-  ];
-
-  Widget _buildReportsList() {
-    List<Map<String, dynamic>> filteredReports = _getFilteredReports();
-    if (filteredReports.isEmpty) return _buildEmptyReportsList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('قائمة البلاغات (${filteredReports.length})', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _textColor())),
-        SizedBox(height: 12),
-        ...filteredReports.map((report) => _buildReportCard(report)).toList(),
-      ],
-    );
-  }
-
-  List<Map<String, dynamic>> _getFilteredReports() {
-  return _reports.where((report) {
-    if (_selectedReportType == 'يومي' && report['status'] != 'جديد') return false;
-    if (_selectedReportType == 'أسبوعي' && report['status'] != 'قيد المعالجة') return false;
-    if (_selectedReportType == 'شهري' && report['status'] != 'تمت المعالجة') return false;
-    return true;
-  }).toList();
-}
-Widget _buildReportCard(Map<String, dynamic> report) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    decoration: BoxDecoration(
-      color: _cardColor(),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: _borderColor()),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(report['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _textColor())),
-          SizedBox(height: 8),
-          Text('${report['type'] ?? ''} - ${report['period'] ?? ''}', style: TextStyle(fontSize: 14, color: _textSecondaryColor())),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('${_formatCurrency(report['totalAmount'] ?? 0)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _successColor)),
-              Text('${report['totalBills'] ?? 0} فاتورة', style: TextStyle(color: _textSecondaryColor())),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.calendar_today_rounded, size: 14, color: _textSecondaryColor()),
-              SizedBox(width: 4),
-              Text(report['date'] ?? '', style: TextStyle(color: _textSecondaryColor())),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
-  Color _getReportStatusColor(String status) {
-    switch (status) {
-      case 'جديد': return _primaryColor;
-      case 'قيد المعالجة': return _warningColor;
-      case 'تمت المعالجة': return _successColor;
-      default: return _textSecondaryColor();
-    }
-  }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'عالي': case 'عاجل': return _errorColor;
-      case 'متوسط': return _warningColor;
-      case 'منخفض': return _successColor;
-      default: return _textSecondaryColor();
-    }
-  }
-
-  void _viewReportDetails(Map<String, dynamic> report) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: _cardColor(),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(color: _primaryColor, borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))), child: Row(children: [Icon(Icons.report_problem_rounded, color: Colors.white), SizedBox(width: 12), Expanded(child: Text('تفاصيل البلاغ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)))])),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(20),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_buildReportDetailRow('رقم البلاغ:', report['id']), _buildReportDetailRow('العنوان:', report['title']), _buildReportDetailRow('الوصف:', report['description']), _buildReportDetailRow('المواطن:', report['citizenName']), _buildReportDetailRow('رقم الهاتف:', report['phone']), _buildReportDetailRow('الموقع:', report['location']), _buildReportDetailRow('التاريخ:', '${report['date']} ${report['time']}'), _buildReportDetailRow('الحالة:', report['status']), _buildReportDetailRow('الأولوية:', report['priority']), _buildReportDetailRow('النوع:', report['type']), if (report['assignedTo'].isNotEmpty) ...[SizedBox(height: 16), Text('معلومات المعالجة', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _primaryColor)), SizedBox(height: 8), _buildReportDetailRow('مسؤول:', report['assignedTo']), _buildReportDetailRow('وقت الاستجابة:', report['responseTime'])], if (report['completedDate'] != null) _buildReportDetailRow('تاريخ الإكمال:', report['completedDate'])]),
-                ),
-              ),
-              Container(padding: EdgeInsets.all(16), decoration: BoxDecoration(border: Border(top: BorderSide(color: _borderColor()))), child: Row(children: [Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), child: Text('إغلاق'))), SizedBox(width: 12), Expanded(child: ElevatedButton.icon(onPressed: () { Navigator.pop(context); _handleReport(report); }, icon: Icon(Icons.play_arrow_rounded), label: Text('معالجة')))])),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReportDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 100, child: Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: _textColor()))), Expanded(child: Text(value, style: TextStyle(color: _textSecondaryColor())))]),
-    );
-  }
-
-  void _handleReport(Map<String, dynamic> report) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _cardColor(),
-        title: Row(children: [Icon(Icons.play_arrow_rounded, color: _primaryColor), SizedBox(width: 8), Text('معالجة البلاغ')]),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [Text('هل أنت متأكد من معالجة هذا البلاغ؟'), SizedBox(height: 16), DropdownButtonFormField<String>(decoration: InputDecoration(labelText: 'تعيين إلى', border: OutlineInputBorder()), items: [DropdownMenuItem(value: 'فني صيانة', child: Text('فني صيانة')), DropdownMenuItem(value: 'فريق طوارئ', child: Text('فريق طوارئ')), DropdownMenuItem(value: 'فني عدادات', child: Text('فني عدادات'))], onChanged: (value) {})]),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء')), ElevatedButton(onPressed: () { setState(() { report['status'] = 'قيد المعالجة'; report['assignedTo'] = 'فني صيانة'; }); Navigator.pop(context); _showSuccessMessage('تم معالجة البلاغ بنجاح'); }, child: Text('تأكيد'))],
-      ),
-    );
-  }
-
-  Widget _buildEmptyReportsList() {
-    return Container(
-      padding: EdgeInsets.all(32),
-      decoration: BoxDecoration(color: _cardColor(), borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor())),
-      child: Column(children: [Icon(Icons.inbox_rounded, size: 64, color: _textSecondaryColor()), SizedBox(height: 16), Text('لا توجد بلاغات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _textColor())), SizedBox(height: 8), Text('لم يتم العثور على بلاغات تطابق معايير البحث', style: TextStyle(color: _textSecondaryColor()), textAlign: TextAlign.center)]),
-    );
-  }
-
-  Widget _buildAddReportButton() {
-    return Container(
-      width: double.infinity,
-      child: ElevatedButton.icon(onPressed: _showAddReportDialog, style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), icon: Icon(Icons.add_rounded), label: Text('إضافة بلاغ جديد')),
-    );
-  }
-
-  void _showAddReportDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: _cardColor(),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(children: [Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: _primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.add_alert_rounded, color: _primaryColor, size: 24)), SizedBox(width: 12), Text('إضافة بلاغ جديد', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _textColor()))]),
-              SizedBox(height: 20),
-              TextField(decoration: InputDecoration(labelText: 'عنوان البلاغ', border: OutlineInputBorder())),
-              SizedBox(height: 12),
-              TextField(decoration: InputDecoration(labelText: 'وصف البلاغ', border: OutlineInputBorder()), maxLines: 3),
-              SizedBox(height: 12),
-              TextField(decoration: InputDecoration(labelText: 'اسم المواطن', border: OutlineInputBorder())),
-              SizedBox(height: 12),
-              TextField(decoration: InputDecoration(labelText: 'رقم الهاتف', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
-              SizedBox(height: 12),
-              TextField(decoration: InputDecoration(labelText: 'الموقع', border: OutlineInputBorder())),
-              SizedBox(height: 20),
-              Row(children: [Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء'))), SizedBox(width: 12), Expanded(child: ElevatedButton(onPressed: () { Navigator.pop(context); _showSuccessMessage('تم إضافة البلاغ بنجاح'); }, child: Text('إضافة البلاغ')))]),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showSuccessMessage(String message) {
+  ];  void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(children: [Icon(Icons.check_circle_rounded, color: Colors.white), SizedBox(width: 8), Expanded(child: Text(message))]),
