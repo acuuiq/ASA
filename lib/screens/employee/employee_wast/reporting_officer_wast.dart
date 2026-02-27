@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -4015,8 +4014,6 @@ class RefreshController {
     // تنظيف الموارد إذا لزم الأمر
   }
 }
-
-// شاشة الإعدادات الكاملة (مطابقة لشاشة المحاسب)
 class SettingsScreen extends StatefulWidget {
   final Color primaryColor;
   final Color secondaryColor;
@@ -4055,7 +4052,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _biometricAuth = false;
   bool _autoSync = true;
   String _language = 'العربية';
-  final List<String> _languages = ['العربية', 'English'];
+  final List<String> _languages = ['العربية', 'English', 'Kurdish', 'Turkmen'];
+
+  // إعدادات خاصة بكل شاشة
+  bool _showCitizenStats = true;
+  bool _showBillStats = true;
+  bool _showComplaintStats = true;
+  bool _showPaymentStats = true;
+  int _itemsPerPage = 10;
+  final List<int> _itemsPerPageOptions = [5, 10, 20, 50];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedSettings();
+  }
+
+  Future<void> _loadSavedSettings() async {
+    // هنا يمكن إضافة كود لتحميل الإعدادات المحفوظة من SharedPreferences
+    // مؤقتاً نستخدم القيم الافتراضية
+  }
 
   void _saveSettings() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -4068,15 +4084,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'biometricAuth': _biometricAuth,
       'autoSync': _autoSync,
       'language': _language,
+      'showCitizenStats': _showCitizenStats,
+      'showBillStats': _showBillStats,
+      'showComplaintStats': _showComplaintStats,
+      'showPaymentStats': _showPaymentStats,
+      'itemsPerPage': _itemsPerPage,
     };
-
+    
     widget.onSettingsChanged(settings);
-
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('تم حفظ الإعدادات بنجاح'),
+        content: Text('تم حفظ الإعدادات بنجاح'),
         backgroundColor: widget.primaryColor,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -4087,28 +4110,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) {
         final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
         return AlertDialog(
-          backgroundColor:
-              themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+          backgroundColor: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
               Icon(Icons.restart_alt_rounded, color: widget.primaryColor),
-              const SizedBox(width: 8),
-              const Text('إعادة التعيين'),
+              SizedBox(width: 8),
+              Text('إعادة التعيين', 
+                style: TextStyle(
+                  color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                ),
+              ),
             ],
           ),
           content: Text(
             'هل أنت متأكد من أنك تريد إعادة جميع الإعدادات إلى القيم الافتراضية؟',
             style: TextStyle(
-              color:
-                  themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('إلغاء',
-                  style: TextStyle(color: widget.textSecondaryColor)),
+              child: Text('إلغاء', 
+                style: TextStyle(color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -4120,15 +4146,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _biometricAuth = false;
                   _autoSync = true;
                   _language = 'العربية';
+                  _showCitizenStats = true;
+                  _showBillStats = true;
+                  _showComplaintStats = true;
+                  _showPaymentStats = true;
+                  _itemsPerPage = 10;
                 });
-
+                
                 themeProvider.toggleTheme(false);
-
+                
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('تم إعادة التعيين إلى الإعدادات الافتراضية'),
+                    content: Text('تم إعادة التعيين إلى الإعدادات الافتراضية'),
                     backgroundColor: widget.primaryColor,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               },
@@ -4136,7 +4168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 backgroundColor: widget.primaryColor,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('تأكيد'),
+              child: Text('تأكيد'),
             ),
           ],
         );
@@ -4160,7 +4192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
             _saveSettings();
             Navigator.pop(context);
@@ -4168,7 +4200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save_rounded, color: Colors.white),
+            icon: Icon(Icons.save_rounded, color: Colors.white),
             onPressed: _saveSettings,
           ),
         ],
@@ -4178,27 +4210,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           return Container(
             decoration: BoxDecoration(
               gradient: themeProvider.isDarkMode
-                  ? const LinearGradient(
+                  ? LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [Color(0xFF121212), Color(0xFF1A1A1A)],
                     )
-                  : const LinearGradient(
+                  : LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [Color(0xFFF5F5F5), Color(0xFFE8F5E8)],
                     ),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSettingsSection(
-                      'الإشعارات', Icons.notifications_rounded, themeProvider),
+                  // قسم الإشعارات
+                  _buildSettingsSection('الإشعارات', Icons.notifications_rounded, themeProvider),
                   _buildSettingSwitch(
                     'تفعيل الإشعارات',
-                    'استلام إشعارات حول البلاغات والتحديثات',
+                    'استلام إشعارات حول الفواتير والتحديثات',
                     _notificationsEnabled,
                     (bool value) => setState(() => _notificationsEnabled = value),
                     themeProvider,
@@ -4218,11 +4250,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     themeProvider,
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
+                  
+                  // قسم المظهر
                   _buildSettingsSection('المظهر', Icons.palette_rounded, themeProvider),
-
                   _buildDarkModeSwitch(themeProvider),
-
                   _buildSettingDropdown(
                     'اللغة',
                     _language,
@@ -4231,11 +4263,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     themeProvider,
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
+                  
+                  // قسم تخصيص العرض
+                  _buildSettingsSection('تخصيص العرض', Icons.visibility_rounded, themeProvider),
+                  _buildSettingSwitch(
+                    'إحصائيات المشتركين',
+                    'عرض إحصائيات المشتركين في الشاشة الرئيسية',
+                    _showCitizenStats,
+                    (bool value) => setState(() => _showCitizenStats = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'إحصائيات الفواتير',
+                    'عرض إحصائيات الفواتير',
+                    _showBillStats,
+                    (bool value) => setState(() => _showBillStats = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'إحصائيات البلاغات',
+                    'عرض إحصائيات البلاغات',
+                    _showComplaintStats,
+                    (bool value) => setState(() => _showComplaintStats = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'إحصائيات طرق الدفع',
+                    'عرض إحصائيات طرق الدفع',
+                    _showPaymentStats,
+                    (bool value) => setState(() => _showPaymentStats = value),
+                    themeProvider,
+                  ),
+                  _buildSettingDropdown(
+                    'عدد العناصر في الصفحة',
+                    _itemsPerPage.toString(),
+                    _itemsPerPageOptions.map((e) => e.toString()).toList(),
+                    (String? value) => setState(() => _itemsPerPage = int.parse(value!)),
+                    themeProvider,
+                  ),
+
+                  SizedBox(height: 24),
+                  
+                  // قسم الخصوصية والأمان
+                  _buildSettingsSection('الخصوصية والأمان', Icons.security_rounded, themeProvider),
+                  _buildSettingSwitch(
+                    'المصادقة البيومترية',
+                    'استخدام البصمة أو الوجه لتسجيل الدخول',
+                    _biometricAuth,
+                    (bool value) => setState(() => _biometricAuth = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'النسخ الاحتياطي التلقائي',
+                    'نسخ احتياطي للبيانات بشكل دوري',
+                    _autoBackup,
+                    (bool value) => setState(() => _autoBackup = value),
+                    themeProvider,
+                  ),
+                  _buildSettingSwitch(
+                    'المزامنة التلقائية',
+                    'مزامنة البيانات مع الخادم تلقائياً',
+                    _autoSync,
+                    (bool value) => setState(() => _autoSync = value),
+                    themeProvider,
+                  ),
+
+                  SizedBox(height: 24),
+                  
+                  // قسم حول التطبيق
                   _buildSettingsSection('حول التطبيق', Icons.info_rounded, themeProvider),
                   _buildAboutCard(themeProvider),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
+                  
+                  // أزرار التحكم
                   Center(
                     child: Column(
                       children: [
@@ -4244,14 +4346,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: widget.primaryColor,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text('حفظ الإعدادات'),
+                          child: Text('حفظ الإعدادات'),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         TextButton(
                           onPressed: _resetToDefaults,
                           child: Text(
@@ -4262,7 +4364,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                 ],
               ),
             ),
@@ -4272,96 +4374,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingsSection(
-      String title, IconData icon, ThemeProvider themeProvider) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: widget.primaryColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: widget.primaryColor, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: themeProvider.isDarkMode
-                  ? widget.darkTextColor
-                  : widget.textColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingSwitch(String title, String subtitle, bool value,
-      Function(bool) onChanged, ThemeProvider themeProvider) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: themeProvider.isDarkMode
-                        ? widget.darkTextColor
-                        : widget.textColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: themeProvider.isDarkMode
-                        ? widget.darkTextSecondaryColor
-                        : widget.textSecondaryColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: widget.primaryColor,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
@@ -4369,7 +4385,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -4379,9 +4395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: themeProvider.isDarkMode
-                  ? Colors.amber.withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.2),
+              color: themeProvider.isDarkMode ? Colors.amber.withOpacity(0.2) : Colors.grey.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -4390,8 +4404,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               size: 22,
             ),
           ),
-          const SizedBox(width: 12),
-
+          SizedBox(width: 12),
+          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -4401,27 +4415,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
-                    color: themeProvider.isDarkMode
-                        ? widget.darkTextColor
-                        : widget.textColor,
+                    color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
-                  themeProvider.isDarkMode
-                      ? 'مفعل - استمتع بتجربة مريحة للعين'
-                      : 'معطل - استمتع بالمظهر الافتراضي',
+                  themeProvider.isDarkMode ? 'مفعل - استمتع بتجربة مريحة للعين' : 'معطل - استمتع بالمظهر الافتراضي',
                   style: TextStyle(
                     fontSize: 12,
-                    color: themeProvider.isDarkMode
-                        ? widget.darkTextSecondaryColor
-                        : widget.textSecondaryColor,
+                    color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
                   ),
                 ),
               ],
             ),
           ),
-
+          
           Switch(
             value: themeProvider.isDarkMode,
             onChanged: (value) {
@@ -4437,11 +4445,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingDropdown(String title, String value, List<String> items,
-      Function(String?) onChanged, ThemeProvider themeProvider) {
+  Widget _buildSettingsSection(String title, IconData icon, ThemeProvider themeProvider) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: widget.primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: widget.primaryColor, size: 22),
+          ),
+          SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingSwitch(String title, String subtitle, bool value, Function(bool) onChanged, ThemeProvider themeProvider) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
@@ -4449,7 +4484,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: widget.primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingDropdown(String title, String value, List<String> items, Function(String?) onChanged, ThemeProvider themeProvider) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -4461,15 +4546,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
-                color: themeProvider.isDarkMode
-                    ? widget.darkTextColor
-                    : widget.textColor,
+                color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: themeProvider.isDarkMode ? Colors.white10 : Colors.grey[50],
               borderRadius: BorderRadius.circular(8),
@@ -4484,15 +4567,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Text(
                     item,
                     style: TextStyle(
-                      color: themeProvider.isDarkMode
-                          ? widget.darkTextColor
-                          : widget.textColor,
+                      color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
                     ),
                   ),
                 );
               }).toList(),
-              underline: const SizedBox(),
+              underline: SizedBox(),
               icon: Icon(Icons.arrow_drop_down_rounded, color: widget.primaryColor),
+              dropdownColor: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
             ),
           ),
         ],
@@ -4502,7 +4584,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildAboutCard(ThemeProvider themeProvider) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: themeProvider.isDarkMode ? widget.darkCardColor : widget.cardColor,
@@ -4510,7 +4592,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -4518,10 +4600,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _buildAboutRow('الإصدار', '1.0.0', themeProvider),
           _buildAboutRow('تاريخ البناء', '2024-03-20', themeProvider),
-          _buildAboutRow('المطور', 'وزارة البلدية - العراق', themeProvider),
-          _buildAboutRow('رقم الترخيص', 'MOE-2024-001', themeProvider),
+          _buildAboutRow('المطور', 'وزارة البلديات - العراق', themeProvider),
+          _buildAboutRow('نظام التشغيل', 'نظام فواتير النفايات', themeProvider),
+          _buildAboutRow('رقم الترخيص', 'MOW-2024-001', themeProvider),
           _buildAboutRow('آخر تحديث', '2024-03-15', themeProvider),
-          _buildAboutRow('البريد الإلكتروني', 'support@electric.gov.iq', themeProvider),
+          _buildAboutRow('البريد الإلكتروني', 'support@municipality.gov.iq', themeProvider),
         ],
       ),
     );
@@ -4537,16 +4620,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color:
-                  themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
+              color: themeProvider.isDarkMode ? widget.darkTextColor : widget.textColor,
             ),
           ),
           Text(
             value,
             style: TextStyle(
-              color: themeProvider.isDarkMode
-                  ? widget.darkTextSecondaryColor
-                  : widget.textSecondaryColor,
+              color: themeProvider.isDarkMode ? widget.darkTextSecondaryColor : widget.textSecondaryColor,
             ),
           ),
         ],
@@ -4554,7 +4634,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-
 // شاشة الاشعارات (مطابقة لشاشة المحاسب)
 class NotificationsScreen extends StatefulWidget {
   static const String routeName = '/notifications';
