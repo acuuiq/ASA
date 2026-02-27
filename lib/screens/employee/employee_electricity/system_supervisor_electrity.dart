@@ -26,6 +26,13 @@ String _selectedMonth = 'مارس 2024';
 String _selectedYear = '2024';
 List<String> _availableYears = ['2024', '2023', '2022', '2021', '2020'];
 
+  // متغيرات التحكم في التحديث
+  final RefreshController _billsRefreshController = RefreshController();
+  final RefreshController _consumptionRefreshController = RefreshController();
+  final RefreshController _maintenanceRefreshController = RefreshController();
+  final RefreshController _reportsRefreshController = RefreshController();
+  bool _isRefreshing = false;
+
   final Color _primaryColor = Color.fromARGB(255, 46, 30, 169);
   final Color _secondaryColor = Color(0xFFD4AF37);
   final Color _accentColor = Color(0xFF8D6E63);
@@ -171,7 +178,7 @@ final List<Map<String, dynamic>> _billsReceivedReports = [
       'isPaying': true,
       'transfers': [
         {'date': '2024-03-15', 'amount': 95795, 'method': 'تحويل بنكي'}
-      ]
+      ],
     },
   ];
 
@@ -467,7 +474,61 @@ void initState() {
   @override
   void dispose() {
     _tabController.dispose();
+    _billsRefreshController.dispose();
+    _consumptionRefreshController.dispose();
+    _maintenanceRefreshController.dispose();
+    _reportsRefreshController.dispose();
     super.dispose();
+  }
+
+  // دوال التحديث
+  Future<void> _refreshBillsTab() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(Duration(seconds: 1)); // محاكاة تحميل البيانات
+    setState(() {
+      // تحديث بيانات الفواتير هنا
+      _billFilter = 'الكل';
+      _isRefreshing = false;
+    });
+    _billsRefreshController.refreshCompleted();
+  }
+
+  Future<void> _refreshConsumptionTab() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      // تحديث بيانات الاستهلاك هنا
+      _selectedDate = DateTime.now();
+      _selectedMonth = 'مارس 2024';
+      _selectedYear = '2024';
+      _isRefreshing = false;
+    });
+    _consumptionRefreshController.refreshCompleted();
+  }
+
+  Future<void> _refreshMaintenanceTab() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      // تحديث بيانات الصيانة هنا
+      _selectedMaintenanceTab = 0;
+      _maintenanceReportFilter = 'الكل';
+      _maintenanceCurrentTab = 0;
+      _isRefreshing = false;
+    });
+    _maintenanceRefreshController.refreshCompleted();
+  }
+
+  Future<void> _refreshReportsTab() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      // تحديث بيانات البلاغات هنا
+      _selectedBillsReportTab = 0;
+      _billsReportFilter = 'الكل';
+      _isRefreshing = false;
+    });
+    _reportsRefreshController.refreshCompleted();
   }
 
   String _formatCurrency(dynamic amount) {
@@ -541,7 +602,7 @@ actions: [
             ),
             constraints: BoxConstraints(minWidth: 16, minHeight: 16),
             child: Text(
-              '3', // يمكنك جعل هذا الرقم ديناميكياً ليعكس عدد الإشعارات غير المقروءة
+              '3',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 10,
@@ -580,8 +641,7 @@ actions: [
                 Tab(icon: Icon(Icons.receipt_long_rounded, size: 22), text: 'الفواتير'),
                 Tab(icon: Icon(Icons.analytics_rounded, size: 22), text: 'الاستهلاك'),
                 Tab(icon: Icon(Icons.engineering_rounded, size: 22), text: 'الصيانة'),
-                Tab(icon: Icon(Icons.report_problem_rounded, size: 22), text: 'البلاغات'), // التبويب الجديد
-
+                Tab(icon: Icon(Icons.report_problem_rounded, size: 22), text: 'البلاغات'),
               ],
             ),
           ),
@@ -601,33 +661,40 @@ actions: [
   }
 
   Widget _buildBillsTab(bool isDarkMode) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDarkMode ? Color(0xFF333333) : Color(0xFFE0E0E0)),
+    return RefreshIndicator(
+      key: const Key('bills_refresh'),
+      onRefresh: _refreshBillsTab,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isDarkMode ? Color(0xFF333333) : Color(0xFFE0E0E0)),
+              ),
+              child: Row(
+                children: [
+                  _buildInnerTabButton('الفواتير', 0, isDarkMode),
+                  _buildInnerTabButton('طرق الدفع', 1, isDarkMode),
+                  _buildInnerTabButton('المواطنين', 2, isDarkMode),
+                  _buildInnerTabButton('التقارير', 3, isDarkMode),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                _buildInnerTabButton('الفواتير', 0, isDarkMode),
-                _buildInnerTabButton('طرق الدفع', 1, isDarkMode),
-                _buildInnerTabButton('المواطنين', 2, isDarkMode),
-                _buildInnerTabButton('التقارير', 3, isDarkMode),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-          if (_currentTabInBills == 0) _buildBillsContent(isDarkMode),
-          if (_currentTabInBills == 1) _buildPaymentMethodsContent(isDarkMode),
-          if (_currentTabInBills == 2) _buildCitizensContent(isDarkMode),
-          if (_currentTabInBills == 3) _buildReportsContent(isDarkMode),
-        ],
+            SizedBox(height: 20),
+            if (_currentTabInBills == 0) _buildBillsContent(isDarkMode),
+            if (_currentTabInBills == 1) _buildPaymentMethodsContent(isDarkMode),
+            if (_currentTabInBills == 2) _buildCitizensContent(isDarkMode),
+            if (_currentTabInBills == 3) _buildReportsContent(isDarkMode),
+          ],
+        ),
       ),
     );
   }
@@ -743,7 +810,6 @@ Widget _buildReportsContent(isDarkMode) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // تبويبات التقارير (طلبات التقارير والتقارير الواردة)
       Container(
         height: 50,
         decoration: BoxDecoration(
@@ -760,7 +826,6 @@ Widget _buildReportsContent(isDarkMode) {
       ),
       SizedBox(height: 16),
       
-      // المحتوى حسب التبويب المختار
       _selectedBillsReportTab == 0 
           ? _buildBillsReportRequestsSection() 
           : _buildBillsReceivedReportsSection(),
@@ -826,7 +891,6 @@ Widget _buildBillsReportRequestsSection() {
           ),
           SizedBox(height: 20),
           
-          // رسالة توضيحية
           Container(
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -849,7 +913,6 @@ Widget _buildBillsReportRequestsSection() {
           ),
           SizedBox(height: 20),
           
-          // أزرار طلب التقارير
           Row(
             children: [
               Expanded(
@@ -882,7 +945,6 @@ Widget _buildBillsReportRequestsSection() {
           ),
           SizedBox(height: 20),
           
-          // قائمة طلبات التقارير
           Text(
             'طلباتي الأخيرة',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _textColor()),
@@ -1182,20 +1244,26 @@ void _sendBillsReportRequest(String reportType) {
   
   _showSuccessMessage('تم إرسال طلب التقرير $reportType بنجاح');
 }
-// =============== دوال تبويب البلاغات الجديدة ===============
 
 Widget _buildReportsTab(bool isDarkMode) {
-  return SingleChildScrollView(
-    padding: EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildReportsStats(),
-        SizedBox(height: 20),
-        _buildReportsFilter(),
-        SizedBox(height: 20),
-        _buildReportsList(),
-      ],
+  return RefreshIndicator(
+    key: const Key('reports_refresh'),
+    onRefresh: _refreshReportsTab,
+    color: _primaryColor,
+    backgroundColor: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+    child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildReportsStats(),
+          SizedBox(height: 20),
+          _buildReportsFilter(),
+          SizedBox(height: 20),
+          _buildReportsList(),
+        ],
+      ),
     ),
   );
 }
@@ -1740,11 +1808,9 @@ Widget _buildBillsReceivedReportsSection() {
           ),
           SizedBox(height: 20),
           
-          // فلترة التقارير
           _buildBillsReportFilter(),
           SizedBox(height: 20),
           
-          // قائمة التقارير الواردة
           if (_billsReceivedReports.isEmpty)
             _buildBillsEmptyReports()
           else
@@ -1805,7 +1871,6 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // صف العنوان والحالة
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -1854,10 +1919,8 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
         
         SizedBox(height: 12),
         
-        // معلومات التقرير
         Row(
           children: [
-            // المرسل
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1885,7 +1948,6 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
               ),
             ),
             
-            // التاريخ والوقت
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1917,7 +1979,6 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
         
         SizedBox(height: 12),
         
-        // نوع التقرير والأولوية
         Row(
           children: [
             Container(
@@ -1961,7 +2022,6 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
             
             Spacer(),
             
-            // حجم الملف
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -1979,7 +2039,6 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
         
         SizedBox(height: 12),
         
-        // ملخص التقرير
         Text(
           report['summary'],
           style: TextStyle(
@@ -1993,7 +2052,6 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
         
         SizedBox(height: 12),
         
-        // معلومات إضافية للفواتير
         Row(
           children: [
             Container(
@@ -2038,7 +2096,6 @@ Widget _buildBillsReceivedReportItem(Map<String, dynamic> report) {
         
         SizedBox(height: 16),
         
-        // أزرار الإجراءات
         Row(
           children: [
             Expanded(
@@ -2123,7 +2180,6 @@ void _viewBillsReport(Map<String, dynamic> report) {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // رأس التقرير
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -2168,7 +2224,6 @@ void _viewBillsReport(Map<String, dynamic> report) {
                     Divider(color: _borderColor()),
                     SizedBox(height: 16),
                     
-                    // ملخص التقرير
                     Text(
                       'ملخص التقرير',
                       style: TextStyle(
@@ -2188,7 +2243,6 @@ void _viewBillsReport(Map<String, dynamic> report) {
                     
                     SizedBox(height: 16),
                     
-                    // معلومات الفواتير
                     Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -2245,7 +2299,6 @@ void _viewBillsReport(Map<String, dynamic> report) {
                     
                     SizedBox(height: 16),
                     
-                    // المرفقات
                     if (report['attachments'] > 0)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2270,7 +2323,6 @@ void _viewBillsReport(Map<String, dynamic> report) {
               ),
             ),
             
-            // أزرار الإجراءات
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -2635,35 +2687,42 @@ Widget _buildBillsEmptyReports() {
         Text(title, style: TextStyle(fontSize: 10, color: _textSecondaryColor())),
       ],
     );
-  }Widget _buildConsumptionTab(isDarkMode) {
-  return SingleChildScrollView(
-    padding: EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // تبويبات الاستهلاك
-        Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isDarkMode ? Color(0xFF333333) : Color(0xFFE0E0E0)),
+  }
+
+Widget _buildConsumptionTab(isDarkMode) {
+  return RefreshIndicator(
+    key: const Key('consumption_refresh'),
+    onRefresh: _refreshConsumptionTab,
+    color: _primaryColor,
+    backgroundColor: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+    child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isDarkMode ? Color(0xFF333333) : Color(0xFFE0E0E0)),
+            ),
+            child: Row(
+              children: [
+                _buildConsumptionTabButton('اليومي', 0, Icons.today_rounded),
+                _buildConsumptionTabButton('الشهري', 1, Icons.date_range_rounded),
+                _buildConsumptionTabButton('السنوي', 2, Icons.calendar_today_rounded),
+              ],
+            ),
           ),
-          child: Row(
-            children: [
-              _buildConsumptionTabButton('اليومي', 0, Icons.today_rounded),
-              _buildConsumptionTabButton('الشهري', 1, Icons.date_range_rounded),
-              _buildConsumptionTabButton('السنوي', 2, Icons.calendar_today_rounded),
-            ],
-          ),
-        ),
-        SizedBox(height: 20),
-        
-        // المحتوى حسب التبويب المختار
-        if (_selectedConsumptionTab == 0) _buildDailyConsumption(),
-        if (_selectedConsumptionTab == 1) _buildMonthlyConsumption(),
-        if (_selectedConsumptionTab == 2) _buildYearlyConsumption(),
-      ],
+          SizedBox(height: 20),
+          
+          if (_selectedConsumptionTab == 0) _buildDailyConsumption(),
+          if (_selectedConsumptionTab == 1) _buildMonthlyConsumption(),
+          if (_selectedConsumptionTab == 2) _buildYearlyConsumption(),
+        ],
+      ),
     ),
   );
 }
@@ -2706,7 +2765,6 @@ Widget _buildDailyConsumption() {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // فلتر التاريخ
       Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -2758,7 +2816,6 @@ Widget _buildDailyConsumption() {
       ),
       SizedBox(height: 20),
       
-      // إحصائيات اليوم المحدد
       _buildDailyStats(),
     ],
   );
@@ -2855,7 +2912,7 @@ Widget _buildDailyStats() {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${_formatNumber(day['consumption'].toDouble())} ك.و.س', // أضف toDouble()
+              '${_formatNumber(day['consumption'].toDouble())} ك.و.س',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _primaryColor),
             ),
             SizedBox(height: 4),
@@ -2890,7 +2947,6 @@ Widget _buildMonthlyConsumption() {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // فلتر الشهر
       Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -2933,7 +2989,6 @@ Widget _buildMonthlyConsumption() {
       ),
       SizedBox(height: 20),
       
-      // إحصائيات الشهر
       _buildMonthlyStats(),
     ],
   );
@@ -3048,7 +3103,6 @@ Widget _buildMonthlyItem(Map<String, dynamic> month) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // فلتر السنة
       Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -3091,7 +3145,6 @@ Widget _buildMonthlyItem(Map<String, dynamic> month) {
       ),
       SizedBox(height: 20),
       
-      // إحصائيات السنة
       _buildYearlyStats(),
     ],
   );
@@ -3281,24 +3334,31 @@ Widget _buildYearlyItem(Map<String, dynamic> year) {
     );
   }
 
-  String _formatNumber(num number) {  // استخدم num بدلاً من double
+  String _formatNumber(num number) {
   if (number >= 1000000) return '${(number / 1000000).toStringAsFixed(1)}M';
   if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}K';
   return number.toStringAsFixed(0);
 }
 
   Widget _buildMaintenanceTab(isdarkmode) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMaintenanceStats(),
-          SizedBox(height: 20),
-          _buildMaintenanceTasksTabs(),
-          SizedBox(height: 20),
-          _buildMaintenanceReportTabs(),
-        ],
+    return RefreshIndicator(
+      key: const Key('maintenance_refresh'),
+      onRefresh: _refreshMaintenanceTab,
+      color: _primaryColor,
+      backgroundColor: isdarkmode ? Color(0xFF1E1E1E) : Colors.white,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildMaintenanceStats(),
+            SizedBox(height: 20),
+            _buildMaintenanceTasksTabs(),
+            SizedBox(height: 20),
+            _buildMaintenanceReportTabs(),
+          ],
+        ),
       ),
     );
   }
@@ -3914,7 +3974,9 @@ Widget _buildYearlyItem(Map<String, dynamic> year) {
       'assignedTo': 'فريق الطوارئ',
       'responseTime': '15 دقيقة',
     },
-  ];  void _showSuccessMessage(String message) {
+  ];  
+
+  void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(children: [Icon(Icons.check_circle_rounded, color: Colors.white), SizedBox(width: 8), Expanded(child: Text(message))]),
@@ -4190,6 +4252,12 @@ Widget _buildYearlyItem(Map<String, dynamic> year) {
   }
 }
 
+// RefreshController helper class
+class RefreshController {
+  void refreshCompleted() {}
+  void dispose() {}
+}
+
 class SupervisorSettingsScreen extends StatefulWidget {
   final Color primaryColor;
   final Color secondaryColor;
@@ -4362,7 +4430,7 @@ class _SupervisorSettingsScreenState extends State<SupervisorSettingsScreen> {
     );
   }
 }
-// شاشة الإشعارات لمسؤول الكهرباء - نسخة مصححة
+
 class SupervisorNotificationsScreen extends StatefulWidget {
   static const String routeName = '/supervisor-notifications';
 
@@ -4373,8 +4441,8 @@ class SupervisorNotificationsScreen extends StatefulWidget {
 class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsScreen> {
   int _selectedTab = 0;
   final List<String> _tabs = ['الصيانة', 'الفواتير', 'البلاغات', 'الكل'];
+  final RefreshController _notificationsRefreshController = RefreshController();
   
-  // تعريف الألوان الثابتة
   final Color _primaryColor = Color.fromARGB(255, 46, 30, 169);
   final Color _secondaryColor = Color(0xFFD4AF37);
   final Color _successColor = Color(0xFF2E7D32);
@@ -4382,9 +4450,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
   final Color _errorColor = Color(0xFFD32F2F);
   final Color _accentColor = Color(0xFF8D6E63);
   
-  // بيانات الإشعارات لمسؤول الكهرباء
   final List<Map<String, dynamic>> _allNotifications = [
-    // تبويب الصيانة
     {
       'id': '1',
       'type': 'maintenance',
@@ -4392,7 +4458,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'تم تعيين مهمة صيانة جديدة للمحول الرئيسي في المنطقة الشمالية',
       'time': 'منذ 10 دقائق',
       'read': false,
-      'tab': 0, // الصيانة
+      'tab': 0,
       'icon': Icons.engineering_rounded,
       'color': Color(0xFF2E7D32),
       'priority': 'عالي',
@@ -4404,7 +4470,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'اكتملت مهمة صيانة خط الكهرباء في المنطقة الجنوبية',
       'time': 'منذ ساعة',
       'read': true,
-      'tab': 0, // الصيانة
+      'tab': 0,
       'icon': Icons.check_circle_rounded,
       'color': Color(0xFF2E7D32),
       'priority': 'متوسط',
@@ -4416,7 +4482,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'تأخرت مهمة تركيب المحول الجديد بسبب انتظار قطع الغيار',
       'time': 'منذ 3 ساعات',
       'read': false,
-      'tab': 0, // الصيانة
+      'tab': 0,
       'icon': Icons.warning_rounded,
       'color': Color(0xFFF57C00),
       'priority': 'عاجل',
@@ -4428,13 +4494,11 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'وصل تقرير جديد من الفني حسن عبدالله بخصوص صيانة المحطة 5',
       'time': 'منذ 5 ساعات',
       'read': true,
-      'tab': 0, // الصيانة
+      'tab': 0,
       'icon': Icons.description_rounded,
       'color': Color(0xFF8D6E63),
       'priority': 'متوسط',
     },
-
-    // تبويب الفواتير
     {
       'id': '5',
       'type': 'bill_overdue',
@@ -4442,7 +4506,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'هناك 3 فواتير متأخرة بحاجة إلى متابعة',
       'time': 'منذ 30 دقيقة',
       'read': false,
-      'tab': 1, // الفواتير
+      'tab': 1,
       'icon': Icons.warning_amber_rounded,
       'color': Color(0xFFD32F2F),
       'priority': 'عالي',
@@ -4454,7 +4518,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'تم دفع فاتورتين بقيمة إجمالية 186,813 دينار',
       'time': 'منذ ساعتين',
       'read': true,
-      'tab': 1, // الفواتير
+      'tab': 1,
       'icon': Icons.payment_rounded,
       'color': Color(0xFF2E7D32),
       'priority': 'عادي',
@@ -4466,13 +4530,11 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'تقرير الفواتير اليومي متاح للعرض من قسم المحاسبة',
       'time': 'منذ 4 ساعات',
       'read': false,
-      'tab': 1, // الفواتير
+      'tab': 1,
       'icon': Icons.receipt_long_rounded,
       'color': Color(0xFF2E7D32),
       'priority': 'متوسط',
     },
-
-    // تبويب البلاغات
     {
       'id': '8',
       'type': 'report_new',
@@ -4480,7 +4542,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'بلاغ جديد عن انقطاع التيار في منطقة المنصور',
       'time': 'منذ 15 دقيقة',
       'read': false,
-      'tab': 2, // البلاغات
+      'tab': 2,
       'icon': Icons.report_problem_rounded,
       'color': Color(0xFFD32F2F),
       'priority': 'عاجل',
@@ -4492,7 +4554,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'تمت معالجة بلاغ عطل المحول في منطقة الكرادة',
       'time': 'منذ ساعة',
       'read': true,
-      'tab': 2, // البلاغات
+      'tab': 2,
       'icon': Icons.check_circle_rounded,
       'color': Color(0xFF2E7D32),
       'priority': 'عالي',
@@ -4504,7 +4566,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'سقوط عمود كهرباء في منطقة الشعلة - بحاجة إلى تدخل فوري',
       'time': 'منذ 25 دقيقة',
       'read': false,
-      'tab': 2, // البلاغات
+      'tab': 2,
       'icon': Icons.warning_rounded,
       'color': Color(0xFFD32F2F),
       'priority': 'عاجل',
@@ -4516,13 +4578,11 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'بلاغ تذبذب الجهد في اليرموك بحاجة إلى متابعة',
       'time': 'منذ 3 ساعات',
       'read': true,
-      'tab': 2, // البلاغات
+      'tab': 2,
       'icon': Icons.follow_the_signs_rounded,
       'color': Color(0xFFF57C00),
       'priority': 'متوسط',
     },
-
-    // إشعارات إضافية للكل
     {
       'id': '12',
       'type': 'system',
@@ -4530,7 +4590,7 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'تم تحديث نظام إدارة المحطة إلى الإصدار 2.1.0',
       'time': 'منذ يوم',
       'read': true,
-      'tab': 3, // الكل
+      'tab': 3,
       'icon': Icons.system_update_rounded,
       'color': Color(0xFF2E7D32),
       'priority': 'عادي',
@@ -4542,15 +4602,21 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       'description': 'اجتماع دوري لمدراء المحطات يوم الأحد القادم الساعة 10 صباحاً',
       'time': 'منذ يومين',
       'read': true,
-      'tab': 3, // الكل
+      'tab': 3,
       'icon': Icons.meeting_room_rounded,
       'color': Color(0xFF8D6E63),
       'priority': 'متوسط',
     },
   ];
 
+  Future<void> _refreshNotifications() async {
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {});
+    _notificationsRefreshController.refreshCompleted();
+  }
+
   List<Map<String, dynamic>> get _filteredNotifications {
-    if (_selectedTab == 3) { // الكل
+    if (_selectedTab == 3) {
       return _allNotifications;
     }
     return _allNotifications.where((notification) => notification['tab'] == _selectedTab).toList();
@@ -4558,6 +4624,12 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
 
   int get _unreadCount {
     return _allNotifications.where((n) => !n['read']).length;
+  }
+
+  @override
+  void dispose() {
+    _notificationsRefreshController.dispose();
+    super.dispose();
   }
 
   @override
@@ -4612,37 +4684,44 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-              border: Border(
-                bottom: BorderSide(color: isDarkMode ? Color(0xFF333333) : Color(0xFFE0E0E0)),
+      body: RefreshIndicator(
+        key: const Key('notifications_refresh'),
+        onRefresh: _refreshNotifications,
+        color: _primaryColor,
+        backgroundColor: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+        child: Column(
+          children: [
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: isDarkMode ? Color(0xFF333333) : Color(0xFFE0E0E0)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  for (int i = 0; i < _tabs.length; i++)
+                    _buildTabButton(_tabs[i], i, isDarkMode),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                for (int i = 0; i < _tabs.length; i++)
-                  _buildTabButton(_tabs[i], i, isDarkMode),
-              ],
-            ),
-          ),
 
-          Expanded(
-            child: _filteredNotifications.isEmpty
-                ? _buildEmptyState(isDarkMode)
-                : ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: _filteredNotifications.length,
-                    itemBuilder: (context, index) {
-                      final notification = _filteredNotifications[index];
-                      return _buildNotificationCard(notification, isDarkMode);
-                    },
-                  ),
-          ),
-        ],
+            Expanded(
+              child: _filteredNotifications.isEmpty
+                  ? _buildEmptyState(isDarkMode)
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: _filteredNotifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = _filteredNotifications[index];
+                        return _buildNotificationCard(notification, isDarkMode);
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -4702,7 +4781,6 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // أيقونة الإشعار
                   Container(
                     width: 50,
                     height: 50,
@@ -4718,7 +4796,6 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
                   ),
                   SizedBox(width: 12),
                   
-                  // محتوى الإشعار
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -4760,7 +4837,6 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // شارة الأولوية
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
@@ -4777,7 +4853,6 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
                                 ),
                               ),
                             ),
-                            // الوقت
                             Text(
                               notification['time'],
                               style: TextStyle(
@@ -4858,7 +4933,6 @@ class _SupervisorNotificationsScreenState extends State<SupervisorNotificationsS
       });
     }
     
-    // عرض تفاصيل الإشعار
     _showNotificationDetails(notification);
   }
 

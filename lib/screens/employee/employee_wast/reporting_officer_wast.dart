@@ -8,6 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'dart:typed_data';
+import 'dart:async';
 
 // استيراد الشاشات الأخرى (يمكنك تعديل المسارات حسب مشروعك)
 import 'package:mang_mu/screens/employee/Shared Services/esignin_screen.dart';
@@ -26,6 +27,20 @@ class ReportingOfficerWasteScreenState
     extends State<ReportingOfficerWasteScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  // متغيرات التحديث لكل تبويب
+  final RefreshController _serviceReportsRefreshController = RefreshController();
+  final RefreshController _employeeReportsRefreshController = RefreshController();
+  final RefreshController _appReportsRefreshController = RefreshController();
+  final RefreshController _emergencyReportsRefreshController = RefreshController();
+  final RefreshController _reportsRefreshController = RefreshController();
+
+  // متغيرات لمحاكاة التحديث
+  bool _isServiceReportsRefreshing = false;
+  bool _isEmployeeReportsRefreshing = false;
+  bool _isAppReportsRefreshing = false;
+  bool _isEmergencyReportsRefreshing = false;
+  bool _isReportsRefreshing = false;
 
   // الألوان الرئيسية (مطابقة للألوان في شاشة المحاسب)
   final Color _primaryColor = const Color.fromARGB(255, 0, 120, 50); // أخضر بلدي
@@ -64,54 +79,10 @@ class ReportingOfficerWasteScreenState
   String? _selectedWeek;
   String? _selectedMonth;
 
-  // دالة لتنسيق العملة
-  String _formatCurrency(dynamic amount) {
-    double numericAmount = 0.0;
-    if (amount is int) {
-      numericAmount = amount.toDouble();
-    } else if (amount is double) {
-      numericAmount = amount;
-    } else if (amount is String) {
-      numericAmount = double.tryParse(amount) ?? 0.0;
-    }
-    return NumberFormat('#,##0').format(numericAmount);
-  }
-
-  // ألوان ديناميكية تعتمد على الوضع المظلم
-  Color _backgroundColor(BuildContext context) {
-    final themeProvider =
-        Provider.of<ThemeProvider>(context, listen: false);
-    return themeProvider.isDarkMode ? const Color(0xFF121212) : const Color(0xFFF0F8FF);
-  }
-
-  Color _cardColor(BuildContext context) {
-    final themeProvider =
-        Provider.of<ThemeProvider>(context, listen: false);
-    return themeProvider.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-  }
-
-  Color _textColor(BuildContext context) {
-    final themeProvider =
-        Provider.of<ThemeProvider>(context, listen: false);
-    return themeProvider.isDarkMode ? Colors.white : const Color(0xFF212121);
-  }
-
-  Color _textSecondaryColor(BuildContext context) {
-    final themeProvider =
-        Provider.of<ThemeProvider>(context, listen: false);
-    return themeProvider.isDarkMode ? Colors.white70 : const Color(0xFF757575);
-  }
-
-  Color _borderColor(BuildContext context) {
-    final themeProvider =
-        Provider.of<ThemeProvider>(context, listen: false);
-    return themeProvider.isDarkMode ? const Color(0xFF333333) : const Color(0xFFE0E0E0);
-  }
-
   // ==================== البيانات التجريبية للبلاغات (وزارة البلدية) ====================
 
   // 1. بلاغات عن الخدمات البلدية (نظافة، طرق، إنارة، حدائق)
-  final List<Map<String, dynamic>> serviceReports = [
+  List<Map<String, dynamic>> serviceReports = [
     {
       'id': 'BLD-SRV-2024-001',
       'citizenName': 'أحمد محمد',
@@ -180,7 +151,7 @@ class ReportingOfficerWasteScreenState
   ];
 
   // 2. بلاغات عن الموظفين
-  final List<Map<String, dynamic>> employeeReports = [
+  List<Map<String, dynamic>> employeeReports = [
     {
       'id': 'BLD-EMP-2024-001',
       'citizenName': 'محمد حسن',
@@ -240,7 +211,7 @@ class ReportingOfficerWasteScreenState
   ];
 
   // 3. بلاغات عن عطل في التطبيق
-  final List<Map<String, dynamic>> appReports = [
+  List<Map<String, dynamic>> appReports = [
     {
       'id': 'BLD-APP-2024-001',
       'citizenName': 'أحمد محمد',
@@ -292,7 +263,7 @@ class ReportingOfficerWasteScreenState
   ];
 
   // 4. بلاغات الطارئة (خاصة بالبلدية)
-  final List<Map<String, dynamic>> emergencyReports = [
+  List<Map<String, dynamic>> emergencyReports = [
     {
       'id': 'BLD-EMG-2024-001',
       'citizenName': 'محمد حسن',
@@ -348,7 +319,7 @@ class ReportingOfficerWasteScreenState
   ];
 
   // 5. بيانات التقارير الواردة
-  final List<Map<String, dynamic>> receivedReports = [
+  List<Map<String, dynamic>> receivedReports = [
     {
       'id': 'BLD-REP-2024-001',
       'title': 'تقرير البلاغات الشهري - قسم النظافة',
@@ -475,6 +446,197 @@ class ReportingOfficerWasteScreenState
     }).toList();
   }
 
+  // ==================== دوال التحديث (Refresh) ====================
+
+  Future<void> _refreshServiceReports() async {
+    setState(() {
+      _isServiceReportsRefreshing = true;
+    });
+
+    // محاكاة جلب بيانات جديدة من الخادم
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      // يمكن إضافة بيانات جديدة أو تحديث البيانات الحالية هنا
+      // على سبيل المثال، إضافة بلاغ جديد وهمي
+      final newReport = {
+        'id': 'BLD-SRV-2024-${DateTime.now().millisecond}',
+        'citizenName': 'مواطن جديد',
+        'citizenPhone': '077${DateTime.now().millisecond}',
+        'title': 'بلاغ جديد بعد التحديث',
+        'description': 'هذا بلاغ تمت إضافته بعد عملية التحديث',
+        'date': DateTime.now(),
+        'status': 'تم الاستلام',
+        'priority': 'متوسطة',
+        'location': 'موقع جديد',
+        'assignedTo': 'قيد التقييم',
+        'serviceType': 'خدمة جديدة',
+      };
+      
+      serviceReports.insert(0, newReport);
+      _isServiceReportsRefreshing = false;
+    });
+
+    _serviceReportsRefreshController.refreshCompleted();
+  }
+
+  Future<void> _refreshEmployeeReports() async {
+    setState(() {
+      _isEmployeeReportsRefreshing = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      final newReport = {
+        'id': 'BLD-EMP-2024-${DateTime.now().millisecond}',
+        'citizenName': 'مواطن جديد',
+        'citizenPhone': '077${DateTime.now().millisecond}',
+        'employeeName': 'موظف جديد',
+        'employeeId': 'EMP-${DateTime.now().millisecond}',
+        'department': 'قسم جديد',
+        'title': 'بلاغ موظف جديد',
+        'description': 'هذا بلاغ موظف تمت إضافته بعد التحديث',
+        'date': DateTime.now(),
+        'status': 'قيد التحقيق',
+        'priority': 'عالية',
+        'location': 'دائرة بلدية جديدة',
+      };
+      
+      employeeReports.insert(0, newReport);
+      _isEmployeeReportsRefreshing = false;
+    });
+
+    _employeeReportsRefreshController.refreshCompleted();
+  }
+
+  Future<void> _refreshAppReports() async {
+    setState(() {
+      _isAppReportsRefreshing = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      final newReport = {
+        'id': 'BLD-APP-2024-${DateTime.now().millisecond}',
+        'citizenName': 'مواطن جديد',
+        'citizenPhone': '077${DateTime.now().millisecond}',
+        'title': 'بلاغ تطبيق جديد',
+        'description': 'هذا بلاغ تطبيق تمت إضافته بعد التحديث',
+        'date': DateTime.now(),
+        'status': 'قيد الإصلاح',
+        'priority': 'عالية',
+        'deviceType': 'جهاز جديد',
+        'appVersion': '2.1.0',
+      };
+      
+      appReports.insert(0, newReport);
+      _isAppReportsRefreshing = false;
+    });
+
+    _appReportsRefreshController.refreshCompleted();
+  }
+
+  Future<void> _refreshEmergencyReports() async {
+    setState(() {
+      _isEmergencyReportsRefreshing = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      final newReport = {
+        'id': 'BLD-EMG-2024-${DateTime.now().millisecond}',
+        'citizenName': 'مواطن جديد',
+        'citizenPhone': '077${DateTime.now().millisecond}',
+        'title': 'بلاغ طارئ جديد',
+        'description': 'هذا بلاغ طارئ تمت إضافته بعد التحديث',
+        'date': DateTime.now(),
+        'status': 'تم الاستلام',
+        'priority': 'طارئة',
+        'location': 'موقع جديد',
+        'responseTime': 'فوري',
+        'emergencyType': 'نوع طارئ جديد',
+      };
+      
+      emergencyReports.insert(0, newReport);
+      _isEmergencyReportsRefreshing = false;
+    });
+
+    _emergencyReportsRefreshController.refreshCompleted();
+  }
+
+  Future<void> _refreshReports() async {
+    setState(() {
+      _isReportsRefreshing = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      final newReport = {
+        'id': 'BLD-REP-2024-${DateTime.now().millisecond}',
+        'title': 'تقرير جديد بعد التحديث',
+        'sender': 'قسم جديد',
+        'date': DateTime.now(),
+        'type': 'شهري',
+        'size': '1.5 MB',
+        'status': 'غير مقروء',
+        'fileType': 'PDF',
+      };
+      
+      receivedReports.insert(0, newReport);
+      _isReportsRefreshing = false;
+    });
+
+    _reportsRefreshController.refreshCompleted();
+  }
+
+  // دالة لتنسيق العملة
+  String _formatCurrency(dynamic amount) {
+    double numericAmount = 0.0;
+    if (amount is int) {
+      numericAmount = amount.toDouble();
+    } else if (amount is double) {
+      numericAmount = amount;
+    } else if (amount is String) {
+      numericAmount = double.tryParse(amount) ?? 0.0;
+    }
+    return NumberFormat('#,##0').format(numericAmount);
+  }
+
+  // ألوان ديناميكية تعتمد على الوضع المظلم
+  Color _backgroundColor(BuildContext context) {
+    final themeProvider =
+        Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? const Color(0xFF121212) : const Color(0xFFF0F8FF);
+  }
+
+  Color _cardColor(BuildContext context) {
+    final themeProvider =
+        Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+  }
+
+  Color _textColor(BuildContext context) {
+    final themeProvider =
+        Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? Colors.white : const Color(0xFF212121);
+  }
+
+  Color _textSecondaryColor(BuildContext context) {
+    final themeProvider =
+        Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? Colors.white70 : const Color(0xFF757575);
+  }
+
+  Color _borderColor(BuildContext context) {
+    final themeProvider =
+        Provider.of<ThemeProvider>(context, listen: false);
+    return themeProvider.isDarkMode ? const Color(0xFF333333) : const Color(0xFFE0E0E0);
+  }
+
   // دوال مساعدة للبحث
   void _updateServiceReportsSearch(String query) {
     setState(() {
@@ -587,6 +749,11 @@ class ReportingOfficerWasteScreenState
     _appReportsSearchController.dispose();
     _emergencyReportsSearchController.dispose();
     _reportsSearchController.dispose();
+    _serviceReportsRefreshController.dispose();
+    _employeeReportsRefreshController.dispose();
+    _appReportsRefreshController.dispose();
+    _emergencyReportsRefreshController.dispose();
+    _reportsRefreshController.dispose();
     super.dispose();
   }
 
@@ -775,9 +942,9 @@ class ReportingOfficerWasteScreenState
     );
   }
 
-  // ==================== بناء كل تبويب ====================
+  // ==================== بناء كل تبويب مع خاصية التحديث ====================
 
-  // تبويب 1: بلاغات الخدمات البلدية
+  // تبويب 1: بلاغات الخدمات البلدية مع التحديث
   Widget _buildServiceReportsView(
       bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
@@ -794,24 +961,33 @@ class ReportingOfficerWasteScreenState
             _serviceReportsSearchQuery,
           ),
           Expanded(
-            child: filteredServiceReports.isEmpty
-                ? _buildNoResults(
-                    isDarkMode, 'لا توجد بلاغات خدمات', _serviceReportsSearchQuery)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredServiceReports.length,
-                    itemBuilder: (context, index) {
-                      return _buildReportCard(
-                          filteredServiceReports[index], isDarkMode, 'service');
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: _refreshServiceReports,
+              color: _primaryColor,
+              backgroundColor: _cardColor(context),
+              child: filteredServiceReports.isEmpty
+                  ? ListView(
+                      children: [
+                        _buildNoResults(
+                            isDarkMode, 'لا توجد بلاغات خدمات', _serviceReportsSearchQuery),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredServiceReports.length,
+                      itemBuilder: (context, index) {
+                        return _buildReportCard(
+                            filteredServiceReports[index], isDarkMode, 'service');
+                      },
+                    ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // تبويب 2: بلاغات الموظفين
+  // تبويب 2: بلاغات الموظفين مع التحديث
   Widget _buildEmployeeReportsView(
       bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
@@ -828,24 +1004,33 @@ class ReportingOfficerWasteScreenState
             _employeeReportsSearchQuery,
           ),
           Expanded(
-            child: filteredEmployeeReports.isEmpty
-                ? _buildNoResults(
-                    isDarkMode, 'لا توجد بلاغات موظفين', _employeeReportsSearchQuery)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredEmployeeReports.length,
-                    itemBuilder: (context, index) {
-                      return _buildReportCard(
-                          filteredEmployeeReports[index], isDarkMode, 'employee');
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: _refreshEmployeeReports,
+              color: _primaryColor,
+              backgroundColor: _cardColor(context),
+              child: filteredEmployeeReports.isEmpty
+                  ? ListView(
+                      children: [
+                        _buildNoResults(
+                            isDarkMode, 'لا توجد بلاغات موظفين', _employeeReportsSearchQuery),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredEmployeeReports.length,
+                      itemBuilder: (context, index) {
+                        return _buildReportCard(
+                            filteredEmployeeReports[index], isDarkMode, 'employee');
+                      },
+                    ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // تبويب 3: بلاغات التطبيق
+  // تبويب 3: بلاغات التطبيق مع التحديث
   Widget _buildAppReportsView(
       bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
@@ -862,24 +1047,33 @@ class ReportingOfficerWasteScreenState
             _appReportsSearchQuery,
           ),
           Expanded(
-            child: filteredAppReports.isEmpty
-                ? _buildNoResults(
-                    isDarkMode, 'لا توجد بلاغات تطبيق', _appReportsSearchQuery)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredAppReports.length,
-                    itemBuilder: (context, index) {
-                      return _buildReportCard(
-                          filteredAppReports[index], isDarkMode, 'app');
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: _refreshAppReports,
+              color: _primaryColor,
+              backgroundColor: _cardColor(context),
+              child: filteredAppReports.isEmpty
+                  ? ListView(
+                      children: [
+                        _buildNoResults(
+                            isDarkMode, 'لا توجد بلاغات تطبيق', _appReportsSearchQuery),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredAppReports.length,
+                      itemBuilder: (context, index) {
+                        return _buildReportCard(
+                            filteredAppReports[index], isDarkMode, 'app');
+                      },
+                    ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // تبويب 4: البلاغات الطارئة
+  // تبويب 4: البلاغات الطارئة مع التحديث
   Widget _buildEmergencyReportsView(
       bool isDarkMode, double screenWidth, double screenHeight) {
     return Container(
@@ -896,82 +1090,97 @@ class ReportingOfficerWasteScreenState
             _emergencyReportsSearchQuery,
           ),
           Expanded(
-            child: filteredEmergencyReports.isEmpty
-                ? _buildNoResults(
-                    isDarkMode, 'لا توجد بلاغات طارئة', _emergencyReportsSearchQuery)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredEmergencyReports.length,
-                    itemBuilder: (context, index) {
-                      return _buildReportCard(
-                          filteredEmergencyReports[index], isDarkMode, 'emergency');
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: _refreshEmergencyReports,
+              color: _primaryColor,
+              backgroundColor: _cardColor(context),
+              child: filteredEmergencyReports.isEmpty
+                  ? ListView(
+                      children: [
+                        _buildNoResults(
+                            isDarkMode, 'لا توجد بلاغات طارئة', _emergencyReportsSearchQuery),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredEmergencyReports.length,
+                      itemBuilder: (context, index) {
+                        return _buildReportCard(
+                            filteredEmergencyReports[index], isDarkMode, 'emergency');
+                      },
+                    ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // تبويب 5: التقارير (مشابه لشاشة المحاسب)
+  // تبويب 5: التقارير مع التحديث
   Widget _buildReportsView(
       bool isDarkMode, double screenWidth, double screenHeight) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // العنوان الرئيسي
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child:
-                    Icon(Icons.summarize_rounded, color: _primaryColor, size: 24),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'نظام تقارير البلاغات',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
-          Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: _cardColor(context),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _borderColor(context)),
-            ),
-            child: Row(
+    return RefreshIndicator(
+      onRefresh: _refreshReports,
+      color: _primaryColor,
+      backgroundColor: _cardColor(context),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // العنوان الرئيسي
+            Row(
               children: [
-                Expanded(
-                  child: _buildReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child:
+                      Icon(Icons.summarize_rounded, color: _primaryColor, size: 24),
                 ),
-                Expanded(
-                  child: _buildReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
+                const SizedBox(width: 8),
+                Text(
+                  'نظام تقارير البلاغات',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // عرض المحتوى حسب التبويب المختار
-          _currentReportInnerTab == 0
-              ? _buildCreateReportSection(isDarkMode)
-              : _buildReceivedReportsSection(isDarkMode),
-        ],
+            // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: _cardColor(context),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderColor(context)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
+                  ),
+                  Expanded(
+                    child: _buildReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // عرض المحتوى حسب التبويب المختار
+            _currentReportInnerTab == 0
+                ? _buildCreateReportSection(isDarkMode)
+                : _buildReceivedReportsSection(isDarkMode),
+          ],
+        ),
       ),
     );
   }
@@ -2340,6 +2549,9 @@ class ReportingOfficerWasteScreenState
               foregroundColor: Colors.white,
             ),
             onPressed: () {
+              setState(() {
+                receivedReports.remove(report);
+              });
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -2442,21 +2654,22 @@ class ReportingOfficerWasteScreenState
                                 });
                               },
                               onDaySelected: (selectedDay, focused) {
-                                focusedDay = focused;
+                                setState(() {
+                                  focusedDay = focused;
 
-                                if (tempSelectedDates.any(
-                                    (date) => isSameDay(date, selectedDay))) {
-                                  tempSelectedDates.removeWhere(
-                                      (date) => isSameDay(date, selectedDay));
-                                } else {
-                                  tempSelectedDates.add(DateTime(
-                                      selectedDay.year,
-                                      selectedDay.month,
-                                      selectedDay.day));
-                                }
+                                  if (tempSelectedDates.any(
+                                      (date) => isSameDay(date, selectedDay))) {
+                                    tempSelectedDates.removeWhere(
+                                        (date) => isSameDay(date, selectedDay));
+                                  } else {
+                                    tempSelectedDates.add(DateTime(
+                                        selectedDay.year,
+                                        selectedDay.month,
+                                        selectedDay.day));
+                                  }
 
-                                tempSelectedDates.sort((a, b) => a.compareTo(b));
-                                (context as Element).markNeedsBuild();
+                                  tempSelectedDates.sort((a, b) => a.compareTo(b));
+                                });
                               },
                               calendarStyle: CalendarStyle(
                                 defaultTextStyle:
@@ -2559,8 +2772,9 @@ class ReportingOfficerWasteScreenState
                                         deleteIcon: const Icon(Icons.close,
                                             color: Colors.white, size: 16),
                                         onDeleted: () {
-                                          tempSelectedDates.remove(date);
-                                          (context as Element).markNeedsBuild();
+                                          setState(() {
+                                            tempSelectedDates.remove(date);
+                                          });
                                         },
                                       );
                                     }).toList(),
@@ -3285,6 +3499,7 @@ class ReportingOfficerWasteScreenState
               onChanged: (value) {
                 setState(() {
                   selectedStatus = value!;
+                  report['status'] = selectedStatus;
                 });
                 Navigator.pop(context);
                 _showSuccessSnackbar('تم تحديث الحالة إلى: $status');
@@ -3335,6 +3550,9 @@ class ReportingOfficerWasteScreenState
             ),
             onPressed: () {
               if (assignController.text.isNotEmpty) {
+                setState(() {
+                  report['assignedTo'] = assignController.text;
+                });
                 Navigator.pop(context);
                 _showSuccessSnackbar('تم تعيين البلاغ إلى: ${assignController.text}');
               }
@@ -3410,6 +3628,53 @@ class ReportingOfficerWasteScreenState
             onPressed: () {
               if (titleController.text.isNotEmpty &&
                   descriptionController.text.isNotEmpty) {
+                setState(() {
+                  final newReport = {
+                    'id': 'BLD-${selectedType.toUpperCase()}-${DateTime.now().millisecond}',
+                    'citizenName': 'مواطن جديد',
+                    'citizenPhone': '077${DateTime.now().millisecond}',
+                    'title': titleController.text,
+                    'description': descriptionController.text,
+                    'date': DateTime.now(),
+                    'status': 'تم الاستلام',
+                    'priority': 'متوسطة',
+                  };
+
+                  switch (selectedType) {
+                    case 'service':
+                      newReport.addAll({
+                        'location': 'موقع جديد',
+                        'assignedTo': 'قيد التقييم',
+                        'serviceType': 'خدمة جديدة',
+                      });
+                      serviceReports.insert(0, newReport);
+                      break;
+                    case 'employee':
+                      newReport.addAll({
+                        'employeeName': 'موظف جديد',
+                        'employeeId': 'EMP-NEW',
+                        'department': 'قسم جديد',
+                        'location': 'دائرة بلدية جديدة',
+                      });
+                      employeeReports.insert(0, newReport);
+                      break;
+                    case 'app':
+                      newReport.addAll({
+                        'deviceType': 'جهاز جديد',
+                        'appVersion': '2.1.0',
+                      });
+                      appReports.insert(0, newReport);
+                      break;
+                    case 'emergency':
+                      newReport.addAll({
+                        'location': 'موقع جديد',
+                        'responseTime': 'فوري',
+                        'emergencyType': 'نوع طارئ',
+                      });
+                      emergencyReports.insert(0, newReport);
+                      break;
+                  }
+                });
                 Navigator.pop(context);
                 _showSuccessSnackbar('تم إضافة البلاغ بنجاح');
               }
@@ -3739,6 +4004,18 @@ class ReportingOfficerWasteScreenState
     );
   }
 }
+
+// كلاس مساعد للتحكم في التحديث
+class RefreshController {
+  void refreshCompleted() {
+    // يمكن إضافة منطق إضافي هنا إذا لزم الأمر
+  }
+  
+  void dispose() {
+    // تنظيف الموارد إذا لزم الأمر
+  }
+}
+
 // شاشة الإعدادات الكاملة (مطابقة لشاشة المحاسب)
 class SettingsScreen extends StatefulWidget {
   final Color primaryColor;
@@ -4431,20 +4708,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
 
           Expanded(
-            child: _filteredNotifications.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: _filteredNotifications.length,
-                    itemBuilder: (context, index) {
-                      final notification = _filteredNotifications[index];
-                      return _buildNotificationCard(notification);
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: _refreshNotifications,
+              color: _primaryColor,
+              backgroundColor: _cardColor,
+              child: _filteredNotifications.isEmpty
+                  ? ListView(
+                      children: [
+                        _buildEmptyState(),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: _filteredNotifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = _filteredNotifications[index];
+                        return _buildNotificationCard(notification);
+                      },
+                    ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _refreshNotifications() async {
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() {
+      // يمكن إضافة إشعار جديد هنا
+    });
   }
 
   Widget _buildTabButton(String title, int index) {

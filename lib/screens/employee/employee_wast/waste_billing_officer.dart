@@ -27,6 +27,13 @@ class WasteBillingOfficerScreenState extends State<WasteBillingOfficerScreen>
   int _currentComplaintTab = 0;
   String _billFilter = 'الكل';
 
+  // متغيرات التحديث
+  bool _isRefreshingCitizens = false;
+  bool _isRefreshingBills = false;
+  bool _isRefreshingReports = false;
+  bool _isRefreshingComplaints = false;
+  bool _isRefreshingPayments = false;
+
   // إضافة متغيرات البحث
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -656,6 +663,107 @@ void main() {
     }
   }
 
+  // ========== دوال التحديث (Pull to Refresh) ==========
+  Future<void> _refreshCitizens() async {
+    setState(() {
+      _isRefreshingCitizens = true;
+    });
+    
+    // محاكاة جلب بيانات جديدة من الخادم
+    await Future.delayed(Duration(seconds: 2));
+    
+    // هنا يمكن إضافة كود لجلب بيانات جديدة من API
+    // مثلاً: citizens = await fetchCitizensFromApi();
+    
+    setState(() {
+      _isRefreshingCitizens = false;
+      // عرض رسالة نجاح
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم تحديث بيانات المشتركين بنجاح'),
+          backgroundColor: _successColor,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
+  Future<void> _refreshBills() async {
+    setState(() {
+      _isRefreshingBills = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isRefreshingBills = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم تحديث بيانات الفواتير بنجاح'),
+          backgroundColor: _successColor,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
+  Future<void> _refreshReports() async {
+    setState(() {
+      _isRefreshingReports = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isRefreshingReports = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم تحديث بيانات التقارير بنجاح'),
+          backgroundColor: _successColor,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
+  Future<void> _refreshComplaints() async {
+    setState(() {
+      _isRefreshingComplaints = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isRefreshingComplaints = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم تحديث بيانات البلاغات بنجاح'),
+          backgroundColor: _successColor,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
+  Future<void> _refreshPayments() async {
+    setState(() {
+      _isRefreshingPayments = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isRefreshingPayments = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم تحديث بيانات طرق الدفع بنجاح'),
+          backgroundColor: _successColor,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -680,40 +788,51 @@ void main() {
   }
 
   Widget _buildReportsView(bool darkMode, double screenWidth, [num? height]) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+    return RefreshIndicator(
+      onRefresh: _refreshReports,
+      color: _primaryColor,
+      backgroundColor: darkMode ? _darkCardColor : _cardColor,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_isRefreshingReports)
+              LinearProgressIndicator(
+                color: _primaryColor,
+                backgroundColor: _primaryColor.withOpacity(0.1),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'نظام التقارير المتقدم',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.assignment, color: _primaryColor, size: 24),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildReportTypeFilter(),
-          const SizedBox(height: 20),
-          _buildReportOptions(),
-          const SizedBox(height: 20),
-          _buildGenerateReportButton(),
-          const SizedBox(height: 20),
-        ],
+                const SizedBox(width: 8),
+                Text(
+                  'نظام التقارير المتقدم',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildReportTypeFilter(),
+            const SizedBox(height: 20),
+            _buildReportOptions(),
+            const SizedBox(height: 20),
+            _buildGenerateReportButton(),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
@@ -1686,7 +1805,6 @@ Widget build(BuildContext context) {
           Container(
             width: 32,
             height: 32,
-
             child: Icon(Icons.recycling,  size: 25),
           ),
           SizedBox(width: 12),
@@ -1879,14 +1997,21 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildCitizensView(bool isDarkMode, double screenWidth, double screenHeight) {
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
+    return RefreshIndicator(
+      onRefresh: _refreshCitizens,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
       child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_isRefreshingCitizens)
+              LinearProgressIndicator(
+                color: _primaryColor,
+                backgroundColor: _primaryColor.withOpacity(0.1),
+              ),
             SizedBox(height: 16),
             _buildSearchBar(isDarkMode, 'ابحث عن مشترك...'),
             SizedBox(height: 16),
@@ -1915,14 +2040,21 @@ Widget build(BuildContext context) {
   Widget _buildBillsView(bool isDarkMode, double screenWidth, double screenHeight) {
     List<Map<String, dynamic>> filteredBills = _getFilteredBills();
 
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
+    return RefreshIndicator(
+      onRefresh: _refreshBills,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
       child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_isRefreshingBills)
+              LinearProgressIndicator(
+                color: _primaryColor,
+                backgroundColor: _primaryColor.withOpacity(0.1),
+              ),
             _buildBillsStatsCard(isDarkMode),
             SizedBox(height: 20),
             _buildBillsFilterRow(isDarkMode),
@@ -1949,43 +2081,58 @@ Widget build(BuildContext context) {
   Widget _buildComplaintsView(bool isDarkMode, double screenWidth, double screenHeight) {
     List<Map<String, dynamic>> filteredComplaints = _getFilteredComplaints();
     
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
-      child: Column(
-        children: [
-          // إحصائيات البلاغات
-          _buildComplaintsStatsCard(isDarkMode),
-          
-          // تبويبات التصفية
-          _buildComplaintsFilterRow(isDarkMode),
-          
-          // قائمة البلاغات
-          Expanded(
-            child: filteredComplaints.isEmpty
-                ? _buildNoComplaintsMessage(isDarkMode)
-                : ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: filteredComplaints.length,
-                    itemBuilder: (context, index) {
-                      return _buildComplaintCard(filteredComplaints[index], isDarkMode);
-                    },
-                  ),
-          ),
-        ],
+    return RefreshIndicator(
+      onRefresh: _refreshComplaints,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            if (_isRefreshingComplaints)
+              LinearProgressIndicator(
+                color: _primaryColor,
+                backgroundColor: _primaryColor.withOpacity(0.1),
+              ),
+            // إحصائيات البلاغات
+            _buildComplaintsStatsCard(isDarkMode),
+            
+            // تبويبات التصفية
+            _buildComplaintsFilterRow(isDarkMode),
+            
+            // قائمة البلاغات
+            if (filteredComplaints.isEmpty)
+              Container(
+                height: screenHeight - 300,
+                child: _buildNoComplaintsMessage(isDarkMode),
+              )
+            else
+              ...filteredComplaints.map((complaint) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _buildComplaintCard(complaint, isDarkMode),
+              )),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPaymentMethodsView(bool isDarkMode, double screenWidth, double screenHeight) {
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
+    return RefreshIndicator(
+      onRefresh: _refreshPayments,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
       child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_isRefreshingPayments)
+              LinearProgressIndicator(
+                color: _primaryColor,
+                backgroundColor: _primaryColor.withOpacity(0.1),
+              ),
             _buildPaymentMethodsSummaryCard(isDarkMode),
             SizedBox(height: 20),
             Text(
@@ -5324,6 +5471,63 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
             child: Text('إغلاق', style: TextStyle(color: widget.primaryColor)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// شاشة الإشعارات (مؤقتة)
+class NotificationsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('الإشعارات'),
+        backgroundColor: Colors.green,
+      ),
+      body: Center(
+        child: Text('شاشة الإشعارات - قيد التطوير'),
+      ),
+    );
+  }
+}
+
+// شاشة الإعدادات (مؤقتة)
+class SettingsScreen extends StatelessWidget {
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color accentColor;
+  final Color darkCardColor;
+  final Color cardColor;
+  final Color darkTextColor;
+  final Color textColor;
+  final Color darkTextSecondaryColor;
+  final Color textSecondaryColor;
+  final Function(Map<String, dynamic>) onSettingsChanged;
+
+  const SettingsScreen({
+    Key? key,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.accentColor,
+    required this.darkCardColor,
+    required this.cardColor,
+    required this.darkTextColor,
+    required this.textColor,
+    required this.darkTextSecondaryColor,
+    required this.textSecondaryColor,
+    required this.onSettingsChanged,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('الإعدادات'),
+        backgroundColor: primaryColor,
+      ),
+      body: Center(
+        child: Text('شاشة الإعدادات - قيد التطوير'),
       ),
     );
   }

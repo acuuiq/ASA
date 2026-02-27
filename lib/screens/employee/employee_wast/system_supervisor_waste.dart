@@ -29,6 +29,12 @@ class _SystemSupervisorWasteScreenState
   
   bool _isLoading = false;
   
+  // متغيرات التحديث
+  bool _isRefreshingDashboard = false;
+  bool _isRefreshingRoutes = false;
+  bool _isRefreshingReports = false;
+  bool _isRefreshingSupervisorReports = false;
+  
   // متغيرات نموذج طلب التقرير
   String _selectedEmployeeId = '';
   String _selectedReportTypeForRequest = 'تقرير يومي';
@@ -345,6 +351,76 @@ class _SystemSupervisorWasteScreenState
     return filtered;
   }
 
+  // ========== دوال التحديث ==========
+  
+  Future<void> _refreshDashboard() async {
+    setState(() {
+      _isRefreshingDashboard = true;
+    });
+    
+    // محاكاة جلب بيانات جديدة
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // تحديث البيانات الوهمية للوحة الرئيسية
+    setState(() {
+      // يمكن إضافة منطق تحديث البيانات هنا
+      _isRefreshingDashboard = false;
+    });
+    
+    _showSuccessMessage('تم تحديث البيانات');
+  }
+  
+  Future<void> _refreshRoutes() async {
+    setState(() {
+      _isRefreshingRoutes = true;
+    });
+    
+    // محاكاة جلب بيانات جديدة للمسارات
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // تحديث البيانات الوهمية للمسارات
+    setState(() {
+      // محاكاة تحديث المسارات
+      _isRefreshingRoutes = false;
+    });
+    
+    _showSuccessMessage('تم تحديث المسارات');
+  }
+  
+  Future<void> _refreshReports() async {
+    setState(() {
+      _isRefreshingReports = true;
+    });
+    
+    // محاكاة جلب بيانات جديدة للبلاغات
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // تحديث البيانات الوهمية للبلاغات
+    setState(() {
+      // محاكاة تحديث البلاغات
+      _isRefreshingReports = false;
+    });
+    
+    _showSuccessMessage('تم تحديث البلاغات');
+  }
+  
+  Future<void> _refreshSupervisorReports() async {
+    setState(() {
+      _isRefreshingSupervisorReports = true;
+    });
+    
+    // محاكاة جلب بيانات جديدة للتقارير
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // تحديث البيانات الوهمية للتقارير
+    setState(() {
+      // محاكاة تحديث التقارير
+      _isRefreshingSupervisorReports = false;
+    });
+    
+    _showSuccessMessage('تم تحديث التقارير');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -375,7 +451,7 @@ class _SystemSupervisorWasteScreenState
                   // شريط تبويب مبسط
                   _buildSimplifiedTabBar(),
                   
-                  // المحتوى الرئيسي
+                  // المحتوى الرئيسي مع خاصية التحديث
                   Expanded(
                     child: PageView(
                       controller: _pageController,
@@ -1776,82 +1852,104 @@ class _SystemSupervisorWasteScreenState
   }
 
   Widget _buildDashboardView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Column(
-        children: [
-          // بطاقات الإحصاءات (مبسطة)
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.2,
-            children: [
-              _buildSimpleStatCard(
-                icon: Icons.delete_sweep,
-                title: 'النفايات',
-                value: '2,450 طن',
-                color: Colors.green,
+    return RefreshIndicator(
+      onRefresh: _refreshDashboard,
+      color: _primaryColor,
+      backgroundColor: _darkModeEnabled ? Colors.grey[800] : Colors.white,
+      child: _isRefreshingDashboard
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: _primaryColor),
+                  const SizedBox(height: 16),
+                  Text(
+                    'جاري تحديث البيانات...',
+                    style: TextStyle(
+                      color: _darkModeEnabled ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
               ),
-              _buildSimpleStatCard(
-                icon: Icons.timer,
-                title: 'الكفاءة',
-                value: '92%',
-                color: Colors.blue,
+            )
+          : SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Column(
+                children: [
+                  // بطاقات الإحصاءات (مبسطة)
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.2,
+                    children: [
+                      _buildSimpleStatCard(
+                        icon: Icons.delete_sweep,
+                        title: 'النفايات',
+                        value: '2,450 طن',
+                        color: Colors.green,
+                      ),
+                      _buildSimpleStatCard(
+                        icon: Icons.timer,
+                        title: 'الكفاءة',
+                        value: '92%',
+                        color: Colors.blue,
+                      ),
+                      _buildSimpleStatCard(
+                        icon: Icons.warning_amber,
+                        title: 'البلاغات',
+                        value: '${_reportsData.length}',
+                        color: Colors.orange,
+                      ),
+                      _buildSimpleStatCard(
+                        icon: Icons.description,
+                        title: 'تقاريري',
+                        value: '${_supervisorReports.length}',
+                        color: Colors.purple,
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // المسارات النشطة
+                  _buildSectionHeader(
+                    title: 'المسارات النشطة',
+                    icon: Icons.route,
+                    onSeeAll: () => _pageController.jumpToPage(1),
+                  ),
+                  
+                  _buildCompactActiveRoutesList(),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // البلاغات الحديثة
+                  _buildSectionHeader(
+                    title: 'آخر البلاغات',
+                    icon: Icons.report,
+                    onSeeAll: () => _pageController.jumpToPage(2),
+                  ),
+                  
+                  _buildCompactRecentReportsList(),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // آخر التقارير
+                  _buildSectionHeader(
+                    title: 'آخر التقارير',
+                    icon: Icons.description,
+                    onSeeAll: () => _pageController.jumpToPage(3),
+                  ),
+                  
+                  _buildCompactRecentSupervisorReportsList(),
+                  
+                  const SizedBox(height: 10),
+                ],
               ),
-              _buildSimpleStatCard(
-                icon: Icons.warning_amber,
-                title: 'البلاغات',
-                value: '${_reportsData.length}',
-                color: Colors.orange,
-              ),
-              _buildSimpleStatCard(
-                icon: Icons.description,
-                title: 'تقاريري',
-                value: '${_supervisorReports.length}',
-                color: Colors.purple,
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // المسارات النشطة
-          _buildSectionHeader(
-            title: 'المسارات النشطة',
-            icon: Icons.route,
-            onSeeAll: () => _pageController.jumpToPage(1),
-          ),
-          
-          _buildCompactActiveRoutesList(),
-          
-          const SizedBox(height: 20),
-          
-          // البلاغات الحديثة
-          _buildSectionHeader(
-            title: 'آخر البلاغات',
-            icon: Icons.report,
-            onSeeAll: () => _pageController.jumpToPage(2),
-          ),
-          
-          _buildCompactRecentReportsList(),
-          
-          const SizedBox(height: 20),
-          
-          // آخر التقارير
-          _buildSectionHeader(
-            title: 'آخر التقارير',
-            icon: Icons.description,
-            onSeeAll: () => _pageController.jumpToPage(3),
-          ),
-          
-          _buildCompactRecentSupervisorReportsList(),
-          
-          const SizedBox(height: 10),
-        ],
-      ),
+            ),
     );
   }
 
@@ -2231,14 +2329,36 @@ class _SystemSupervisorWasteScreenState
           ),
         ),
         
-        // قائمة المسارات
+        // قائمة المسارات مع خاصية التحديث
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: _routesData.length,
-            itemBuilder: (context, index) {
-              return _buildCompactDetailedRouteCard(_routesData[index]);
-            },
+          child: RefreshIndicator(
+            onRefresh: _refreshRoutes,
+            color: _primaryColor,
+            backgroundColor: _darkModeEnabled ? Colors.grey[800] : Colors.white,
+            child: _isRefreshingRoutes
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: _primaryColor),
+                        const SizedBox(height: 16),
+                        Text(
+                          'جاري تحديث المسارات...',
+                          style: TextStyle(
+                            color: _darkModeEnabled ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _routesData.length,
+                    itemBuilder: (context, index) {
+                      return _buildCompactDetailedRouteCard(_routesData[index]);
+                    },
+                  ),
           ),
         ),
       ],
@@ -2578,17 +2698,37 @@ class _SystemSupervisorWasteScreenState
           ),
         ),
         
-        // قائمة البلاغات
+        // قائمة البلاغات مع خاصية التحديث
         Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _filteredReports.length,
-                  itemBuilder: (context, index) {
-                    return _buildCompactDetailedReportCard(_filteredReports[index]);
-                  },
-                ),
+          child: RefreshIndicator(
+            onRefresh: _refreshReports,
+            color: _primaryColor,
+            backgroundColor: _darkModeEnabled ? Colors.grey[800] : Colors.white,
+            child: _isLoading || _isRefreshingReports
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: _primaryColor),
+                        const SizedBox(height: 16),
+                        Text(
+                          'جاري تحديث البلاغات...',
+                          style: TextStyle(
+                            color: _darkModeEnabled ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _filteredReports.length,
+                    itemBuilder: (context, index) {
+                      return _buildCompactDetailedReportCard(_filteredReports[index]);
+                    },
+                  ),
+          ),
         ),
       ],
     );
@@ -2673,19 +2813,39 @@ class _SystemSupervisorWasteScreenState
           ),
         ),
         
-        // قائمة التقارير أو الطلبات حسب التصفية
+        // قائمة التقارير أو الطلبات حسب التصفية مع خاصية التحديث
         Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _selectedReportType == 'طلبات'
-                  ? _buildReportRequestsList()
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: _filteredSupervisorReports.length,
-                      itemBuilder: (context, index) {
-                        return _buildCompactDetailedSupervisorReportCard(_filteredSupervisorReports[index]);
-                      },
+          child: RefreshIndicator(
+            onRefresh: _refreshSupervisorReports,
+            color: _primaryColor,
+            backgroundColor: _darkModeEnabled ? Colors.grey[800] : Colors.white,
+            child: _isLoading || _isRefreshingSupervisorReports
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: _primaryColor),
+                        const SizedBox(height: 16),
+                        Text(
+                          'جاري تحديث التقارير...',
+                          style: TextStyle(
+                            color: _darkModeEnabled ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ],
                     ),
+                  )
+                : _selectedReportType == 'طلبات'
+                    ? _buildReportRequestsList()
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(12),
+                        itemCount: _filteredSupervisorReports.length,
+                        itemBuilder: (context, index) {
+                          return _buildCompactDetailedSupervisorReportCard(_filteredSupervisorReports[index]);
+                        },
+                      ),
+          ),
         ),
       ],
     );
@@ -2721,6 +2881,7 @@ class _SystemSupervisorWasteScreenState
     }
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(12),
       itemCount: _reportRequests.length,
       itemBuilder: (context, index) {

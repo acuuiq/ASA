@@ -9,13 +9,6 @@ import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:mang_mu/providers/theme_provider.dart';
 
-void main() {
-  runApp(const MaterialApp(
-    home: WasteCleaningWorkerScreen(),
-    debugShowCheckedModeBanner: false,
-  ));
-}
-
 class WasteCleaningWorkerScreen extends StatefulWidget {
   const WasteCleaningWorkerScreen({super.key});
 
@@ -28,6 +21,19 @@ class _WasteCleaningWorkerScreenState
     extends State<WasteCleaningWorkerScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentIndex = 0;
+
+  // ========== متغيرات التحديث ==========
+  final GlobalKey<RefreshIndicatorState> _dashboardRefreshKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _scheduleRefreshKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _tasksRefreshKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _complaintsRefreshKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _reportsRefreshKey = GlobalKey<RefreshIndicatorState>();
+  
+  bool _isDashboardRefreshing = false;
+  bool _isScheduleRefreshing = false;
+  bool _isTasksRefreshing = false;
+  bool _isComplaintsRefreshing = false;
+  bool _isReportsRefreshing = false;
 
   // ========== نظام التقارير الجديد ==========
   String _selectedReportTypeSystem = 'يومي';
@@ -191,197 +197,200 @@ class _WasteCleaningWorkerScreenState
       'completionDate': DateTime.now().subtract(const Duration(days: 5)),
     },
   ];
-// بيانات المهام (محدثة مع مهام لجميع الأيام)
-final List<CleanTask> _todayTasks = [
-  // مهام يوم الأحد
-  CleanTask(
-    id: 10,
-    areaName: 'حي الواحة - المنطقة F',
-    truckNumber: 'شاحنة 110',
-    workers: ['سامر أحمد', 'مازن علي'],
-    startTime: '08:30',
-    endTime: '12:30',
-    date: _getDateForDay(DateTime.sunday),
-    isCompleted: false,
-    status: 'مخطط',
-    wasteType: 'منزلي',
-    binCount: 22,
-  ),
-  
-  // مهام يوم الاثنين
-  CleanTask(
-    id: 11,
-    areaName: 'حي الأندلس - المنطقة G',
-    truckNumber: 'شاحنة 111',
-    workers: ['ياسر محمود', 'باسم حسن'],
-    startTime: '09:00',
-    endTime: '13:00',
-    date: _getDateForDay(DateTime.monday),
-    isCompleted: true,
-    status: 'مكتمل',
-    wasteType: 'تجاري',
-    binCount: 18,
-  ),
-  
-  // مهام يوم الثلاثاء
-  CleanTask(
-    id: 12,
-    areaName: 'حي الزهور - المنطقة H',
-    truckNumber: 'شاحنة 112',
-    workers: ['رامي سعيد', 'هشام عادل'],
-    startTime: '10:00',
-    endTime: '14:00',
-    date: _getDateForDay(DateTime.tuesday),
-    isCompleted: false,
-    status: 'قيد التنفيذ',
-    wasteType: 'منزلي',
-    binCount: 25,
-  ),
-  
-  // مهام يوم الأربعاء
-  CleanTask(
-    id: 13,
-    areaName: 'حي النور - المنطقة I',
-    truckNumber: 'شاحنة 113',
-    workers: ['نبيل إبراهيم', 'رياض كمال'],
-    startTime: '11:00',
-    endTime: '15:00',
-    date: _getDateForDay(DateTime.wednesday),
-    isCompleted: false,
-    status: 'مخطط',
-    wasteType: 'تجاري',
-    binCount: 20,
-  ),
-  
-  // مهام يوم الخميس
-  CleanTask(
-    id: 14,
-    areaName: 'حي الفيحاء - المنطقة J',
-    truckNumber: 'شاحنة 114',
-    workers: ['عصام فؤاد', 'جمال ناصر'],
-    startTime: '12:00',
-    endTime: '16:00',
-    date: _getDateForDay(DateTime.thursday),
-    isCompleted: true,
-    status: 'مكتمل',
-    wasteType: 'منزلي',
-    binCount: 30,
-  ),
-  
-  // مهام يوم الجمعة
-  CleanTask(
-    id: 15,
-    areaName: 'حي الروضة - المنطقة K',
-    truckNumber: 'شاحنة 115',
-    workers: ['عدنان رشيد', 'سمير لطفي'],
-    startTime: '13:00',
-    endTime: '17:00',
-    date: _getDateForDay(DateTime.friday),
-    isCompleted: false,
-    status: 'مخطط',
-    wasteType: 'تجاري',
-    binCount: 15,
-  ),
-  
-  // مهام يوم السبت
-  CleanTask(
-    id: 16,
-    areaName: 'حي المروج - المنطقة L',
-    truckNumber: 'شاحنة 116',
-    workers: ['فائز منير', 'نضال حامد'],
-    startTime: '14:00',
-    endTime: '18:00',
-    date: _getDateForDay(DateTime.saturday),
-    isCompleted: false,
-    status: 'قيد التنفيذ',
-    wasteType: 'منزلي',
-    binCount: 28,
-  ),
-  
-  // المهام القديمة (يمكنك الاحتفاظ بها أو حذفها)
-  CleanTask(
-    id: 1,
-    areaName: 'حي السلام - المنطقة A',
-    truckNumber: 'شاحنة 101',
-    workers: ['أحمد محمد', 'خالد علي'],
-    startTime: '08:00',
-    endTime: '12:00',
-    date: DateTime.now(),
-    isCompleted: true,
-    status: 'مكتمل',
-    wasteType: 'منزلي',
-    binCount: 25,
-  ),
-  CleanTask(
-    id: 2,
-    areaName: 'حي النهضة - المنطقة B',
-    truckNumber: 'شاحنة 102',
-    workers: ['محمود حسن', 'سعيد عبدالله'],
-    startTime: '13:00',
-    endTime: '16:00',
-    date: DateTime.now(),
-    isCompleted: false,
-    status: 'قيد التنفيذ',
-    wasteType: 'تجاري',
-    binCount: 15,
-  ),
-  CleanTask(
-    id: 3,
-    areaName: 'حي الورود - المنطقة C',
-    truckNumber: 'شاحنة 103',
-    workers: ['علي كمال', 'فارس ناصر'],
-    startTime: '17:00',
-    endTime: '19:00',
-    date: DateTime.now(),
-    isCompleted: false,
-    status: 'مخطط',
-    wasteType: 'منزلي',
-    binCount: 30,
-  ),
-  CleanTask(
-    id: 4,
-    areaName: 'حي النخيل - المنطقة D',
-    truckNumber: 'شاحنة 104',
-    workers: ['حسن علي', 'مصطفى أحمد'],
-    startTime: '09:00',
-    endTime: '12:00',
-    date: DateTime.now().subtract(const Duration(days: 1)),
-    isCompleted: true,
-    status: 'مكتمل',
-    wasteType: 'منزلي',
-    binCount: 20,
-  ),
-  CleanTask(
-    id: 5,
-    areaName: 'حي الرياض - المنطقة E',
-    truckNumber: 'شاحنة 105',
-    workers: ['عمر خالد', 'زيدان محمد'],
-    startTime: '14:00',
-    endTime: '17:00',
-    date: DateTime.now().add(const Duration(days: 1)),
-    isCompleted: false,
-    status: 'مخطط',
-    wasteType: 'تجاري',
-    binCount: 18,
-  ),
-]; 
-// في نهاية الكلاس، أضف static قبل الدالة
-static DateTime _getDateForDay(int targetWeekday) {
-  final today = DateTime.now();
-  final currentWeekday = today.weekday;
-  
-  // حساب الفرق بالأيام للوصول إلى اليوم المطلوب
-  int daysToAdd;
-  
-  if (currentWeekday <= targetWeekday) {
-    daysToAdd = targetWeekday - currentWeekday;
-  } else {
-    daysToAdd = targetWeekday + 7 - currentWeekday;
+
+  // بيانات المهام (محدثة مع مهام لجميع الأيام)
+  final List<CleanTask> _todayTasks = [
+    // مهام يوم الأحد
+    CleanTask(
+      id: 10,
+      areaName: 'حي الواحة - المنطقة F',
+      truckNumber: 'شاحنة 110',
+      workers: ['سامر أحمد', 'مازن علي'],
+      startTime: '08:30',
+      endTime: '12:30',
+      date: _getDateForDay(DateTime.sunday),
+      isCompleted: false,
+      status: 'مخطط',
+      wasteType: 'منزلي',
+      binCount: 22,
+    ),
+    
+    // مهام يوم الاثنين
+    CleanTask(
+      id: 11,
+      areaName: 'حي الأندلس - المنطقة G',
+      truckNumber: 'شاحنة 111',
+      workers: ['ياسر محمود', 'باسم حسن'],
+      startTime: '09:00',
+      endTime: '13:00',
+      date: _getDateForDay(DateTime.monday),
+      isCompleted: true,
+      status: 'مكتمل',
+      wasteType: 'تجاري',
+      binCount: 18,
+    ),
+    
+    // مهام يوم الثلاثاء
+    CleanTask(
+      id: 12,
+      areaName: 'حي الزهور - المنطقة H',
+      truckNumber: 'شاحنة 112',
+      workers: ['رامي سعيد', 'هشام عادل'],
+      startTime: '10:00',
+      endTime: '14:00',
+      date: _getDateForDay(DateTime.tuesday),
+      isCompleted: false,
+      status: 'قيد التنفيذ',
+      wasteType: 'منزلي',
+      binCount: 25,
+    ),
+    
+    // مهام يوم الأربعاء
+    CleanTask(
+      id: 13,
+      areaName: 'حي النور - المنطقة I',
+      truckNumber: 'شاحنة 113',
+      workers: ['نبيل إبراهيم', 'رياض كمال'],
+      startTime: '11:00',
+      endTime: '15:00',
+      date: _getDateForDay(DateTime.wednesday),
+      isCompleted: false,
+      status: 'مخطط',
+      wasteType: 'تجاري',
+      binCount: 20,
+    ),
+    
+    // مهام يوم الخميس
+    CleanTask(
+      id: 14,
+      areaName: 'حي الفيحاء - المنطقة J',
+      truckNumber: 'شاحنة 114',
+      workers: ['عصام فؤاد', 'جمال ناصر'],
+      startTime: '12:00',
+      endTime: '16:00',
+      date: _getDateForDay(DateTime.thursday),
+      isCompleted: true,
+      status: 'مكتمل',
+      wasteType: 'منزلي',
+      binCount: 30,
+    ),
+    
+    // مهام يوم الجمعة
+    CleanTask(
+      id: 15,
+      areaName: 'حي الروضة - المنطقة K',
+      truckNumber: 'شاحنة 115',
+      workers: ['عدنان رشيد', 'سمير لطفي'],
+      startTime: '13:00',
+      endTime: '17:00',
+      date: _getDateForDay(DateTime.friday),
+      isCompleted: false,
+      status: 'مخطط',
+      wasteType: 'تجاري',
+      binCount: 15,
+    ),
+    
+    // مهام يوم السبت
+    CleanTask(
+      id: 16,
+      areaName: 'حي المروج - المنطقة L',
+      truckNumber: 'شاحنة 116',
+      workers: ['فائز منير', 'نضال حامد'],
+      startTime: '14:00',
+      endTime: '18:00',
+      date: _getDateForDay(DateTime.saturday),
+      isCompleted: false,
+      status: 'قيد التنفيذ',
+      wasteType: 'منزلي',
+      binCount: 28,
+    ),
+    
+    // المهام القديمة
+    CleanTask(
+      id: 1,
+      areaName: 'حي السلام - المنطقة A',
+      truckNumber: 'شاحنة 101',
+      workers: ['أحمد محمد', 'خالد علي'],
+      startTime: '08:00',
+      endTime: '12:00',
+      date: DateTime.now(),
+      isCompleted: true,
+      status: 'مكتمل',
+      wasteType: 'منزلي',
+      binCount: 25,
+    ),
+    CleanTask(
+      id: 2,
+      areaName: 'حي النهضة - المنطقة B',
+      truckNumber: 'شاحنة 102',
+      workers: ['محمود حسن', 'سعيد عبدالله'],
+      startTime: '13:00',
+      endTime: '16:00',
+      date: DateTime.now(),
+      isCompleted: false,
+      status: 'قيد التنفيذ',
+      wasteType: 'تجاري',
+      binCount: 15,
+    ),
+    CleanTask(
+      id: 3,
+      areaName: 'حي الورود - المنطقة C',
+      truckNumber: 'شاحنة 103',
+      workers: ['علي كمال', 'فارس ناصر'],
+      startTime: '17:00',
+      endTime: '19:00',
+      date: DateTime.now(),
+      isCompleted: false,
+      status: 'مخطط',
+      wasteType: 'منزلي',
+      binCount: 30,
+    ),
+    CleanTask(
+      id: 4,
+      areaName: 'حي النخيل - المنطقة D',
+      truckNumber: 'شاحنة 104',
+      workers: ['حسن علي', 'مصطفى أحمد'],
+      startTime: '09:00',
+      endTime: '12:00',
+      date: DateTime.now().subtract(const Duration(days: 1)),
+      isCompleted: true,
+      status: 'مكتمل',
+      wasteType: 'منزلي',
+      binCount: 20,
+    ),
+    CleanTask(
+      id: 5,
+      areaName: 'حي الرياض - المنطقة E',
+      truckNumber: 'شاحنة 105',
+      workers: ['عمر خالد', 'زيدان محمد'],
+      startTime: '14:00',
+      endTime: '17:00',
+      date: DateTime.now().add(const Duration(days: 1)),
+      isCompleted: false,
+      status: 'مخطط',
+      wasteType: 'تجاري',
+      binCount: 18,
+    ),
+  ]; 
+
+  // في نهاية الكلاس، أضف static قبل الدالة
+  static DateTime _getDateForDay(int targetWeekday) {
+    final today = DateTime.now();
+    final currentWeekday = today.weekday;
+    
+    // حساب الفرق بالأيام للوصول إلى اليوم المطلوب
+    int daysToAdd;
+    
+    if (currentWeekday <= targetWeekday) {
+      daysToAdd = targetWeekday - currentWeekday;
+    } else {
+      daysToAdd = targetWeekday + 7 - currentWeekday;
+    }
+    
+    return today.add(Duration(days: daysToAdd));
   }
-  
-  return today.add(Duration(days: daysToAdd));
-}
- // مناطق العمل
+
+  // مناطق العمل
   final List<String> _workAreas = ['الكل', 'حي السلام', 'حي النهضة', 'حي الورود', 'حي النخيل', 'حي الرياض'];
 
   // دالة للبحث في المهام
@@ -511,6 +520,131 @@ static DateTime _getDateForDay(int targetWeekday) {
     setState(() {
       _areaFilter = area;
     });
+  }
+
+  // ========== دوال التحديث ==========
+  Future<void> _refreshDashboard() async {
+    if (_isDashboardRefreshing) return;
+    
+    setState(() {
+      _isDashboardRefreshing = true;
+    });
+    
+    // محاكاة جلب بيانات جديدة من السيرفر
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // هنا يمكن إضافة كود لجلب البيانات الحقيقية من API
+    
+    setState(() {
+      _isDashboardRefreshing = false;
+    });
+    
+    // إظهار رسالة نجاح
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تم تحديث البيانات بنجاح'),
+          backgroundColor: _successColor,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshSchedule() async {
+    if (_isScheduleRefreshing) return;
+    
+    setState(() {
+      _isScheduleRefreshing = true;
+    });
+    
+    await Future.delayed(const Duration(seconds: 1));
+    
+    setState(() {
+      _isScheduleRefreshing = false;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تم تحديث جدول المهام'),
+          backgroundColor: _successColor,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshTasks() async {
+    if (_isTasksRefreshing) return;
+    
+    setState(() {
+      _isTasksRefreshing = true;
+    });
+    
+    await Future.delayed(const Duration(seconds: 1));
+    
+    setState(() {
+      _isTasksRefreshing = false;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تم تحديث قائمة المهام'),
+          backgroundColor: _successColor,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshComplaints() async {
+    if (_isComplaintsRefreshing) return;
+    
+    setState(() {
+      _isComplaintsRefreshing = true;
+    });
+    
+    await Future.delayed(const Duration(seconds: 1));
+    
+    setState(() {
+      _isComplaintsRefreshing = false;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تم تحديث البلاغات'),
+          backgroundColor: _successColor,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshReports() async {
+    if (_isReportsRefreshing) return;
+    
+    setState(() {
+      _isReportsRefreshing = true;
+    });
+    
+    await Future.delayed(const Duration(seconds: 1));
+    
+    setState(() {
+      _isReportsRefreshing = false;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تم تحديث التقارير'),
+          backgroundColor: _successColor,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   @override
@@ -720,16 +854,19 @@ static DateTime _getDateForDay(int targetWeekday) {
     );
   }
 
-  // ========== شاشة الرئيسية ==========
+  // ========== شاشة الرئيسية مع RefreshIndicator ==========
   Widget _buildDashboardView(bool isDarkMode, double screenWidth, double screenHeight) {
     int completedTasks = _todayTasks.where((task) => task.isCompleted).length;
     int inProgressTasks = _todayTasks.where((task) => task.status == 'قيد التنفيذ').length;
     int plannedTasks = _todayTasks.where((task) => task.status == 'مخطط').length;
     
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
+    return RefreshIndicator(
+      key: _dashboardRefreshKey,
+      onRefresh: _refreshDashboard,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -833,6 +970,9 @@ static DateTime _getDateForDay(int targetWeekday) {
               _buildNoComplaintsMessage(isDarkMode)
             else
               ...complaints.take(3).map((complaint) => _buildComplaintMiniCard(complaint, isDarkMode)).toList(),
+            
+            // إضافة مسافة في الأسفل للسماح بالسحب
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -975,183 +1115,285 @@ static DateTime _getDateForDay(int targetWeekday) {
         ),
       ],
     );
-  }  Widget _buildScheduleTaskCard(CleanTask task, bool isDarkMode) {
-    Color statusColor = task.isCompleted 
-        ? _successColor 
-        : (task.status == 'قيد التنفيذ' ? _warningColor : _primaryColor);
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? _darkCardColor : _cardColor,
-        border: Border.all(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+  }  
+
+  // ========== شاشة الجداول مع RefreshIndicator ==========
+  Widget _buildScheduleView(bool isDarkMode, double screenWidth, double screenHeight) {
+    return RefreshIndicator(
+      key: _scheduleRefreshKey,
+      onRefresh: _refreshSchedule,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    task.areaName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: isDarkMode ? _darkTextColor : _textColor,
-                    ),
-                  ),
+            // شريط الإحصائيات
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? _darkCardColor : _cardColor,
+                border: Border(
+                  bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: statusColor),
-                  ),
-                  child: Text(
-                    task.status,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatChip('إجمالي المهام', _todayTasks.length.toString(), _primaryColor),
+                  _buildStatChip('المناطق', _getUniqueAreas().toString(), _successColor),
+                  _buildStatChip('العمال', _getUniqueWorkers().toString(), _warningColor),
+                  _buildStatChip('الشاحنات', _getUniqueTrucks().toString(), _accentColor),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.local_shipping, size: 16, color: _textSecondaryColor),
-                const SizedBox(width: 4),
-                Text(' ${task.truckNumber}', style: TextStyle(color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-                const SizedBox(width: 16),
-                Icon(Icons.access_time, size: 16, color: _textSecondaryColor),
-                const SizedBox(width: 4),
-                Text(' ${task.startTime} - ${task.endTime}', style: TextStyle(color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-              ],
+            
+            // الجدول الرئيسي
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: _buildScheduleTable(isDarkMode),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.people, size: 16, color: _textSecondaryColor),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    task.workers.join('، '),
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.delete_outline, size: 16, color: _textSecondaryColor),
-                const SizedBox(width: 4),
-                Text('نوع النفايات: ${task.wasteType}', style: TextStyle(color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-                const SizedBox(width: 16),
-                Icon(Icons.inventory, size: 16, color: _textSecondaryColor),
-                const SizedBox(width: 4),
-                Text('${task.binCount} حاوية', style: TextStyle(color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor)),
-              ],
-            ),
+            
+            // إضافة مسافة في الأسفل للسماح بالسحب
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  // ========== شاشة المهام ==========
-  Widget _buildTasksView(bool isDarkMode, double screenWidth, double screenHeight) {
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
+  Widget _buildScheduleTable(bool isDarkMode) {
+    final weekDays = _getWeekDays();
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // شريط البحث والتصفية
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDarkMode ? _darkCardColor : _cardColor,
-              border: Border(
-                bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
+          // رؤوس الأعمدة
+          _buildScheduleHeader(isDarkMode),
+          
+          // صفوف البيانات
+          ...List.generate(7, (index) {
+            final dayData = weekDays[index];
+            final dayTasks = _getTasksForDay(dayData['date']);
+            
+            return _buildScheduleRow(
+              dayName: dayData['name'],
+              dayDate: dayData['date'],
+              tasks: dayTasks,
+              isDarkMode: isDarkMode,
+              rowIndex: index,
+            );
+          }),
+          
+          // صف الإجمالي
+          _buildTotalRow(isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  // ========== شاشة المهام مع RefreshIndicator ==========
+  Widget _buildTasksView(bool isDarkMode, double screenWidth, double screenHeight) {
+    return RefreshIndicator(
+      key: _tasksRefreshKey,
+      onRefresh: _refreshTasks,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            // شريط البحث والتصفية
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? _darkCardColor : _cardColor,
+                border: Border(
+                  bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
+                ),
+              ),
+              child: Column(
+                children: [
+                  _buildSearchBar(isDarkMode, 'ابحث عن مهمة...'),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _workAreas.map((area) {
+                        return _buildAreaFilterChip(area, isDarkMode);
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Column(
+
+            // تبويبات المهام
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDarkMode ? _darkCardColor : _cardColor,
+                border: Border(
+                  bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
+                ),
+              ),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildTaskTabButton('الكل', 0, isDarkMode),
+                  _buildTaskTabButton('مكتمل', 1, isDarkMode),
+                  _buildTaskTabButton('قيد التنفيذ', 2, isDarkMode),
+                  _buildTaskTabButton('مخطط', 3, isDarkMode),
+                ],
+              ),
+            ),
+
+            // إحصائيات سريعة للمهام
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDarkMode ? _darkCardColor : _cardColor,
+                border: Border(
+                  bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildTaskMiniStat('الإجمالي', _filteredTasks.length.toString(), _primaryColor),
+                  _buildTaskMiniStat('مكتمل', _filteredTasks.where((t) => t.isCompleted).length.toString(), _successColor),
+                  _buildTaskMiniStat('قيد التنفيذ', _filteredTasks.where((t) => t.status == 'قيد التنفيذ').length.toString(), _warningColor),
+                  _buildTaskMiniStat('مخطط', _filteredTasks.where((t) => t.status == 'مخطط').length.toString(), _primaryColor),
+                ],
+              ),
+            ),
+
+            // قائمة المهام
+            if (_filteredTasks.isEmpty)
+              Container(
+                height: 300,
+                child: _buildNoTasksMessage(isDarkMode, 'لا توجد مهام تطابق البحث'),
+              )
+            else
+              ..._filteredTasks.map((task) => _buildDetailedTaskCard(task, isDarkMode)).toList(),
+            
+            // إضافة مسافة في الأسفل للسماح بالسحب
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ========== شاشة البلاغات مع RefreshIndicator ==========
+  Widget _buildComplaintsView(bool isDarkMode, double screenWidth, double screenHeight) {
+    List<Map<String, dynamic>> filteredComplaints = _getFilteredComplaints();
+    
+    return RefreshIndicator(
+      key: _complaintsRefreshKey,
+      onRefresh: _refreshComplaints,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            // إحصائيات البلاغات
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: _buildComplaintsStatsCard(isDarkMode),
+            ),
+            
+            // تبويبات التصفية
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDarkMode ? _darkCardColor : _cardColor,
+                border: Border(
+                  bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
+                ),
+              ),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildComplaintFilterChip('الكل', 0, isDarkMode),
+                  _buildComplaintFilterChip('جديدة', 1, isDarkMode),
+                  _buildComplaintFilterChip('قيد المعالجة', 2, isDarkMode),
+                  _buildComplaintFilterChip('مكتملة', 3, isDarkMode),
+                  _buildComplaintFilterChip('ملغية', 4, isDarkMode),
+                ],
+              ),
+            ),
+            
+            // قائمة البلاغات
+            if (filteredComplaints.isEmpty)
+              Container(
+                height: 300,
+                child: _buildNoComplaintsMessage(isDarkMode),
+              )
+            else
+              ...filteredComplaints.map((complaint) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _buildComplaintCard(complaint, isDarkMode),
+              )).toList(),
+            
+            // إضافة مسافة في الأسفل للسماح بالسحب
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ========== شاشة التقارير مع RefreshIndicator ==========
+  Widget _buildReportsView(bool isDarkMode, double screenWidth, double screenHeight) {
+    return RefreshIndicator(
+      key: _reportsRefreshKey,
+      onRefresh: _refreshReports,
+      color: _primaryColor,
+      backgroundColor: isDarkMode ? _darkCardColor : _cardColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                _buildSearchBar(isDarkMode, 'ابحث عن مهمة...'),
-                const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _workAreas.map((area) {
-                      return _buildAreaFilterChip(area, isDarkMode);
-                    }).toList(),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.assignment, color: _primaryColor, size: 24),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'نظام التقارير المتقدم',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
                   ),
                 ),
               ],
             ),
-          ),
-
-          // تبويبات المهام
-          Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDarkMode ? _darkCardColor : _cardColor,
-              border: Border(
-                bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-              ),
-            ),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildTaskTabButton('الكل', 0, isDarkMode),
-                _buildTaskTabButton('مكتمل', 1, isDarkMode),
-                _buildTaskTabButton('قيد التنفيذ', 2, isDarkMode),
-                _buildTaskTabButton('مخطط', 3, isDarkMode),
-              ],
-            ),
-          ),
-
-          // إحصائيات سريعة للمهام
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDarkMode ? _darkCardColor : _cardColor,
-              border: Border(
-                bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildTaskMiniStat('الإجمالي', _filteredTasks.length.toString(), _primaryColor),
-                _buildTaskMiniStat('مكتمل', _filteredTasks.where((t) => t.isCompleted).length.toString(), _successColor),
-                _buildTaskMiniStat('قيد التنفيذ', _filteredTasks.where((t) => t.status == 'قيد التنفيذ').length.toString(), _warningColor),
-                _buildTaskMiniStat('مخطط', _filteredTasks.where((t) => t.status == 'مخطط').length.toString(), _primaryColor),
-              ],
-            ),
-          ),
-
-          // قائمة المهام
-          Expanded(
-            child: _filteredTasks.isEmpty
-                ? _buildNoTasksMessage(isDarkMode, 'لا توجد مهام تطابق البحث')
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredTasks.length,
-                    itemBuilder: (context, index) {
-                      return _buildDetailedTaskCard(_filteredTasks[index], isDarkMode);
-                    },
-                  ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            _buildReportTypeFilter(),
+            const SizedBox(height: 20),
+            _buildReportOptions(),
+            const SizedBox(height: 20),
+            _buildGenerateReportButton(),
+            const SizedBox(height: 20),
+            
+            // إضافة مسافة في الأسفل للسماح بالسحب
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
@@ -1525,38 +1767,6 @@ static DateTime _getDateForDay(int targetWeekday) {
         onTap: () {
           _showComplaintDetails(complaint, isDarkMode);
         },
-      ),
-    );
-  }
-
-  // ========== شاشة البلاغات ==========
-  Widget _buildComplaintsView(bool isDarkMode, double screenWidth, double screenHeight) {
-    List<Map<String, dynamic>> filteredComplaints = _getFilteredComplaints();
-    
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
-      child: Column(
-        children: [
-          // إحصائيات البلاغات
-          _buildComplaintsStatsCard(isDarkMode),
-          
-          // تبويبات التصفية
-          _buildComplaintsFilterRow(isDarkMode),
-          
-          // قائمة البلاغات
-          Expanded(
-            child: filteredComplaints.isEmpty
-                ? _buildNoComplaintsMessage(isDarkMode)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredComplaints.length,
-                    itemBuilder: (context, index) {
-                      return _buildComplaintCard(filteredComplaints[index], isDarkMode);
-                    },
-                  ),
-          ),
-        ],
       ),
     );
   }
@@ -2137,46 +2347,6 @@ static DateTime _getDateForDay(int targetWeekday) {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  // ========== شاشة التقارير ==========
-  Widget _buildReportsView(bool isDarkMode, double screenWidth, double screenHeight) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.assignment, color: _primaryColor, size: 24),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'نظام التقارير المتقدم',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildReportTypeFilter(),
-          const SizedBox(height: 20),
-          _buildReportOptions(),
-          const SizedBox(height: 20),
-          _buildGenerateReportButton(),
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -3183,6 +3353,283 @@ static DateTime _getDateForDay(int targetWeekday) {
       ),
     );
   }
+
+  Widget _buildScheduleHeader(bool isDarkMode) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: isDarkMode ? _darkPrimaryColor.withOpacity(0.3) : _primaryColor.withOpacity(0.1),
+        border: Border(
+          bottom: BorderSide(color: _secondaryColor, width: 2),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildScheduleHeaderCell('اليوم', width: 100, isDarkMode: isDarkMode),
+          _buildScheduleHeaderCell('منطقة العمل', width: 180, isDarkMode: isDarkMode),
+          _buildScheduleHeaderCell('الوقت', width: 140, isDarkMode: isDarkMode),
+          _buildScheduleHeaderCell('العمال', width: 180, isDarkMode: isDarkMode),
+          _buildScheduleHeaderCell('رقم الشاحنة', width: 120, isDarkMode: isDarkMode),
+          _buildScheduleHeaderCell('عدد البيوت', width: 100, isDarkMode: isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleHeaderCell(String title, {required double width, required bool isDarkMode}) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+                fontSize: 14,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.arrow_upward_rounded, size: 14, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleRow({
+    required String dayName,
+    required DateTime dayDate,
+    required List<CleanTask> tasks,
+    required bool isDarkMode,
+    required int rowIndex,
+  }) {
+    final primaryTask = tasks.isNotEmpty ? tasks.first : null;
+    final dayColor = _getDayColor(dayDate.weekday);
+    final bgColor = rowIndex % 2 == 0
+        ? (isDarkMode ? Colors.white.withOpacity(0.02) : Colors.grey.withOpacity(0.01))
+        : Colors.transparent;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // الصف الرئيسي
+        Container(
+          height: tasks.length > 1 ? 56 : 50,
+          color: bgColor,
+          child: Row(
+            children: [
+              // عمود اليوم
+              _buildScheduleDataCell(
+                width: 100,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: tasks.length > 1 ? 40 : 34,
+                      decoration: BoxDecoration(
+                        color: dayColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            dayName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: dayColor,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            DateFormat('yyyy/MM/dd').format(dayDate),
+                            style: TextStyle(
+                              color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // باقي الأعمدة
+              _buildScheduleDataCell(
+                width: 180,
+                child: Text(
+                  primaryTask?.areaName ?? 'لا توجد مهام',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextColor : _textColor,
+                    fontSize: 12,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _buildScheduleDataCell(
+                width: 140,
+                child: Text(
+                  primaryTask != null ? '${primaryTask.startTime}-${primaryTask.endTime}' : '--:--',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextColor : _textColor,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _buildScheduleDataCell(
+                width: 180,
+                child: Text(
+                  primaryTask != null ? primaryTask.workers.join('، ') : '---',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextColor : _textColor,
+                    fontSize: 12,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _buildScheduleDataCell(
+                width: 120,
+                child: Text(
+                  primaryTask?.truckNumber ?? '---',
+                  style: TextStyle(
+                    color: isDarkMode ? _darkTextColor : _textColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _buildScheduleDataCell(
+                width: 100,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _successColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        primaryTask != null ? '${primaryTask.binCount}' : '0',
+                        style: TextStyle(
+                          color: _successColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (tasks.length > 1) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: _warningColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '+${tasks.length - 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // الصفوف الفرعية
+        if (tasks.length > 1)
+          ...tasks.skip(1).map((task) => _buildScheduleSubRow(task, isDarkMode, bgColor)).toList(),
+      ],
+    );
+  }
+
+  Widget _buildScheduleDataCell({required double width, required Widget child}) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      alignment: Alignment.centerRight,
+      child: child,
+    );
+  }
+
+  Widget _buildScheduleSubRow(CleanTask task, bool isDarkMode, Color bgColor) {
+    return Container(
+      height: 44,
+      color: bgColor,
+      child: Row(
+        children: [
+          _buildScheduleDataCell(
+            width: 100,
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                Icon(Icons.subdirectory_arrow_right_rounded, size: 16, color: _textSecondaryColor),
+              ],
+            ),
+          ),
+          _buildScheduleDataCell(
+            width: 180,
+            child: Text(task.areaName, style: TextStyle(fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis),
+          ),
+          _buildScheduleDataCell(
+            width: 140,
+            child: Text('${task.startTime}-${task.endTime}', style: TextStyle(fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          _buildScheduleDataCell(
+            width: 180,
+            child: Text(task.workers.join('، '), style: TextStyle(fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis),
+          ),
+          _buildScheduleDataCell(
+            width: 120,
+            child: Text(task.truckNumber, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          _buildScheduleDataCell(
+            width: 100,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: _successColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('${task.binCount}', style: TextStyle(color: _successColor, fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNoTasksMessage(bool isDarkMode, String message) {
     return Center(
       child: Column(
@@ -3204,6 +3651,192 @@ static DateTime _getDateForDay(int targetWeekday) {
       ),
     );
   }
+
+  Widget _buildSearchBar(bool isDarkMode, String hintText) {
+    return Container(
+      height: 36,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        color: isDarkMode ? _darkCardColor : _cardColor,
+        border: Border.all(
+          color: isDarkMode ? Colors.grey[800]! : _borderColor,
+          width: 0.5,
+        ),
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: _updateSearchQuery,
+        textAlign: TextAlign.right,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor, fontSize: 11),
+          prefixIcon: Icon(Icons.search_rounded, color: _textSecondaryColor, size: 16),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear_rounded, color: _textSecondaryColor, size: 14),
+                  onPressed: _clearSearch,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          isDense: true,
+        ),
+        style: TextStyle(color: isDarkMode ? _darkTextColor : _textColor, fontSize: 11),
+      ),
+    );
+  }
+
+  Widget _buildStatChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$value ', style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 10)),
+          Text(label, style: TextStyle(color: _textSecondaryColor, fontSize: 9)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalRow(bool isDarkMode) {
+    int totalBins = _calculateTotalHouses();
+    int totalTasks = _todayTasks.length;
+    int uniqueAreas = _getUniqueAreas();
+    int uniqueWorkers = _getUniqueWorkers();
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? _darkPrimaryColor.withOpacity(0.2) : _primaryColor.withOpacity(0.05),
+        border: Border(
+          top: BorderSide(color: _secondaryColor, width: 2),
+          bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
+        ),
+      ),
+      child: Row(
+        children: [
+          // العمود 1: اليوم
+          _buildTotalCell(
+            width: 100,
+            child: Text(
+              'الإجمالي',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? _darkTextColor : _primaryColor,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          
+          // العمود 2: منطقة العمل
+          _buildTotalCell(
+            width: 180,
+            child: Text(
+              '$uniqueAreas منطقة',
+              style: TextStyle(
+                color: isDarkMode ? _darkTextColor : _textColor,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          
+          // العمود 3: الوقت
+          _buildTotalCell(
+            width: 140,
+            child: Text(
+              '$totalTasks مهمة',
+              style: TextStyle(
+                color: isDarkMode ? _darkTextColor : _textColor,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          
+          // العمود 4: العمال
+          _buildTotalCell(
+            width: 180,
+            child: Text(
+              '$uniqueWorkers عامل',
+              style: TextStyle(
+                color: isDarkMode ? _darkTextColor : _textColor,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          
+          // العمود 5: رقم الشاحنة
+          _buildTotalCell(
+            width: 120,
+            child: Text(
+              '${_getUniqueTrucks()} شاحنة',
+              style: TextStyle(
+                color: isDarkMode ? _darkTextColor : _textColor,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          
+          // العمود 6: عدد البيوت
+          _buildTotalCell(
+            width: 100,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _successColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                totalBins.toString(),
+                style: TextStyle(
+                  color: _successColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalCell({required double width, required Widget child}) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+      alignment: Alignment.centerRight,
+      child: child,
+    );
+  }
+
+  int _calculateTotalHouses() {
+    return _todayTasks.fold(0, (sum, task) => sum + task.binCount);
+  }
+
+  int _getUniqueAreas() {
+    return _todayTasks.map((task) => task.areaName).toSet().length;
+  }
+
+  int _getUniqueWorkers() {
+    final allWorkers = <String>[];
+    for (var task in _todayTasks) {
+      allWorkers.addAll(task.workers);
+    }
+    return allWorkers.toSet().length;
+  }
+
+  int _getUniqueTrucks() {
+    return _todayTasks.map((task) => task.truckNumber).toSet().length;
+  }
+
   void _showNotifications(BuildContext context) {
     showDialog(
       context: context,
@@ -3262,6 +3895,83 @@ static DateTime _getDateForDay(int targetWeekday) {
   // دالة للتحقق إذا كان اليوم عطلة نهاية الأسبوع
   bool _isWeekend(DateTime day) {
     return day.weekday == DateTime.friday || day.weekday == DateTime.saturday;
+  }
+
+  // دالة للحصول على اسم اليوم بالعربية
+  String _getArabicDayName(int weekday) {
+    switch (weekday) {
+      case DateTime.sunday:
+        return 'الأحد';
+      case DateTime.monday:
+        return 'الاثنين';
+      case DateTime.tuesday:
+        return 'الثلاثاء';
+      case DateTime.wednesday:
+        return 'الأربعاء';
+      case DateTime.thursday:
+        return 'الخميس';
+      case DateTime.friday:
+        return 'الجمعة';
+      case DateTime.saturday:
+        return 'السبت';
+      default:
+        return '';
+    }
+  }
+
+  // دالة للحصول على أيام الأسبوع بالترتيب من الأحد إلى السبت
+  List<Map<String, dynamic>> _getWeekDays() {
+    final today = DateTime.now();
+    
+    int daysToSubtract;
+    if (today.weekday == DateTime.sunday) {
+      daysToSubtract = 0; 
+    } else {
+      daysToSubtract = today.weekday; 
+    }
+    
+    final sundayDate = today.subtract(Duration(days: daysToSubtract));
+    
+    print('تاريخ اليوم: $today');
+    print('تاريخ الأحد: $sundayDate');
+    
+    return List.generate(7, (index) {
+      final date = sundayDate.add(Duration(days: index));
+      return {
+        'name': _getArabicDayName(date.weekday),
+        'date': date,
+      };
+    });
+  }
+
+  // دالة للحصول على المهام ليوم معين
+  List<CleanTask> _getTasksForDay(DateTime date) {
+    return _todayTasks.where((task) {
+      return task.date.year == date.year &&
+             task.date.month == date.month &&
+             task.date.day == date.day;
+    }).toList();
+  }
+
+  Color _getDayColor(int weekday) {
+    switch (weekday) {
+      case DateTime.sunday:
+        return Colors.blue;
+      case DateTime.monday:
+        return Colors.green;
+      case DateTime.tuesday:
+        return Colors.orange;
+      case DateTime.wednesday:
+        return Colors.purple;
+      case DateTime.thursday:
+        return Colors.teal;
+      case DateTime.friday:
+        return Colors.brown;
+      case DateTime.saturday:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 
   // بناء القائمة المنسدلة
@@ -3407,1513 +4117,8 @@ static DateTime _getDateForDay(int targetWeekday) {
         ),
       ),
     );
-}
-// ========== شاشة الجداول - الحل النهائي ==========
-Widget _buildScheduleView(bool isDarkMode, double screenWidth, double screenHeight) {
-  // حساب المساحات بدقة
-  final availableHeight = screenHeight - 
-      kToolbarHeight -  // ارتفاع AppBar
-      60 -              // ارتفاع TabBar
-      56 -              // ارتفاع شريط الأدوات العلوي
-      50;               // ارتفاع شريط الإحصائيات السفلي (تقديري)
-  
-  return Container(
-    width: screenWidth,
-    height: screenHeight,
-    child: Column(
-      children: [
-        // شريط الأدوات العلوي
-        _buildScheduleToolbar(isDarkMode),
-        
-        // الجدول الرئيسي (يأخذ المساحة المتبقية)
-        Expanded(
-          child: Container(
-            height: availableHeight, // تحديد ارتفاع محدد
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-              ),
-            ),
-            child: _buildScheduleTable(isDarkMode),
-          ),
-        ),
-        
-        // شريط الإحصائيات السفلي
-        _buildScheduleStatsBar(isDarkMode),
-      ],
-    ),
-  );
-}
-// شريط الأدوات العلوي (بدون بحث)
-Widget _buildScheduleToolbar(bool isDarkMode) {
-  return Container(
-    height: 56, // تحديد ارتفاع ثابت
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkCardColor : _cardColor,
-      border: Border(
-        bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-      ),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.end, // لمحاذاة الأيقونة لليسار
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: _primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _primaryColor.withOpacity(0.3)),
-          ),
-          child: IconButton(
-            icon: Icon(Icons.download_rounded, color: _primaryColor, size: 20),
-            onPressed: _exportScheduleToExcel,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-// الجدول الرئيسي
-Widget _buildScheduleTable(bool isDarkMode) {
-  final weekDays = _getWeekDays();
-  
-  return SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min, // مهم: يمنع التمدد
-      children: [
-        // رؤوس الأعمدة
-        _buildScheduleHeader(isDarkMode),
-        
-        // صفوف البيانات
-        ...List.generate(7, (index) {
-          final dayData = weekDays[index];
-          final dayTasks = _getTasksForDay(dayData['date']);
-          
-          return _buildScheduleRow(
-            dayName: dayData['name'],
-            dayDate: dayData['date'],
-            tasks: dayTasks,
-            isDarkMode: isDarkMode,
-            rowIndex: index,
-          );
-        }),
-        
-        // صف الإجمالي
-        _buildScheduleTotalRow(isDarkMode),
-      ],
-    ),
-  );
-}
-
-// رؤوس الأعمدة (تصغير الارتفاع)
-Widget _buildScheduleHeader(bool isDarkMode) {
-  return Container(
-    height: 42, // تحديد ارتفاع ثابت
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkPrimaryColor.withOpacity(0.3) : _primaryColor.withOpacity(0.1),
-      border: Border(
-        bottom: BorderSide(color: _secondaryColor, width: 2),
-      ),
-    ),
-    child: Row(
-      children: [
-        _buildScheduleHeaderCell('اليوم', width: 90, isDarkMode: isDarkMode),
-        _buildScheduleHeaderCell('منطقة العمل', width: 160, isDarkMode: isDarkMode),
-        _buildScheduleHeaderCell('الوقت', width: 120, isDarkMode: isDarkMode),
-        _buildScheduleHeaderCell('العمال', width: 160, isDarkMode: isDarkMode),
-        _buildScheduleHeaderCell('رقم الشاحنة', width: 100, isDarkMode: isDarkMode),
-        _buildScheduleHeaderCell('عدد البيوت', width: 90, isDarkMode: isDarkMode),
-      ],
-    ),
-  );
-}
-
-// خلية رأس (تصغير)
-Widget _buildScheduleHeaderCell(String title, {required double width, required bool isDarkMode}) {
-  return Container(
-    width: width,
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-    alignment: Alignment.centerRight,
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
-              fontSize: 11,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        const SizedBox(width: 2),
-        Icon(Icons.arrow_upward_rounded, size: 11, color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor),
-      ],
-    ),
-  );
-}
-
-// صف البيانات (تصغير الارتفاع)
-Widget _buildScheduleRow({
-  required String dayName,
-  required DateTime dayDate,
-  required List<CleanTask> tasks,
-  required bool isDarkMode,
-  required int rowIndex,
-}) {
-  final primaryTask = tasks.isNotEmpty ? tasks.first : null;
-  final dayColor = _getDayColor(dayDate.weekday);
-  final bgColor = rowIndex % 2 == 0
-      ? (isDarkMode ? Colors.white.withOpacity(0.02) : Colors.grey.withOpacity(0.01))
-      : Colors.transparent;
-  
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      // الصف الرئيسي
-      Container(
-        height: tasks.length > 1 ? 50 : 44, // ارتفاع متغير حسب وجود صفوف فرعية
-        color: bgColor,
-        child: Row(
-          children: [
-            // عمود اليوم
-            _buildScheduleDataCell(
-              width: 90,
-              child: Row(
-                children: [
-                  Container(
-                    width: 3,
-                    height: tasks.length > 1 ? 34 : 28,
-                    decoration: BoxDecoration(
-                      color: dayColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          dayName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dayColor,
-                            fontSize: 11,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          DateFormat('yyyy/MM/dd').format(dayDate),
-                          style: TextStyle(
-                            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-                            fontSize: 8,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // باقي الأعمدة
-            _buildScheduleDataCell(
-              width: 160,
-              child: Text(
-                primaryTask?.areaName ?? 'لا توجد مهام',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 10,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            _buildScheduleDataCell(
-              width: 120,
-              child: Text(
-                primaryTask != null ? '${primaryTask.startTime}-${primaryTask.endTime}' : '--:--',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 10,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            _buildScheduleDataCell(
-              width: 160,
-              child: Text(
-                primaryTask != null ? primaryTask.workers.join('، ') : '---',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 10,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            _buildScheduleDataCell(
-              width: 100,
-              child: Text(
-                primaryTask?.truckNumber ?? '---',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            _buildScheduleDataCell(
-              width: 90,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _successColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      primaryTask != null ? '${primaryTask.binCount}' : '0',
-                      style: TextStyle(
-                        color: _successColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (tasks.length > 1) ...[
-                    const SizedBox(width: 2),
-                    Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: _warningColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '+${tasks.length - 1}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 7,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      
-      // الصفوف الفرعية
-      if (tasks.length > 1)
-        ...tasks.skip(1).map((task) => _buildScheduleSubRow(task, isDarkMode, bgColor)).toList(),
-    ],
-  );
-}
-
-// خلية بيانات (تصغير)
-Widget _buildScheduleDataCell({required double width, required Widget child}) {
-  return Container(
-    width: width,
-    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-    alignment: Alignment.centerRight,
-    child: child,
-  );
-}
-
-// صف فرعي (تصغير)
-Widget _buildScheduleSubRow(CleanTask task, bool isDarkMode, Color bgColor) {
-  return Container(
-    height: 38, // ارتفاع ثابت للصفوف الفرعية
-    color: bgColor,
-    child: Row(
-      children: [
-        _buildScheduleDataCell(
-          width: 90,
-          child: Row(
-            children: [
-              const SizedBox(width: 8),
-              Icon(Icons.subdirectory_arrow_right_rounded, size: 12, color: _textSecondaryColor),
-            ],
-          ),
-        ),
-        _buildScheduleDataCell(
-          width: 160,
-          child: Text(task.areaName, style: TextStyle(fontSize: 9), maxLines: 2, overflow: TextOverflow.ellipsis),
-        ),
-        _buildScheduleDataCell(
-          width: 120,
-          child: Text('${task.startTime}-${task.endTime}', style: TextStyle(fontSize: 9), maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        _buildScheduleDataCell(
-          width: 160,
-          child: Text(task.workers.join('، '), style: TextStyle(fontSize: 9), maxLines: 2, overflow: TextOverflow.ellipsis),
-        ),
-        _buildScheduleDataCell(
-          width: 100,
-          child: Text(task.truckNumber, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        _buildScheduleDataCell(
-          width: 90,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: _successColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text('${task.binCount}', style: TextStyle(color: _successColor, fontSize: 9, fontWeight: FontWeight.bold)),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-// صف الإجمالي (تصغير)
-Widget _buildScheduleTotalRow(bool isDarkMode) {
-  return Container(
-    height: 44, // ارتفاع ثابت
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkPrimaryColor.withOpacity(0.2) : _primaryColor.withOpacity(0.05),
-      border: Border(
-        top: BorderSide(color: _secondaryColor, width: 2),
-      ),
-    ),
-    child: Row(
-      children: [
-        _buildScheduleDataCell(
-          width: 90,
-          child: Text('الإجمالي', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
-        ),
-        _buildScheduleDataCell(
-          width: 160,
-          child: Text('${_getUniqueAreas()} منطقة', style: TextStyle(fontSize: 10)),
-        ),
-        _buildScheduleDataCell(
-          width: 120,
-          child: Text('${_todayTasks.length} مهمة', style: TextStyle(fontSize: 10)),
-        ),
-        _buildScheduleDataCell(
-          width: 160,
-          child: Text('${_getUniqueWorkers()} عامل', style: TextStyle(fontSize: 10)),
-        ),
-        _buildScheduleDataCell(
-          width: 100,
-          child: Text('${_getUniqueTrucks()} شاحنة', style: TextStyle(fontSize: 10)),
-        ),
-        _buildScheduleDataCell(
-          width: 90,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: _successColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _calculateTotalHouses().toString(),
-              style: TextStyle(color: _successColor, fontSize: 10, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-// شريط الإحصائيات السفلي (تصغير)
-Widget _buildScheduleStatsBar(bool isDarkMode) {
-  return Container(
-    height: 44, // تحديد ارتفاع ثابت
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkCardColor : _cardColor,
-      border: Border(
-        top: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-      ),
-    ),
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildStatChip('إجمالي المهام', _todayTasks.length.toString(), _primaryColor),
-          const SizedBox(width: 8),
-          _buildStatChip('إجمالي البيوت', _calculateTotalHouses().toString(), _successColor),
-          const SizedBox(width: 8),
-          _buildStatChip('المناطق المغطاة', _getUniqueAreas().toString(), _warningColor),
-          const SizedBox(width: 8),
-          _buildStatChip('عدد العمال', _getUniqueWorkers().toString(), _accentColor),
-        ],
-      ),
-    ),
-  );
-}
-
-// تحسين شريط البحث
-Widget _buildSearchBar(bool isDarkMode, String hintText) {
-  return Container(
-    height: 36, // تحديد ارتفاع ثابت
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(6),
-      color: isDarkMode ? _darkCardColor : _cardColor,
-      border: Border.all(
-        color: isDarkMode ? Colors.grey[800]! : _borderColor,
-        width: 0.5,
-      ),
-    ),
-    child: TextField(
-      controller: _searchController,
-      onChanged: _updateSearchQuery,
-      textAlign: TextAlign.right,
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor, fontSize: 11),
-        prefixIcon: Icon(Icons.search_rounded, color: _textSecondaryColor, size: 16),
-        suffixIcon: _searchQuery.isNotEmpty
-            ? IconButton(
-                icon: Icon(Icons.clear_rounded, color: _textSecondaryColor, size: 14),
-                onPressed: _clearSearch,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
-              )
-            : null,
-        border: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        isDense: true,
-      ),
-      style: TextStyle(color: isDarkMode ? _darkTextColor : _textColor, fontSize: 11),
-    ),
-  );
-}
-
-// تحسين شريط الإحصائيات
-Widget _buildStatChip(String label, String value, Color color) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: color.withOpacity(0.2)),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('$value ', style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 10)),
-        Text(label, style: TextStyle(color: _textSecondaryColor, fontSize: 9)),
-      ],
-    ),
-  );
-}
-int _getUniqueTrucks() {
-  return _todayTasks.map((task) => task.truckNumber).toSet().length;
-}
-
-Widget _buildHeaderCell(String title, {required double width, required bool isDarkMode}) {
-  return Container(
-    width: width,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-    decoration: BoxDecoration(
-      border: Border(
-        left: BorderSide(color: isDarkMode ? Colors.grey[700]! : _borderColor),
-      ),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
-              fontSize: 13,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Icon(
-          Icons.arrow_upward_rounded,
-          size: 14,
-          color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-        ),
-      ],
-    ),
-  );
-}
-
-// تحسين دالة بناء خلية في صف اليوم
-Widget _buildDayCell({required double width, required Widget child}) {
-  return Container(
-    width: width,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    decoration: BoxDecoration(
-      border: Border(
-        left: BorderSide(color: _borderColor.withOpacity(0.3)),
-      ),
-    ),
-    child: child,
-  );
-}
-
-// تحسين دالة بناء خلية في الصف الفرعي
-Widget _buildSubCell({required double width, required Widget child}) {
-  return Container(
-    width: width,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(
-      border: Border(
-        left: BorderSide(color: _borderColor.withOpacity(0.3)),
-      ),
-    ),
-    child: child,
-  );
-}
-
-// تحسين دالة بناء خلية في صف الإجمالي
-Widget _buildTotalCell({required double width, required Widget child}) {
-  return Container(
-    width: width,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    decoration: BoxDecoration(
-      border: Border(
-        left: BorderSide(color: _borderColor.withOpacity(0.3)),
-      ),
-    ),
-    child: child,
-  );
-}
-
-// إضافة هذه الدالة إذا كانت مفقودة (لون اليوم)
-Color _getDayColor(int weekday) {
-  switch (weekday) {
-    case DateTime.sunday:
-      return Colors.blue;
-    case DateTime.monday:
-      return Colors.green;
-    case DateTime.tuesday:
-      return Colors.orange;
-    case DateTime.wednesday:
-      return Colors.purple;
-    case DateTime.thursday:
-      return Colors.teal;
-    case DateTime.friday:
-      return Colors.brown;
-    case DateTime.saturday:
-      return Colors.red;
-    default:
-      return Colors.grey;
   }
-}
-// دالة للحصول على اسم اليوم بالعربية
-String _getArabicDayName(int weekday) {
-  switch (weekday) {
-    case DateTime.sunday:
-      return 'الأحد';
-    case DateTime.monday:
-      return 'الاثنين';
-    case DateTime.tuesday:
-      return 'الثلاثاء';
-    case DateTime.wednesday:
-      return 'الأربعاء';
-    case DateTime.thursday:
-      return 'الخميس';
-    case DateTime.friday:
-      return 'الجمعة';
-    case DateTime.saturday:
-      return 'السبت';
-    default:
-      return '';
-  }
-}
-// دالة للحصول على أيام الأسبوع بالترتيب من الأحد إلى السبت
-List<Map<String, dynamic>> _getWeekDays() {
-  final today = DateTime.now();
-  
-  int daysToSubtract;
-  if (today.weekday == DateTime.sunday) {
-    daysToSubtract = 0; 
-  } else {
-    daysToSubtract = today.weekday; 
-  }
-  
-  final sundayDate = today.subtract(Duration(days: daysToSubtract));
-  
-  print('تاريخ اليوم: $today');
-  print('تاريخ الأحد: $sundayDate');
-  
-  return List.generate(7, (index) {
-    final date = sundayDate.add(Duration(days: index));
-    return {
-      'name': _getArabicDayName(date.weekday),
-      'date': date,
-    };
-  });
-}
-// دالة للحصول على المهام ليوم معين
-List<CleanTask> _getTasksForDay(DateTime date) {
-  return _todayTasks.where((task) {
-    return task.date.year == date.year &&
-           task.date.month == date.month &&
-           task.date.day == date.day;
-  }).toList();
-}
 
-int _calculateTotalHouses() {
-  return _todayTasks.fold(0, (sum, task) => sum + task.binCount);
-}
-
-int _getUniqueAreas() {
-  return _todayTasks.map((task) => task.areaName).toSet().length;
-}
-
-int _getUniqueWorkers() {
-  final allWorkers = <String>[];
-  for (var task in _todayTasks) {
-    allWorkers.addAll(task.workers);
-  }
-  return allWorkers.toSet().length;
-}
-// دالة لبناء رأس الجدول
-Widget _buildTableHeader(bool isDarkMode) {
-  return Container(
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkPrimaryColor.withOpacity(0.3) : _primaryColor.withOpacity(0.1),
-      border: Border(
-        bottom: BorderSide(color: _secondaryColor, width: 2),
-        top: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-      ),
-    ),
-    child: Row(
-      children: [
-        _buildHeaderCell('اليوم', width: 120, isDarkMode: isDarkMode),
-        _buildHeaderCell('منطقة العمل', width: 200, isDarkMode: isDarkMode),
-        _buildHeaderCell('الوقت', width: 150, isDarkMode: isDarkMode),
-        _buildHeaderCell('العمال', width: 200, isDarkMode: isDarkMode),
-        _buildHeaderCell('رقم الشاحنة', width: 120, isDarkMode: isDarkMode),
-        _buildHeaderCell('عدد البيوت', width: 120, isDarkMode: isDarkMode),
-      ],
-    ),
-  );
-}
-// دالة لبناء صف اليوم
-Widget _buildDayRow({
-  required String dayName,
-  required DateTime dayDate,
-  required List<CleanTask> tasks,
-  required bool isDarkMode,
-  required int rowIndex,
-}) {
-  final primaryTask = tasks.isNotEmpty ? tasks.first : null;
-  final dayColor = _getDayColor(dayDate.weekday);
-  final isEvenRow = rowIndex % 2 == 0;
-  
-  return Column(
-    children: [
-      // الصف الرئيسي لليوم
-      Container(
-        decoration: BoxDecoration(
-          color: isEvenRow
-              ? (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.02))
-              : Colors.transparent,
-          border: Border(
-            bottom: BorderSide(
-              color: isDarkMode ? Colors.grey[800]! : _borderColor,
-              width: 0.5,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            // العمود 1: اليوم
-            _buildDayCell(
-              width: 120,
-              child: Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: dayColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          dayName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dayColor,
-                            fontSize: 13,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          DateFormat('yyyy/MM/dd').format(dayDate),
-                          style: TextStyle(
-                            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // العمود 2: منطقة العمل
-            _buildDayCell(
-              width: 200,
-              child: Text(
-                primaryTask?.areaName ?? 'لا توجد مهام',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 12,
-                  fontWeight: primaryTask != null ? FontWeight.normal : FontWeight.w300,
-                  fontStyle: primaryTask == null ? FontStyle.italic : FontStyle.normal,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            
-            // العمود 3: الوقت
-            _buildDayCell(
-              width: 150,
-              child: Text(
-                primaryTask != null 
-                    ? '${primaryTask.startTime} - ${primaryTask.endTime}'
-                    : '--:--',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 12,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            
-            // العمود 4: العمال
-            _buildDayCell(
-              width: 200,
-              child: Text(
-                primaryTask != null 
-                    ? primaryTask.workers.join('، ')
-                    : '---',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 12,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            
-            // العمود 5: رقم الشاحنة
-            _buildDayCell(
-              width: 120,
-              child: Text(
-                primaryTask?.truckNumber ?? '---',
-                style: TextStyle(
-                  color: isDarkMode ? _darkTextColor : _textColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            
-            // العمود 6: عدد البيوت مع عداد المهام المتعددة
-            _buildDayCell(
-              width: 120,
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _successColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      primaryTask != null ? '${primaryTask.binCount}' : '0',
-                      style: TextStyle(
-                        color: _successColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (tasks.length > 1) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: _warningColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '+${tasks.length - 1}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      
-      // الصفوف الفرعية للمهام الإضافية في نفس اليوم
-      if (tasks.length > 1)
-        ...tasks.skip(1).map((task) => _buildSubTaskRow(task, isDarkMode, rowIndex)).toList(),
-    ],
-  );
-}
-// دالة لبناء صف فرعي لمهمة إضافية
-Widget _buildSubTaskRow(CleanTask task, bool isDarkMode, int parentRowIndex) {
-  final isEvenRow = parentRowIndex % 2 == 0;
-  
-  return Container(
-    decoration: BoxDecoration(
-      color: isEvenRow
-          ? (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.02))
-          : Colors.transparent,
-      border: Border(
-        bottom: BorderSide(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
-          width: 0.5,
-        ),
-      ),
-    ),
-    child: Row(
-      children: [
-        // العمود 1: أيقونة فرعية
-        _buildSubCell(
-          width: 120,
-          child: Row(
-            children: [
-              const SizedBox(width: 20),
-              Icon(
-                Icons.subdirectory_arrow_right_rounded,
-                size: 16,
-                color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-              ),
-            ],
-          ),
-        ),
-        
-        // العمود 2: منطقة العمل
-        _buildSubCell(
-          width: 200,
-          child: Text(
-            task.areaName,
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        
-        // العمود 3: الوقت
-        _buildSubCell(
-          width: 150,
-          child: Text(
-            '${task.startTime} - ${task.endTime}',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        
-        // العمود 4: العمال
-        _buildSubCell(
-          width: 200,
-          child: Text(
-            task.workers.join('، '),
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        
-        // العمود 5: رقم الشاحنة
-        _buildSubCell(
-          width: 120,
-          child: Text(
-            task.truckNumber,
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        
-        // العمود 6: عدد البيوت
-        _buildSubCell(
-          width: 120,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: _successColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '${task.binCount}',
-              style: TextStyle(
-                color: _successColor,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-// دالة لبناء صف الإجماليات
-Widget _buildTotalRow(bool isDarkMode) {
-  int totalBins = _calculateTotalHouses();
-  int totalTasks = _todayTasks.length;
-  int uniqueAreas = _getUniqueAreas();
-  int uniqueWorkers = _getUniqueWorkers();
-  
-  return Container(
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkPrimaryColor.withOpacity(0.2) : _primaryColor.withOpacity(0.05),
-      border: Border(
-        top: BorderSide(color: _secondaryColor, width: 2),
-        bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-      ),
-    ),
-    child: Row(
-      children: [
-        // العمود 1: اليوم
-        _buildTotalCell(
-          width: 120,
-          child: Text(
-            'الإجمالي',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        
-        // العمود 2: منطقة العمل
-        _buildTotalCell(
-          width: 200,
-          child: Text(
-            '$uniqueAreas منطقة',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        
-        // العمود 3: الوقت
-        _buildTotalCell(
-          width: 150,
-          child: Text(
-            '$totalTasks مهمة',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        
-        // العمود 4: العمال
-        _buildTotalCell(
-          width: 200,
-          child: Text(
-            '$uniqueWorkers عامل',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        
-        // العمود 5: رقم الشاحنة
-        _buildTotalCell(
-          width: 120,
-          child: Text(
-            '${_getUniqueTrucks()} شاحنة',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        
-        // العمود 6: عدد البيوت
-        _buildTotalCell(
-          width: 120,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: _successColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              totalBins.toString(),
-              style: TextStyle(
-                color: _successColor,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-// دالة لبناء خلية رأس الجدول
-Widget _buildTableHeaderCell(String title, {required double width, required bool isDarkMode}) {
-  return Container(
-    width: width,
-    padding: const EdgeInsets.symmetric(horizontal: 8),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
-              fontSize: 13,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Icon(
-          Icons.arrow_upward_rounded,
-          size: 14,
-          color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-        ),
-      ],
-    ),
-  );
-}
-// دالة لبناء صف فرعي للمهام الإضافية في نفس اليوم
-Widget _buildTaskSubRow(CleanTask task, bool isDarkMode) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(
-      color: isDarkMode ? Colors.white.withOpacity(0.02) : Colors.grey.withOpacity(0.02),
-      border: Border(
-        bottom: BorderSide(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
-          width: 0.5,
-        ),
-      ),
-    ),
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          // العمود 1: اليوم (فارغ للصفوف الفرعية)
-          Container(
-            width: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.subdirectory_arrow_right_rounded,
-                  size: 16,
-                  color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-                ),
-              ],
-            ),
-          ),
-          
-          // العمود 2: منطقة العمل
-          Container(
-            width: 150,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              task.areaName,
-              style: TextStyle(
-                color: isDarkMode ? _darkTextColor : _textColor,
-                fontSize: 11,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          
-          // العمود 3: الوقت
-          Container(
-            width: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              '${task.startTime} - ${task.endTime}',
-              style: TextStyle(
-                color: isDarkMode ? _darkTextColor : _textColor,
-                fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          
-          // العمود 4: العمال
-          Container(
-            width: 150,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              task.workers.join('، '),
-              style: TextStyle(
-                color: isDarkMode ? _darkTextColor : _textColor,
-                fontSize: 11,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          
-          // العمود 5: رقم الشاحنة
-          Container(
-            width: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              task.truckNumber,
-              style: TextStyle(
-                color: isDarkMode ? _darkTextColor : _textColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          
-          // العمود 6: عدد البيوت
-          Container(
-            width: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: _successColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${task.binCount}',
-                style: TextStyle(
-                  color: _successColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}// تحديث دالة تصدير إلى Excel
-Future<void> _exportScheduleToExcel() async {
-  try {
-    String csvContent = 'اليوم,التاريخ,منطقة العمل,وقت البدء,وقت الانتهاء,العمال,رقم الشاحنة,عدد البيوت\n';
-    
-    // ترتيب المهام حسب التاريخ
-    final sortedTasks = List<CleanTask>.from(_todayTasks)
-      ..sort((a, b) => a.date.compareTo(b.date));
-    
-    for (var task in sortedTasks) {
-      final dayName = _getArabicDayName(task.date.weekday);
-      final dateStr = DateFormat('yyyy/MM/dd').format(task.date);
-      
-      csvContent += 
-        '"$dayName",' +
-        '"$dateStr",' +
-        '"${task.areaName}",' +
-        '"${task.startTime}",' +
-        '"${task.endTime}",' +
-        '"${task.workers.join(" - ")}",' +
-        '"${task.truckNumber}",' +
-        '"${task.binCount}"\n';
-    }
-    
-    // إضافة صف الإحصائيات
-    csvContent += '\n';
-    csvContent += '"الإحصائيات",,,,,,,\n';
-    csvContent += '"إجمالي المهام",${_todayTasks.length},,,,,,,\n';
-    csvContent += '"إجمالي البيوت",${_calculateTotalHouses()},,,,,,,\n';
-    csvContent += '"المناطق المغطاة",${_getUniqueAreas()},,,,,,,\n';
-    csvContent += '"عدد العمال",${_getUniqueWorkers()},,,,,,,\n';
-
-    final fileName = 'جدول_المهام_${DateTime.now().millisecondsSinceEpoch}.csv';
-    final bytes = utf8.encode(csvContent);
-    
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          Uint8List.fromList(bytes),
-          name: fileName,
-          mimeType: 'text/csv',
-        )
-      ],
-      subject: 'جدول المهام الأسبوعي',
-      text: 'تم تصدير جدول المهام الأسبوعي بنجاح',
-    );
-
-    _showSuccessSnackbar('تم تصدير الجدول بنجاح');
-  } catch (e) {
-    _showErrorSnackbar('خطأ في تصدير الجدول: $e');
-  }
-}
-Widget _buildExcelHeaderCell(String title, {required int flex, required bool isDarkMode}) {
-  return Expanded(
-    flex: flex,
-    child: Container(
-      padding: const EdgeInsets.only(right: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min, // مهم: يمنع التمدد الزائد
-        children: [
-          Flexible( // استخدام Flexible بدلاً من النص المباشر
-            child: Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? _darkTextColor : _primaryColor,
-                fontSize: 12,
-              ),
-              overflow: TextOverflow.ellipsis, // إضافة علامات الحذف عند التجاوز
-              maxLines: 1,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.arrow_upward_rounded,
-            size: 14,
-            color: isDarkMode ? _darkTextSecondaryColor : _textSecondaryColor,
-          ),
-        ],
-      ),
-    ),
-  );
-}
-Widget _buildExcelRow(CleanTask task, int rowIndex, bool isDarkMode) {
-  Color statusColor = task.isCompleted 
-      ? _successColor 
-      : (task.status == 'قيد التنفيذ' ? _warningColor : _primaryColor);
-  
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // تقليل padding
-    decoration: BoxDecoration(
-      color: rowIndex.isEven
-          ? (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.02))
-          : Colors.transparent,
-      border: Border(
-        bottom: BorderSide(
-          color: isDarkMode ? Colors.grey[800]! : _borderColor,
-          width: 0.5,
-        ),
-      ),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            task.areaName,
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11, // تصغير الخط
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Text(
-            task.truckNumber,
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            '${task.startTime}-${task.endTime}',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            task.workers.join('، '),
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Text(
-            task.wasteType,
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Text(
-            '${task.binCount}',
-            style: TextStyle(
-              color: isDarkMode ? _darkTextColor : _textColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: statusColor.withOpacity(0.3)),
-            ),
-            child: Text(
-              task.status,
-              style: TextStyle(
-                color: statusColor,
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-Widget _buildExcelTotalRow(bool isDarkMode) {
-  int totalBins = _todayTasks.fold(0, (sum, task) => sum + task.binCount);
-  
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-    decoration: BoxDecoration(
-      color: isDarkMode ? _darkPrimaryColor.withOpacity(0.2) : _primaryColor.withOpacity(0.05),
-      border: Border(
-        top: BorderSide(color: _primaryColor, width: 2),
-        bottom: BorderSide(color: isDarkMode ? Colors.grey[800]! : _borderColor),
-      ),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            'الإجمالي',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        const Expanded(flex: 1, child: SizedBox.shrink()),
-        const Expanded(flex: 2, child: SizedBox.shrink()),
-        const Expanded(flex: 2, child: SizedBox.shrink()),
-        const Expanded(flex: 1, child: SizedBox.shrink()),
-        Expanded(
-          flex: 1,
-          child: Text(
-            '$totalBins',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? _darkTextColor : _primaryColor,
-              fontSize: 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const Expanded(flex: 1, child: SizedBox.shrink()),
-      ],
-    ),
-  );
-}
   Widget _buildDrawerMenuItem({
     required IconData icon,
     required String title,
@@ -5006,6 +4211,7 @@ Widget _buildExcelTotalRow(bool isDarkMode) {
       ),
     );
   }
+
   void _showSettingsScreen(BuildContext context, bool isDarkMode) {
     showDialog(
       context: context,

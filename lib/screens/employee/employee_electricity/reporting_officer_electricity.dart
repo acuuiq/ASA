@@ -30,6 +30,13 @@ class _ReportingOfficerElectricityScreenState extends State<ReportingOfficerElec
   late TabController _emergencyTabController;
   late TabController _emergencySubTabController;
 
+  // متغيرات التحكم في التحديث
+  final GlobalKey<RefreshIndicatorState> _refreshElectricityKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshEmployeeKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshAppKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshEmergencyKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshReportsKey = GlobalKey<RefreshIndicatorState>();
+
   // ألوان موحدة للتبويبات
   late Color _tabPrimaryColor;
   late Color _tabSecondaryColor;
@@ -65,6 +72,14 @@ class _ReportingOfficerElectricityScreenState extends State<ReportingOfficerElec
     'app': 'غير مقروءة',
     'emergency': 'غير مقروءة',
   };
+
+  // متغيرات حالة التحميل
+  bool _isLoadingElectricity = false;
+  bool _isLoadingEmployee = false;
+  bool _isLoadingApp = false;
+  bool _isLoadingEmergency = false;
+  bool _isLoadingReports = false;
+
   // بيانات إضافية لانقطاع التيار الكهربائي
 List<ElectricityProblem> _outageProblems = [
   ElectricityProblem(
@@ -578,6 +593,82 @@ List<EmployeeProblem> _billingEmployeeProblems = [
     });
   }
 
+  // دوال التحديث لكل شاشة
+  Future<void> _refreshElectricityData() async {
+    setState(() {
+      _isLoadingElectricity = true;
+    });
+    
+    // محاكاة جلب بيانات جديدة من الخادم
+    await Future.delayed(Duration(seconds: 2));
+    
+    // هنا يمكنك إضافة منطق جلب البيانات الجديدة من الـ API
+    // مثلاً: إعادة تحميل البيانات من قاعدة البيانات أو الـ API
+    
+    setState(() {
+      _isLoadingElectricity = false;
+    });
+    
+    // عرض رسالة نجاح
+    _showSuccessSnackbar('تم تحديث بيانات الكهرباء بنجاح');
+  }
+
+  Future<void> _refreshEmployeeData() async {
+    setState(() {
+      _isLoadingEmployee = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isLoadingEmployee = false;
+    });
+    
+    _showSuccessSnackbar('تم تحديث بيانات الموظفين بنجاح');
+  }
+
+  Future<void> _refreshAppData() async {
+    setState(() {
+      _isLoadingApp = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isLoadingApp = false;
+    });
+    
+    _showSuccessSnackbar('تم تحديث بيانات التطبيق بنجاح');
+  }
+
+  Future<void> _refreshEmergencyData() async {
+    setState(() {
+      _isLoadingEmergency = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isLoadingEmergency = false;
+    });
+    
+    _showSuccessSnackbar('تم تحديث بيانات الطوارئ بنجاح');
+  }
+
+  Future<void> _refreshReportsData() async {
+    setState(() {
+      _isLoadingReports = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isLoadingReports = false;
+    });
+    
+    _showSuccessSnackbar('تم تحديث التقارير بنجاح');
+  }
+
   // دالة موحدة لبناء تبويب رئيسي
   Widget _buildMainTab(String text, IconData icon, int index, bool isSelected) {
     return Container(
@@ -621,14 +712,13 @@ List<EmployeeProblem> _billingEmployeeProblems = [
   required int tabIndex,
   required int currentIndex,
   required bool isDarkMode,
-  required TabController controller, // أضف هذا المتغير
+  required TabController controller,
 }) {
   bool isSelected = currentIndex == tabIndex;
   
   return Expanded(
     child: GestureDetector(
       onTap: () {
-        // تغيير التبويب باستخدام الـ Controller المناسب
         controller.animateTo(tabIndex);
       },
       child: Container(
@@ -685,7 +775,6 @@ List<EmployeeProblem> _billingEmployeeProblems = [
 List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType) {
   bool showUnread = _subTabStatus[tabType] == 'غير مقروءة';
   
-  // تصفية مباشرة بدون تعقيد
   if (showUnread) {
     return problems.where((p) {
       if (p is ElectricityProblem) return !p.isRead;
@@ -723,7 +812,6 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
         print('لم يتم العثور على البلاغ!');
       }
     }
-    // أضف باقي أنواع المشاكل بنفس الطريقة...
   });
   
   print('عدد البلاغات المقروءة بعد التحديث: ${_electricityProblems.where((p) => p.isRead).length}');
@@ -1067,37 +1155,50 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
-          Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+    return RefreshIndicator(
+      key: _refreshReportsKey,
+      onRefresh: _refreshReportsData,
+      color: _tabPrimaryColor,
+      backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_isLoadingReports)
+              LinearProgressIndicator(
+                color: _tabPrimaryColor,
+                backgroundColor: _tabPrimaryColor.withOpacity(0.1),
+              ),
+            SizedBox(height: 8),
+            // تبويبات داخلية (إنشاء التقارير / التقارير الواردة)
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
+                  ),
+                  Expanded(
+                    child: _buildReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildReportInnerTabButton('إنشاء التقارير', 0, isDarkMode),
-                ),
-                Expanded(
-                  child: _buildReportInnerTabButton('التقارير الواردة', 1, isDarkMode),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // عرض المحتوى حسب التبويب المختار
-          _currentReportTab == 0 
-              ? _buildCreateReportSection(isDarkMode)
-              : _buildReceivedReportsSection(isDarkMode),
-        ],
+            // عرض المحتوى حسب التبويب المختار
+            _currentReportTab == 0 
+                ? _buildCreateReportSection(isDarkMode)
+                : _buildReceivedReportsSection(isDarkMode),
+          ],
+        ),
       ),
     );
   }
@@ -1133,67 +1234,65 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
   }
 
   Widget _buildCreateReportSection(bool isDarkMode) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey[300]!),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.filter_alt, color: _tabPrimaryColor, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'فلترة التقارير',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : _textColor(context),
-                        ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey[300]!),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.filter_alt, color: _tabPrimaryColor, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'فلترة التقارير',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : _textColor(context),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  _buildReportTypeFilter(isDarkMode),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                _buildReportTypeFilter(isDarkMode),
+              ],
             ),
           ),
-          
-          SizedBox(height: 20),
-          
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey[300]!),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _buildReportOptions(isDarkMode),
-            ),
+        ),
+        
+        SizedBox(height: 20),
+        
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey[300]!),
           ),
-          
-          SizedBox(height: 20),
-          
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: _buildGenerateReportButton(),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildReportOptions(isDarkMode),
           ),
-        ],
-      ),
+        ),
+        
+        SizedBox(height: 20),
+        
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: _buildGenerateReportButton(),
+        ),
+      ],
     );
   }
 
@@ -2165,7 +2264,6 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // هذا السطر يرجلك لواجهة تسجيل الدخول
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -2238,7 +2336,6 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
           ),
         ),
         actions: [
-          // زر الإشعارات
           IconButton(
             icon: Stack(
               clipBehavior: Clip.none,
@@ -2365,67 +2462,82 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
   }
 
   Widget _buildElectricityReportSection() {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.zero,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 6,
-                offset: Offset(0, 2),
+    return RefreshIndicator(
+      key: _refreshElectricityKey,
+      onRefresh: _refreshElectricityData,
+      color: _tabPrimaryColor,
+      backgroundColor: Provider.of<ThemeProvider>(context).isDarkMode ? Colors.grey[800] : Colors.white,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            if (_isLoadingElectricity)
+              LinearProgressIndicator(
+                color: _tabPrimaryColor,
+                backgroundColor: _tabPrimaryColor.withOpacity(0.1),
               ),
-            ],
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: TabBar(
-            controller: _electricityTabController,
-            isScrollable: true,
-            indicator: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_tabPrimaryColor, _tabSecondaryColor],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+            Container(
+              padding: EdgeInsets.zero,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey[200]!),
               ),
-              borderRadius: BorderRadius.circular(10),
+              child: TabBar(
+                controller: _electricityTabController,
+                isScrollable: true,
+                indicator: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_tabPrimaryColor, _tabSecondaryColor],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                indicatorColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: _tabPrimaryColor,
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 11,
+                ),
+                padding: EdgeInsets.zero,
+                labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                indicatorPadding: EdgeInsets.zero,
+                tabAlignment: TabAlignment.start,
+                tabs: [
+                  Tab(text: 'انقطاع التيار الكهربائي'),
+                  Tab(text: 'مشكلة في الفولطية'),
+                  Tab(text: 'مشكلة في العدادات'),
+                  Tab(text: 'أخرى'),
+                ],
+              ),
             ),
-            indicatorColor: Colors.transparent,
-            labelColor: Colors.white,
-            unselectedLabelColor: _tabPrimaryColor,
-            labelStyle: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+            Container(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: TabBarView(
+                controller: _electricityTabController,
+                children: [
+                  _buildElectricityOutageContent(),
+                  _buildElectricityVoltageContent(),
+                  _buildElectricityMeterContent(),
+                  _buildElectricityOtherContent(),
+                ],
+              ),
             ),
-            unselectedLabelStyle: TextStyle(
-              fontSize: 11,
-            ),
-            padding: EdgeInsets.zero,
-            labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            indicatorPadding: EdgeInsets.zero,
-            tabAlignment: TabAlignment.start,
-            tabs: [
-              Tab(text: 'انقطاع التيار الكهربائي'),
-              Tab(text: 'مشكلة في الفولطية'),
-              Tab(text: 'مشكلة في العدادات'),
-              Tab(text: 'أخرى'),
-            ],
-          ),
+          ],
         ),
-        Expanded(
-          child: TabBarView(
-            controller: _electricityTabController,
-            children: [
-              _buildElectricityOutageContent(),
-              _buildElectricityVoltageContent(),
-              _buildElectricityMeterContent(),
-              _buildElectricityOtherContent(),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -2483,80 +2595,82 @@ List<dynamic> _filterProblemsByReadStatus(List<dynamic> problems, String tabType
     int unreadCount = problems.where((p) => !p.isRead).length;
     int readCount = problems.where((p) => p.isRead).length;
     
-    return Column(
-      children: [
-        // عنوان القسم
-        Container(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: Column(
+        children: [
+          // عنوان القسم
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: _tabPrimaryColor, size: 24),
                 ),
-                child: Icon(icon, color: _tabPrimaryColor, size: 24),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'وزارة الكهرباء - إدارة الخدمات',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                      Text(
+                        'وزارة الكهرباء - إدارة الخدمات',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${problems.length} بلاغ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        
-        // التبويبات الفرعية (غير مقروءة / مقروءة)
-        Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-            border: Border(
-              bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${problems.length} بلاغ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
+          
+          // التبويبات الفرعية (غير مقروءة / مقروءة)
+          Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+              border: Border(
+                bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+              ),
+            ),
+            child: Row(
+              children: [
 _buildSubTab(
   text: 'غير مقروءة',
   count: unreadCount,
   tabIndex: 0,
   currentIndex: _electricitySubTabController.index,
   isDarkMode: isDarkMode,
-  controller: _electricitySubTabController, // أضف هذا
+  controller: _electricitySubTabController,
 ),              _buildSubTab(
   text: 'مقروءة',
   count: readCount,
@@ -2600,69 +2714,85 @@ _buildSubTab(
                 ),
         ),
       ],
-    );
+    ),
+  );
   }
 
   Widget _buildEmployeeReportSection() {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.zero,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 6,
-                offset: Offset(0, 2),
+    return RefreshIndicator(
+      key: _refreshEmployeeKey,
+      onRefresh: _refreshEmployeeData,
+      color: _tabPrimaryColor,
+      backgroundColor: Provider.of<ThemeProvider>(context).isDarkMode ? Colors.grey[800] : Colors.white,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            if (_isLoadingEmployee)
+              LinearProgressIndicator(
+                color: _tabPrimaryColor,
+                backgroundColor: _tabPrimaryColor.withOpacity(0.1),
               ),
-            ],
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: TabBar(
-            controller: _employeeTabController,
-            isScrollable: true,
-            indicator: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_tabPrimaryColor, _tabSecondaryColor],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+            Container(
+              padding: EdgeInsets.zero,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey[200]!),
               ),
-              borderRadius: BorderRadius.circular(10),
+              child: TabBar(
+                controller: _employeeTabController,
+                isScrollable: true,
+                indicator: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_tabPrimaryColor, _tabSecondaryColor],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                indicatorColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: _tabPrimaryColor,
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 11,
+                ),
+                padding: EdgeInsets.zero,
+                labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                indicatorPadding: EdgeInsets.zero,
+                tabAlignment: TabAlignment.start,
+                tabs: [
+                  Tab(text: 'موظف الصيانة'),
+                  Tab(text: 'موظف الفواتير'),
+                  Tab(text: 'أخرى'),
+                ],
+              ),
             ),
-            indicatorColor: Colors.transparent,
-            labelColor: Colors.white,
-            unselectedLabelColor: _tabPrimaryColor,
-            labelStyle: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+            Container(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: TabBarView(
+                controller: _employeeTabController,
+                children: [
+                  _buildEmployeeMaintenanceContent(),
+                  _buildEmployeeBillingContent(),
+                  _buildEmployeeOtherContent(),
+                ],
+              ),
             ),
-            unselectedLabelStyle: TextStyle(
-              fontSize: 11,
-            ),
-            padding: EdgeInsets.zero,
-            labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            indicatorPadding: EdgeInsets.zero,
-            tabAlignment: TabAlignment.start,
-            tabs: [
-              Tab(text: 'موظف الصيانة'),
-              Tab(text: 'موظف الفواتير'),
-              Tab(text: 'أخرى'),
-            ],
-          ),
+          ],
         ),
-        Expanded(
-          child: TabBarView(
-            controller: _employeeTabController,
-            children: [
-              _buildEmployeeMaintenanceContent(),
-              _buildEmployeeBillingContent(),
-              _buildEmployeeOtherContent(),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -2709,74 +2839,76 @@ _buildSubTab(
     int unreadCount = problems.where((p) => !p.isRead).length;
     int readCount = problems.where((p) => p.isRead).length;
     
-    return Column(
-      children: [
-        // عنوان القسم
-        Container(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: Column(
+        children: [
+          // عنوان القسم
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: _tabPrimaryColor, size: 24),
                 ),
-                child: Icon(icon, color: _tabPrimaryColor, size: 24),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'وزارة الكهرباء - إدارة الموارد البشرية',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                      Text(
+                        'وزارة الكهرباء - إدارة الموارد البشرية',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${problems.length} بلاغ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        
-        // التبويبات الفرعية
-        Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-            border: Border(
-              bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${problems.length} بلاغ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              _buildSubTab(
+          
+          // التبويبات الفرعية
+          Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+              border: Border(
+                bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildSubTab(
   text: 'غير مقروءة',
   count: unreadCount,
   tabIndex: 0,
@@ -2828,71 +2960,87 @@ _buildSubTab(
                 ),
         ),
       ],
+    ),
     );
   }
 
   Widget _buildAppProblemSection() {
-    return Column(
-      children: [
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 6,
-                offset: Offset(0, 2),
+    return RefreshIndicator(
+      key: _refreshAppKey,
+      onRefresh: _refreshAppData,
+      color: _tabPrimaryColor,
+      backgroundColor: Provider.of<ThemeProvider>(context).isDarkMode ? Colors.grey[800] : Colors.white,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            if (_isLoadingApp)
+              LinearProgressIndicator(
+                color: _tabPrimaryColor,
+                backgroundColor: _tabPrimaryColor.withOpacity(0.1),
               ),
-            ],
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: TabBar(
-            controller: _appTabController,
-            isScrollable: true,
-            indicator: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_tabPrimaryColor, _tabSecondaryColor],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey[200]!),
               ),
-              borderRadius: BorderRadius.circular(10),
+              child: TabBar(
+                controller: _appTabController,
+                isScrollable: true,
+                indicator: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_tabPrimaryColor, _tabSecondaryColor],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                indicatorColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: _tabPrimaryColor,
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 11,
+                ),
+                padding: EdgeInsets.zero,
+                labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                indicatorPadding: EdgeInsets.zero,
+                tabAlignment: TabAlignment.start,
+                tabs: [
+                  Tab(text: 'تعطل في التطبيق'),
+                  Tab(text: 'مشكلة في الدفع'),
+                  Tab(text: 'واجهة المستخدم'),
+                  Tab(text: 'أخرى'),
+                ],
+              ),
             ),
-            indicatorColor: Colors.transparent,
-            labelColor: Colors.white,
-            unselectedLabelColor: _tabPrimaryColor,
-            labelStyle: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+            Container(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: TabBarView(
+                controller: _appTabController,
+                children: [
+                  _buildAppCrashContent(),
+                  _buildAppPaymentContent(),
+                  _buildAppUIUXContent(),
+                  _buildAppOtherContent(),
+                ],
+              ),
             ),
-            unselectedLabelStyle: TextStyle(
-              fontSize: 11,
-            ),
-            padding: EdgeInsets.zero,
-            labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            indicatorPadding: EdgeInsets.zero,
-            tabAlignment: TabAlignment.start,
-            tabs: [
-              Tab(text: 'تعطل في التطبيق'),
-              Tab(text: 'مشكلة في الدفع'),
-              Tab(text: 'واجهة المستخدم'),
-              Tab(text: 'أخرى'),
-            ],
-          ),
+          ],
         ),
-        Expanded(
-          child: TabBarView(
-            controller: _appTabController,
-            children: [
-              _buildAppCrashContent(),
-              _buildAppPaymentContent(),
-              _buildAppUIUXContent(),
-              _buildAppOtherContent(),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -2950,74 +3098,76 @@ _buildSubTab(
     int unreadCount = problems.where((p) => !p.isRead).length;
     int readCount = problems.where((p) => p.isRead).length;
     
-    return Column(
-      children: [
-        // عنوان القسم
-        Container(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: Column(
+        children: [
+          // عنوان القسم
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: _tabPrimaryColor, size: 24),
                 ),
-                child: Icon(icon, color: _tabPrimaryColor, size: 24),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'وزارة الكهرباء - الدعم الفني',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                      Text(
+                        'وزارة الكهرباء - الدعم الفني',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${problems.length} بلاغ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        
-        // التبويبات الفرعية
-        Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-            border: Border(
-              bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${problems.length} بلاغ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              _buildSubTab(
+          
+          // التبويبات الفرعية
+          Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+              border: Border(
+                bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildSubTab(
   text: 'غير مقروءة',
   count: unreadCount,
   tabIndex: 0,
@@ -3069,69 +3219,85 @@ _buildSubTab(
                 ),
         ),
       ],
+    ),
     );
   }
 
   Widget _buildEmergencyReportSection() {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.zero,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 6,
-                offset: Offset(0, 2),
+    return RefreshIndicator(
+      key: _refreshEmergencyKey,
+      onRefresh: _refreshEmergencyData,
+      color: _tabPrimaryColor,
+      backgroundColor: Provider.of<ThemeProvider>(context).isDarkMode ? Colors.grey[800] : Colors.white,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            if (_isLoadingEmergency)
+              LinearProgressIndicator(
+                color: _tabPrimaryColor,
+                backgroundColor: _tabPrimaryColor.withOpacity(0.1),
               ),
-            ],
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: TabBar(
-            controller: _emergencyTabController,
-            isScrollable: true,
-            indicator: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_tabPrimaryColor, _tabSecondaryColor],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+            Container(
+              padding: EdgeInsets.zero,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey[200]!),
               ),
-              borderRadius: BorderRadius.circular(10),
+              child: TabBar(
+                controller: _emergencyTabController,
+                isScrollable: true,
+                indicator: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_tabPrimaryColor, _tabSecondaryColor],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                indicatorColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: _tabPrimaryColor,
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 11,
+                ),
+                padding: EdgeInsets.zero,
+                labelPadding: EdgeInsets.symmetric(horizontal: 3, vertical: 4),
+                indicatorPadding: EdgeInsets.zero,
+                tabAlignment: TabAlignment.start,
+                tabs: [
+                  Tab(text: 'حوادث كهربائية'),
+                  Tab(text: 'حرائق'),
+                  Tab(text: 'أخرى'),
+                ],
+              ),
             ),
-            indicatorColor: Colors.transparent,
-            labelColor: Colors.white,
-            unselectedLabelColor: _tabPrimaryColor,
-            labelStyle: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+            Container(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: TabBarView(
+                controller: _emergencyTabController,
+                children: [
+                  _buildElectricalAccidentsContent(),
+                  _buildFireEmergenciesContent(),
+                  _buildOtherEmergenciesContent(),
+                ],
+              ),
             ),
-            unselectedLabelStyle: TextStyle(
-              fontSize: 11,
-            ),
-            padding: EdgeInsets.zero,
-            labelPadding: EdgeInsets.symmetric(horizontal: 3, vertical: 4),
-            indicatorPadding: EdgeInsets.zero,
-            tabAlignment: TabAlignment.start,
-            tabs: [
-              Tab(text: 'حوادث كهربائية'),
-              Tab(text: 'حرائق'),
-              Tab(text: 'أخرى'),
-            ],
-          ),
+          ],
         ),
-        Expanded(
-          child: TabBarView(
-            controller: _emergencyTabController,
-            children: [
-              _buildElectricalAccidentsContent(),
-              _buildFireEmergenciesContent(),
-              _buildOtherEmergenciesContent(),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -3182,74 +3348,76 @@ _buildSubTab(
     int unreadCount = problems.where((p) => !p.isRead).length;
     int readCount = problems.where((p) => p.isRead).length;
     
-    return Column(
-      children: [
-        // عنوان القسم
-        Container(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: Column(
+        children: [
+          // عنوان القسم
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: _tabPrimaryColor, size: 24),
                 ),
-                child: Icon(icon, color: _tabPrimaryColor, size: 24),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : _tabPrimaryColor,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'وزارة الكهرباء - الطوارئ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                      Text(
+                        'وزارة الكهرباء - الطوارئ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _tabPrimaryColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${problems.length} بلاغ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        
-        // التبويبات الفرعية
-        Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-            border: Border(
-              bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _tabPrimaryColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${problems.length} بلاغ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              _buildSubTab(
+          
+          // التبويبات الفرعية
+          Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+              border: Border(
+                bottom: BorderSide(color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildSubTab(
   text: 'غير مقروءة',
   count: unreadCount,
   tabIndex: 0,
@@ -3292,6 +3460,7 @@ _buildSubTab(
                 ),
         ),
       ],
+    ),
     );
   }
 
@@ -5240,7 +5409,7 @@ ${problem.description}
   }
 }
 
-// شاشة الإشعارات
+// شاشة الإشعارات (نفس الكود بدون تغيير)
 class NotificationsScreen extends StatefulWidget {
   static const String routeName = '/notifications';
 
@@ -5391,13 +5560,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   List<Map<String, dynamic>> get _filteredNotifications {
     switch (_selectedTab) {
-      case 0: // الجميع
+      case 0:
         return _allNotifications;
-      case 1: // غير مقروءة
+      case 1:
         return _allNotifications.where((notification) => !notification['read']).toList();
-      case 2: // مقروءة
+      case 2:
         return _allNotifications.where((notification) => notification['read']).toList();
-      case 3: // النظام
+      case 3:
         return _allNotifications.where((notification) => notification['type'] == 'system').toList();
       default:
         return _allNotifications;
@@ -5843,6 +6012,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       await Future.delayed(Duration(seconds: 1));
                       setState(() {});
                     },
+                    color: _primaryColor,
+                    backgroundColor: Colors.white,
                     child: ListView.builder(
                       padding: EdgeInsets.zero,
                       itemCount: _filteredNotifications.length,
@@ -6171,17 +6342,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     String description;
     
     switch (_selectedTab) {
-      case 1: // غير مقروءة
+      case 1:
         icon = Icons.mark_email_read_rounded;
         title = 'لا توجد إشعارات غير مقروءة';
         description = 'جميع الإشعارات قد تمت قراءتها';
         break;
-      case 2: // مقروءة
+      case 2:
         icon = Icons.mark_email_unread_rounded;
         title = 'لا توجد إشعارات مقروءة';
         description = 'لم تتم قراءة أي إشعار بعد';
         break;
-      case 3: // النظام
+      case 3:
         icon = Icons.notifications_off_rounded;
         title = 'لا توجد إشعارات نظام';
         description = 'لم يتم إصدار أي إشعارات نظام';
@@ -6231,7 +6402,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 }
 
-// شاشة الإعدادات
+// شاشة الإعدادات (نفس الكود بدون تغيير)
 class SettingsScreen extends StatefulWidget {
   final Color primaryColor;
   final Color secondaryColor;
@@ -6742,7 +6913,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// كلاس ElectricityProblem
+// كلاسات المشاكل (نفس الكود بدون تغيير)
 class ElectricityProblem {
   final String customerName;
   final String customerId;
@@ -6827,7 +6998,6 @@ class ElectricityProblem {
   }
 }
 
-// كلاس EmployeeProblem
 class EmployeeProblem {
   final String customerName;
   final String area;
@@ -6896,7 +7066,6 @@ class EmployeeProblem {
   }
 }
 
-// كلاس AppProblem
 class AppProblem {
   final String customerName;
   final String area;
@@ -6961,7 +7130,6 @@ class AppProblem {
   }
 }
 
-// كلاس TransformerProblem
 class TransformerProblem {
   final String customerName;
   final String location;
@@ -7018,7 +7186,6 @@ class TransformerProblem {
   }
 }
 
-// كلاس SafetyHazardProblem
 class SafetyHazardProblem {
   final String customerName;
   final String area;
@@ -7071,7 +7238,6 @@ class SafetyHazardProblem {
   }
 }
 
-// كلاس ConnectionProblem
 class ConnectionProblem {
   final String customerName;
   final String area;
@@ -7128,7 +7294,6 @@ class ConnectionProblem {
   }
 }
 
-// كلاس EmergencyReport
 class EmergencyReport {
   final String customerName;
   final String location;
